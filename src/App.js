@@ -426,6 +426,12 @@ const SoftballScoreApp = () => {
             <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
             <h1 className="text-3xl font-bold text-gray-800 mb-2">ソフトボール速報</h1>
             <p className="text-gray-600">試合情報を入力してください</p>
+               <button
+                onClick={watchGame}
+                className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs transition-colors"
+              >
+                観戦画面
+              </button>
                   <ScoreViewer />
                   <ScoreUpdater />
           </div>
