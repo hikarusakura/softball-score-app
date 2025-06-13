@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Users, Trophy, Clock, Target, Eye, ChevronLeft } from 'lucide-react';
+import ScoreUpdater from "./components/ScoreUpdater";
+import ScoreViewer from "./components/ScoreViewer";
+
 let sharedGameState = {
   isActive: false,
   inputUserId: null,
@@ -423,6 +426,8 @@ const SoftballScoreApp = () => {
             <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
             <h1 className="text-3xl font-bold text-gray-800 mb-2">ソフトボール速報</h1>
             <p className="text-gray-600">試合情報を入力してください</p>
+                  <ScoreViewer />
+                  <ScoreUpdater />
           </div>
           
           <div className="space-y-6">
