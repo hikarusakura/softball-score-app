@@ -20,9 +20,12 @@ export default function ScoreViewer() {
 
   return (
     <div>
-      <h3>チームA</h3>
-      <p>得点: {score.runs}</p>
-      <p>ヒット: {score.hits}</p>
+              <button
+                onClick={watchGame}
+                className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs transition-colors"
+              >
+                観戦画面
+              </button>
     </div>
   );
 }
