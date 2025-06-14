@@ -776,7 +776,7 @@ const SoftballScoreApp = () => {
           </div>
         </div>
       </div>
-      
+    
       {/* スコア入力画面（下半分） */}
       <div className="flex-1 bg-white p-3 overflow-auto">
         <div className="max-w-4xl mx-auto">
