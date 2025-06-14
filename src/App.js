@@ -735,8 +735,12 @@ if (gameState === 'setup') {
 
   // 速報観戦画面
   if (gameState === 'watching') {
-    const totalHomeScore = homeScore.reduce((a, b) => (a || 0) + (b || 0), 0);
-    const totalAwayScore = awayScore.reduce((a, b) => (a || 0) + (b || 0), 0);
+    const totalHomeScore = homeScore.reduce((total, score) => {
+      return total + (typeof score === 'number' && !isNaN(score) ? score : 0);
+    }, 0);
+    const totalAwayScore = awayScore.reduce((total, score) => {
+      return total + (typeof score === 'number' && !isNaN(score) ? score : 0);
+    }, 0);
     const currentTeamName = getCurrentTeamName();
 
   return (
