@@ -393,32 +393,39 @@ const addToTimeline = (message, eventDetails = {}) => {
       }
     }
 
-    // 次のイニングと攻撃チームを先に計算
-    let nextInning = currentInning;
-    let nextTeamBatting;
+    // 1. 次のイニング、攻撃チーム、チーム名を事前に計算
+    const isNextInningTop = currentTeamBatting === 'home';
+    const nextInning = isNextInningTop ? currentInning + 1 : currentInning;
+    const nextTeamBatting = isNextInningTop ? 'away' : 'home';
 
-    if (currentTeamBatting === 'away') {
-      nextTeamBatting = 'home';
+    let nextTeamName;
+    if (isHomeTeam) {
+      // 若葉が後攻の場合
+      nextTeamName = nextTeamBatting === 'away' ? truncateTeamName(opponentTeam) : '若葉';
     } else {
-      nextTeamBatting = 'away';
-      nextInning = currentInning + 1;
+      // 若葉が先攻の場合
+      nextTeamName = nextTeamBatting === 'away' ? '若葉' : truncateTeamName(opponentTeam);
     }
-
-    // 正しい情報でタイムラインを更新
+    
+    // 2. 正しい情報でタイムラインメッセージと詳細オブジェクトを作成
     const inningHalf = nextTeamBatting === 'home' ? '裏' : '表';
-    addToTimeline(`${nextInning}回${inningHalf}開始`);
+    const message = `${nextInning}回${inningHalf}開始`;
+    const timelineDetails = {
+      inning: nextInning,
+      team: nextTeamName,
+      outCount: 0 // チェンジ直後は0アウト
+    };
 
-    // stateの更新を実行
-    if (currentTeamBatting === 'away') {
-      // 表から裏へ
-      setCurrentTeamBatting('home'); [cite, 57]
-    } else {
-      // 裏から次のイニングの表へ
-      setCurrentTeamBatting('away'); [cite, 58]
-      setCurrentInning(prev => prev + 1); [cite, 59]
+    // 3. 拡張したaddToTimelineを呼び出す
+    addToTimeline(message, timelineDetails);
+
+    // 4. 実際のstate更新を実行
+    setOutCount(0);
+    setBases({ first: false, second: false, third: false });
+    setCurrentTeamBatting(nextTeamBatting);
+    if (isNextInningTop) {
+      setCurrentInning(nextInning);
     }
-    setOutCount(0); [cite, 60]
-    setBases({ first: false, second: false, third: false }); [cite, 60]
   };
 
   // 強制チェンジ
