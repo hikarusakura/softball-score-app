@@ -750,7 +750,7 @@ if (gameState === 'setup') {
           <div className="bg-black bg-opacity-50 rounded-lg p-6 mb-6">
             <div className="text-center">
               <div className="grid grid-cols-9 gap-1 sm:gap-2 mb-3 pb-2">
-                <div className="text-left font-semibold min-w-[40px]">チーム</div>
+                <div className="text-left font-semibold min-w-[40px]">.</div>
                {[1,2,3,4,5,6].map(i => (
                  <div key={i} className="text-center font-bold min-w-[28px]">{i}</div>
                ))}
