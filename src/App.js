@@ -758,7 +758,7 @@ if (gameState === 'setup') {
                 {[1,2,3,4,5,6].map(i => (
                   <div key={i} className="text-xs">{i}</div>
                 ))}
-                <div className="font-bold text-sm">R</div>
+                <div className="font-bold text-xs">R</div>
               </div>
               
               {/* スコア表示（先攻・後攻に応じて表示順序を調整） */}
@@ -809,7 +809,9 @@ if (gameState === 'setup') {
             <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
               <div className="text-xs text-gray-300">現在</div>
               <div className="font-bold text-sm">{currentInning}回{currentTeamBatting === 'away' ? '表' : '裏'}</div>
-              <div className="text-xs">{currentTeamName}</div>
+              <div className="text-xs truncate">
+                {currentTeamName}
+              </div>
             </div>
             
             <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
@@ -819,43 +821,45 @@ if (gameState === 'setup') {
             
             <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
               <div className="text-xs text-gray-300">打者</div>
-              <div className="font-bold text-sm">
+              <div className="font-bold text-xs truncate">
                 {useCustomBatter ? customBatter : currentBatter || '未選択'}
               </div>
             </div>
           </div>
           
           {/* ダイアモンド */}
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-3">
             <div className="relative w-24 h-24">
               <div className="absolute inset-0 border-2 border-white transform rotate-45"></div>
+              {/* 3塁 */}
               <div className={`absolute top-1/2 left-0 w-3 h-3 -ml-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.third ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
+              {/* 2塁 */}
               <div className={`absolute top-0 left-1/2 w-3 h-3 -ml-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.second ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
+              {/* 1塁 */}
               <div className={`absolute top-1/2 right-0 w-3 h-3 -mr-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.first ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
+              {/* ホーム */}
               <div className="absolute bottom-0 left-1/2 w-3 h-3 -ml-1.5 -mb-1.5 rounded-full border-2 border-white bg-red-600"></div>
             </div>
           </div>
           
           {/* タイムライン */}
-          <div className="bg-white bg-opacity-10 rounded-lg p-3">
+          <div className="bg-white bg-opacity-10 rounded-lg p-3 max-h-32 overflow-y-auto">
             <h3 className="font-bold mb-2 text-center text-sm">⚡ タイムライン ⚡</h3>
-            <div className="max-h-64 overflow-y-auto">
-              {timeline.length === 0 ? (
-                <p className="text-center text-gray-300">まだプレイがありません</p>
-              ) : (
-                timeline.map((entry, index) => (
-                  <div key={index} className="border-b border-gray-600 pb-1 mb-1 last:border-b-0">
-                    <div className="flex justify-between items-start text-xs">
-                      <span className="text-gray-300">{entry.time}</span>
-                      <span className="text-gray-300">{entry.inning}回 {entry.outCount}アウト</span>
-                    </div>
-                    <div className="text-xs">
-                      <span className="font-medium text-yellow-300">[{entry.team}]</span> {entry.message}
-                    </div>
+            {timeline.length === 0 ? (
+              <p className="text-center text-gray-300 text-xs">まだプレイがありません</p>
+            ) : (
+              timeline.map((entry, index) => (
+                <div key={index} className="border-b border-gray-600 pb-1 mb-1 last:border-b-0">
+                  <div className="flex justify-between items-start text-xs">
+                    <span className="text-gray-300">{entry.time}</span>
+                    <span className="text-gray-300">{entry.inning}回 {entry.outCount}アウト</span>
                   </div>
-                ))
-              )}
-            </div>
+                  <div className="text-xs">
+                    <span className="font-medium text-yellow-300">[{entry.team}]</span> {entry.message}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
