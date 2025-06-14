@@ -843,7 +843,7 @@ if (gameState === 'setup') {
           </div>
           
           {/* タイムライン */}
-          <div className="bg-white bg-opacity-10 rounded-lg p-3 max-h-32 overflow-y-auto">
+          <div className="bg-white bg-opacity-10 rounded-lg p-3">
             <h3 className="font-bold mb-2 text-center text-sm">⚡ タイムライン ⚡</h3>
             {timeline.length === 0 ? (
               <p className="text-center text-gray-300 text-xs">まだプレイがありません</p>
