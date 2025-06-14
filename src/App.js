@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Users, Trophy, Clock, Target, Eye, ChevronLeft } from 'lucide-react';
-import ScoreUpdater from "./components/ScoreUpdater";
-import ScoreViewer from "./components/ScoreViewer";
+import { Play, Users, Trophy, Clock, Target, Eye, ChevronLeft, Share2, Copy, Wifi, WifiOff } from 'lucide-react';
+import { saveGameState, watchGameState, stopWatching, generateGameId } from './firebase';
+
 
 let sharedGameState = {
   isActive: false,
@@ -55,6 +55,97 @@ const SoftballScoreApp = () => {
   // タイムライン表示用
   const [selectedGameTimeline, setSelectedGameTimeline] = useState(null);
 
+  // 新しく追加するstate（共有機能用）
+  const [gameId, setGameId] = useState(null);
+  const [isGameCreator, setIsGameCreator] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [watchingGameId, setWatchingGameId] = useState('');
+  const [firebaseListener, setFirebaseListener] = useState(null);
+
+  // URL パラメータからゲームIDを取得
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameIdFromUrl = urlParams.get('gameId');
+    
+    if (gameIdFromUrl) {
+      // 観戦モードで開始
+      setWatchingGameId(gameIdFromUrl);
+      setGameId(gameIdFromUrl);
+      setIsGameCreator(false);
+      setIsWatchingMode(true);
+      setGameState('watching');
+      startWatchingGame(gameIdFromUrl);
+    }
+  }, []);
+
+  // 観戦モードでゲーム状態を監視
+  const startWatchingGame = (gameId) => {
+    const listener = watchGameState(gameId, (data) => {
+      console.log('ゲーム状態を受信:', data);
+      
+      // 受信したデータで状態を更新
+      if (data.opponentTeam) setOpponentTeam(data.opponentTeam);
+      if (data.isHomeTeam !== undefined) setIsHomeTeam(data.isHomeTeam);
+      if (data.currentInning) setCurrentInning(data.currentInning);
+      if (data.currentTeamBatting) setCurrentTeamBatting(data.currentTeamBatting);
+      if (data.outCount !== undefined) setOutCount(data.outCount);
+      if (data.bases) setBases(data.bases);
+      if (data.homeScore) setHomeScore(data.homeScore);
+      if (data.awayScore) setAwayScore(data.awayScore);
+      if (data.timeline) setTimeline(data.timeline);
+      if (data.currentBatter) setCurrentBatter(data.currentBatter);
+      if (data.customBatter) setCustomBatter(data.customBatter);
+      if (data.useCustomBatter !== undefined) setUseCustomBatter(data.useCustomBatter);
+      
+      setIsConnected(true);
+    });
+    
+    setFirebaseListener(listener);
+  };
+
+  // ゲーム状態をFirebaseに保存
+  const saveCurrentGameState = async () => {
+    if (!gameId || !isGameCreator) return;
+
+    const currentState = {
+      opponentTeam,
+      isHomeTeam,
+      currentInning,
+      currentTeamBatting,
+      outCount,
+      bases,
+      homeScore,
+      awayScore,
+      timeline,
+      currentBatter,
+      customBatter,
+      useCustomBatter,
+      gameState: 'playing',
+      createdAt: Date.now()
+    };
+
+    try {
+      await saveGameState(gameId, currentState);
+      setIsConnected(true);
+    } catch (error) {
+      console.error('保存失敗:', error);
+      setIsConnected(false);
+    }
+  };
+
+  // 状態が変更されたときにFirebaseに保存
+  useEffect(() => {
+    if (isGameCreator && gameState === 'playing') {
+      saveCurrentGameState();
+    }
+  }, [
+    opponentTeam, currentInning, currentTeamBatting, outCount, 
+    bases, homeScore, awayScore, timeline, currentBatter, 
+    customBatter, useCustomBatter
+  ]);
+
   // 試合開始
   const startGame = () => {
     if (!opponentTeam) {
@@ -65,6 +156,24 @@ const SoftballScoreApp = () => {
     // 先攻・後攻の正しい実装
     setCurrentTeamBatting('away'); // 1回表は常に先攻チーム
     addToTimeline('試合開始！');
+
+  
+    // ゲームIDを生成
+    const newGameId = generateGameId();
+    setGameId(newGameId);
+    setIsGameCreator(true);
+    setIsWatchingMode(false);
+    
+    // 共有URLを生成
+    const url = `${window.location.origin}${window.location.pathname}?gameId=${newGameId}`;
+    setShareUrl(url);
+
+    setGameState('playing');
+    setCurrentTeamBatting('away');
+    addToTimeline('試合開始！');
+
+        // 共有ダイアログを表示
+    setShowShareDialog(true);
   };
 
   // 速報観戦モード
@@ -76,13 +185,15 @@ const SoftballScoreApp = () => {
   const addToTimeline = (message) => {
     const timestamp = new Date().toLocaleTimeString();
     const currentTeam = getCurrentTeamName();
-    setTimeline(prev => [{
+    const newEntry = {
       time: timestamp,
       message: message,
       inning: currentInning,
       team: currentTeam,
       outCount: outCount
-    }, ...prev]);
+    };
+    
+    setTimeline(prev => [newEntry, ...prev]);
   };
 
   // 現在攻撃中のチーム名を取得
@@ -94,6 +205,94 @@ const SoftballScoreApp = () => {
       // 若葉が先攻の場合
       return currentTeamBatting === 'away' ? '若葉' : opponentTeam;
     }
+  };
+
+    // URLをクリップボードにコピー
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      alert('観戦用URLをコピーしました！');
+    } catch (err) {
+      console.error('コピー失敗:', err);
+      // フォールバック
+      const textArea = document.createElement('textarea');
+      textArea.value = shareUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('観戦用URLをコピーしました！');
+    }
+  };
+
+  // 観戦モード開始（URLから）
+  const startWatchingFromId = () => {
+    if (!watchingGameId) {
+      alert('ゲームIDを入力してください');
+      return;
+    }
+    
+    setGameId(watchingGameId);
+    setIsGameCreator(false);
+    setIsWatchingMode(true);
+    setGameState('watching');
+    startWatchingGame(watchingGameId);
+  };
+
+  // 共有ダイアログ
+  const ShareDialog = () => {
+    if (!showShareDialog) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <h3 className="text-lg font-bold mb-4 text-center">観戦用URL</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            このURLを共有すると、他の人がリアルタイムで試合を観戦できます
+          </p>
+          
+          <div className="bg-gray-100 p-3 rounded-lg mb-4 break-all text-sm">
+            {shareUrl}
+          </div>
+          
+          <div className="flex space-x-3">
+            <button
+              onClick={copyToClipboard}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2"
+            >
+              <Copy className="h-4 w-4" />
+              <span>コピー</span>
+            </button>
+            <button
+              onClick={() => setShowShareDialog(false)}
+              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg"
+            >
+              閉じる
+            </button>
+          </div>
+          
+          <div className="mt-3 text-center">
+            <p className="text-xs text-gray-500">ゲームID: {gameId}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 接続状態表示
+  const ConnectionStatus = () => {
+    if (!gameId) return null;
+
+    return (
+      <div className="fixed top-4 right-4 z-40">
+        <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm ${
+          isConnected ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`}>
+          {isConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
+          <span>{isConnected ? '接続中' : '切断'}</span>
+        </div>
+      </div>
+    );
   };
 
   // 得点追加
@@ -417,103 +616,116 @@ const SoftballScoreApp = () => {
     );
   }
 
-  // セットアップ画面
-  if (gameState === 'setup') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 p-4">
-        <div className="max-w-md mx-auto bg-white rounded-xl shadow-2xl p-8">
-          <div className="text-center mb-8">
-            <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">ソフトボール速報</h1>
-            <p className="text-gray-600">試合情報を入力してください</p>
-               <button
-                onClick={watchGame}
-                className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs transition-colors"
-              >
-                観戦画面
-              </button>
-                  <ScoreViewer />
-                  <ScoreUpdater />
+// セットアップ画面の修正版
+if (gameState === 'setup') {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 p-4">
+      <div className="max-w-md mx-auto bg-white rounded-xl shadow-2xl p-8">
+        <div className="text-center mb-8">
+          <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">ソフトボール速報</h1>
+          <p className="text-gray-600">試合情報を入力してください</p>
+        </div>
+        
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              対戦相手チーム名
+            </label>
+            <input
+              type="text"
+              value={opponentTeam}
+              onChange={(e) => setOpponentTeam(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="チーム名を入力"
+            />
           </div>
           
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                対戦相手チーム名
-              </label>
+          <div>
+            <label className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                checked={isHomeTeam}
+                onChange={(e) => setIsHomeTeam(e.target.checked)}
+                className="w-5 h-5 text-blue-600"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                若葉が後攻（ホーム）
+              </span>
+            </label>
+          </div>
+          
+          <div className="space-y-3">
+            <button
+              onClick={startGame}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+            >
+              <Play className="h-5 w-5" />
+              <span>試合開始（記録モード）</span>
+            </button>
+            
+            {/* 既存のゲーム観戦用ボタン */}
+            {gameId && isGameCreator && (
+              <button
+                onClick={() => setShowShareDialog(true)}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+              >
+                <Share2 className="h-5 w-5" />
+                <span>観戦URLを共有</span>
+              </button>
+            )}
+          </div>
+          
+          {/* 観戦モード用入力 */}
+          <div className="border-t border-gray-200 pt-6">
+            <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
+            <div className="space-y-3">
               <input
                 type="text"
-                value={opponentTeam}
-                onChange={(e) => setOpponentTeam(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="チーム名を入力"
+                value={watchingGameId}
+                onChange={(e) => setWatchingGameId(e.target.value.toUpperCase())}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="ゲームIDを入力 (例: ABC123)"
+                maxLength={6}
               />
-            </div>
-            
-            <div>
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={isHomeTeam}
-                  onChange={(e) => setIsHomeTeam(e.target.checked)}
-                  className="w-5 h-5 text-blue-600"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  若葉が後攻（ホーム）
-                </span>
-              </label>
-            </div>
-            
-            <div className="space-y-3">
               <button
-                onClick={startGame}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                onClick={startWatchingFromId}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
-                <Play className="h-5 w-5" />
-                <span>試合開始</span>
+                <Eye className="h-5 w-5" />
+                <span>観戦開始</span>
               </button>
-              
-              {gameState !== 'setup' && (
-                <button
-                  onClick={watchGame}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                >
-                  <Eye className="h-5 w-5" />
-                  <span>速報中（観戦）</span>
-                </button>
-              )}
             </div>
           </div>
-          
-          {/* 過去の試合 */}
-          {pastGames.length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-lg font-bold text-gray-800 mb-4">過去の試合</h2>
-              {pastGames.slice(0, 3).map((game, index) => (
-                <div key={index} className="bg-gray-50 p-3 rounded-lg mb-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">{game.date}</span>
-                    <span className="font-medium">
-                      vs {game.opponent}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => showTimeline(game)}
-                    className="w-full text-center mt-1 hover:bg-gray-100 p-1 rounded transition-colors"
-                  >
-                    <span className={`font-bold ${game.winner === '若葉' ? 'text-blue-600' : 'text-red-600'}`}>
-                      {game.isHomeTeam ? '若葉' : game.opponent} {game.isHomeTeam ? game.homeScore : game.awayScore} - {game.isHomeTeam ? game.awayScore : game.homeScore} {game.isHomeTeam ? game.opponent : '若葉'} ({game.winner}勝利)
-                    </span>
-                    <div className="text-xs text-gray-500 mt-1">クリックで詳細表示</div>
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
+        
+        {/* 既存の過去の試合表示 */}
+        {pastGames.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-lg font-bold text-gray-800 mb-4">過去の試合</h2>
+            {pastGames.slice(0, 3).map((game, index) => (
+              <div key={index} className="bg-gray-50 p-3 rounded-lg mb-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">{game.date}</span>
+                  <span className="font-medium">vs {game.opponent}</span>
+                </div>
+                <button
+                  onClick={() => showTimeline(game)}
+                  className="w-full text-center mt-1 hover:bg-gray-100 p-1 rounded transition-colors"
+                >
+                  <span className={`font-bold ${game.winner === '若葉' ? 'text-blue-600' : 'text-red-600'}`}>
+                    {game.isHomeTeam ? '若葉' : game.opponent} {game.isHomeTeam ? game.homeScore : game.awayScore} - {game.isHomeTeam ? game.awayScore : game.homeScore} {game.isHomeTeam ? game.opponent : '若葉'} ({game.winner}勝利)
+                  </span>
+                  <div className="text-xs text-gray-500 mt-1">クリックで詳細表示</div>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   // 速報観戦画面
   if (gameState === 'watching') {
@@ -526,8 +738,8 @@ const SoftballScoreApp = () => {
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h1 className="text-2xl font-bold">⚾ ソフトボール速報 ⚾</h1>
-              <p className="text-sm">若葉 vs {opponentTeam}</p>
+              <h1 className="text-2xl font-bold text-gray-800">⚾ 試合進行中 ⚾</h1>
+              <p className="text-gray-600">若葉 vs {opponentTeam}</p>
             </div>
             <button
               onClick={() => setGameState('playing')}
@@ -783,21 +995,22 @@ const SoftballScoreApp = () => {
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-bold text-gray-800">📝 スコア入力</h2>
             <div className="flex space-x-2">
-                  <button
-      onClick={() => {
-        navigator.clipboard.writeText(window.location.origin + '/watch');
-        alert('観戦リンクをコピーしました！');
-      }}
-      className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs transition-colors"
-    >
-      リンクをコピー
-    </button>
+                {isGameCreator && (
+      <button
+        onClick={() => setShowShareDialog(true)}
+        className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors flex items-center space-x-1"
+      >
+        <Share2 className="h-4 w-4" />
+        <span>共有</span>
+      </button>
+    )}
               <button
-                onClick={watchGame}
-                className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs transition-colors"
-              >
-                観戦画面
-              </button>
+      onClick={() => setGameState('watching')}
+      className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm transition-colors flex items-center space-x-1"
+    >
+      <Eye className="h-4 w-4" />
+      <span>観戦画面</span>
+    </button>
               <button
                 onClick={forceChange}
                 className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs transition-colors"
