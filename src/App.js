@@ -179,18 +179,18 @@ const SoftballScoreApp = () => {
   };
 
   // タイムラインに追加
-  const addToTimeline = (message) => {
-    const timestamp = new Date().toLocaleTimeString();
-    const currentTeam = getCurrentTeamName();
-    const newEntry = {
-      time: timestamp,
-      message: message,
-      inning: currentInning,
-      team: currentTeam,
-      outCount: outCount
-    };
-    
-    setTimeline(prev => [newEntry, ...prev]);
+const addToTimeline = (message, eventDetails = {}) => {
+  const timestamp = new Date().toLocaleTimeString();
+  
+  // eventDetails に値があればそれを使い、なければ現在の state を使う
+  const newEntry = {
+    time: timestamp,
+    message: message,
+    inning: eventDetails.inning !== undefined ? eventDetails.inning : currentInning,
+    team: eventDetails.team !== undefined ? eventDetails.team : getCurrentTeamName(),
+    outCount: eventDetails.outCount !== undefined ? eventDetails.outCount : outCount,
+  };
+  setTimeline(prev => [newEntry, ...prev]);
   };
 
     // チーム名を短縮する関数
