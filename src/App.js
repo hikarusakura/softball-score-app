@@ -783,6 +783,15 @@ const SoftballScoreApp = () => {
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-bold text-gray-800">📝 スコア入力</h2>
             <div className="flex space-x-2">
+                  <button
+      onClick={() => {
+        navigator.clipboard.writeText(window.location.origin + '/watch');
+        alert('観戦リンクをコピーしました！');
+      }}
+      className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs transition-colors"
+    >
+      リンクをコピー
+    </button>
               <button
                 onClick={watchGame}
                 className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs transition-colors"
