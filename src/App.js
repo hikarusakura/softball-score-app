@@ -393,19 +393,32 @@ const SoftballScoreApp = () => {
       }
     }
 
+    // 次のイニングと攻撃チームを先に計算
+    let nextInning = currentInning;
+    let nextTeamBatting;
+
+    if (currentTeamBatting === 'away') {
+      nextTeamBatting = 'home';
+    } else {
+      nextTeamBatting = 'away';
+      nextInning = currentInning + 1;
+    }
+
+    // 正しい情報でタイムラインを更新
+    const inningHalf = nextTeamBatting === 'home' ? '裏' : '表';
+    addToTimeline(`${nextInning}回${inningHalf}開始`);
+
+    // stateの更新を実行
     if (currentTeamBatting === 'away') {
       // 表から裏へ
-      setCurrentTeamBatting('home');
+      setCurrentTeamBatting('home'); [cite, 57]
     } else {
       // 裏から次のイニングの表へ
-      setCurrentTeamBatting('away');
-      setCurrentInning(prev => prev + 1);
+      setCurrentTeamBatting('away'); [cite, 58]
+      setCurrentInning(prev => prev + 1); [cite, 59]
     }
-    setOutCount(0);
-    setBases({ first: false, second: false, third: false });
-    
-    const nextTeam = currentTeamBatting === 'away' ? getCurrentTeamName() : getCurrentTeamName();
-    addToTimeline(`${currentInning}回${currentTeamBatting === 'away' ? '表' : '裏'}開始`);
+    setOutCount(0); [cite, 60]
+    setBases({ first: false, second: false, third: false }); [cite, 60]
   };
 
   // 強制チェンジ
