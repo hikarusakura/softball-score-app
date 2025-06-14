@@ -393,39 +393,44 @@ const addToTimeline = (message, eventDetails = {}) => {
       }
     }
 
-    // 1. 次のイニング、攻撃チーム、チーム名を事前に計算
-    const isNextInningTop = currentTeamBatting === 'home';
-    const nextInning = isNextInningTop ? currentInning + 1 : currentInning;
-    const nextTeamBatting = isNextInningTop ? 'away' : 'home';
+      // 1. 「次の」状態をすべて計算します
+    let nextInning;
+    let nextTeamBatting;
 
-    let nextTeamName;
-    if (isHomeTeam) {
-      // 若葉が後攻の場合
-      nextTeamName = nextTeamBatting === 'away' ? truncateTeamName(opponentTeam) : '若葉';
+    if (currentTeamBatting === 'away') {
+        // 現在が「表」なら、次は「裏」
+        nextTeamBatting = 'home';
+        nextInning = currentInning; // イニング数は同じ
     } else {
-      // 若葉が先攻の場合
-      nextTeamName = nextTeamBatting === 'away' ? '若葉' : truncateTeamName(opponentTeam);
+        // 現在が「裏」なら、次は次のイニングの「表」
+        nextTeamBatting = 'away';
+        nextInning = currentInning + 1; // イニング数を1増やす
     }
-    
-    // 2. 正しい情報でタイムラインメッセージと詳細オブジェクトを作成
-    const inningHalf = nextTeamBatting === 'home' ? '裏' : '表';
+
+    // 2. 「次の」攻撃チーム名を取得します
+    let nextTeamName;
+    const teamNameOpponent = truncateTeamName(opponentTeam);
+    if (isHomeTeam) { // 若葉が後攻の場合
+        nextTeamName = (nextTeamBatting === 'away') ? teamNameOpponent : '若葉';
+    } else { // 若葉が先攻の場合
+        nextTeamName = (nextTeamBatting === 'away') ? '若葉' : teamNameOpponent;
+    }
+
+    // 3. 計算した「次の」情報を使ってタイムラインを更新します
+    const inningHalf = (nextTeamBatting === 'home') ? '裏' : '表';
     const message = `${nextInning}回${inningHalf}開始`;
-    const timelineDetails = {
-      inning: nextInning,
-      team: nextTeamName,
-      outCount: 0 // チェンジ直後は0アウト
-    };
+    
+    addToTimeline(message, {
+        inning: nextInning,
+        team: nextTeamName,
+        outCount: 0 // チェンジ直後は必ず0アウト
+    });
 
-    // 3. 拡張したaddToTimelineを呼び出す
-    addToTimeline(message, timelineDetails);
-
-    // 4. 実際のstate更新を実行
+    // 4. 最後に、計算済みの値でstateを更新します
+    setCurrentTeamBatting(nextTeamBatting);
+    setCurrentInning(nextInning);
     setOutCount(0);
     setBases({ first: false, second: false, third: false });
-    setCurrentTeamBatting(nextTeamBatting);
-    if (isNextInningTop) {
-      setCurrentInning(nextInning);
-    }
   };
 
   // 強制チェンジ
