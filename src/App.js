@@ -749,7 +749,7 @@ if (gameState === 'setup') {
       <div className="flex-1 bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-3">
-            <h1 className="text-lg font-bold">⚾ ソフトボール速報 ⚾</h1>
+            <h1 className="text-lg font-bold">⚾ 速報中 ⚾</h1>
             <p className="text-xs truncate">若葉 vs {opponentTeam}</p>
           </div>
           
@@ -774,7 +774,7 @@ if (gameState === 'setup') {
                     {awayScore.map((score, i) => (
                       <div key={i} className="text-xs">{score !== null ? score : '-'}</div>
                     ))}
-                    <div className="font-bold text-sm">{totalAwayScore}</div>
+                    <div className="font-bold text-xs">{totalAwayScore}</div>
                   </div>
                   
                   <div className="grid grid-cols-9 gap-1">
@@ -782,7 +782,7 @@ if (gameState === 'setup') {
                     {homeScore.map((score, i) => (
                       <div key={i} className="text-xs">{score !== null ? score : '-'}</div>
                     ))}
-                    <div className="font-bold text-sm">{totalHomeScore}</div>
+                    <div className="font-bold text-xs">{totalHomeScore}</div>
                   </div>
                 </>
               ) : (
@@ -793,7 +793,7 @@ if (gameState === 'setup') {
                     {awayScore.map((score, i) => (
                       <div key={i} className="text-xs">{score !== null ? score : '-'}</div>
                     ))}
-                    <div className="font-bold text-sm">{totalAwayScore}</div>
+                    <div className="font-bold text-xs">{totalAwayScore}</div>
                   </div>
                   
                   <div className="grid grid-cols-9 gap-1">
@@ -801,7 +801,7 @@ if (gameState === 'setup') {
                     {homeScore.map((score, i) => (
                       <div key={i} className="text-xs">{score !== null ? score : '-'}</div>
                     ))}
-                    <div className="font-bold text-sm">{totalHomeScore}</div>
+                    <div className="font-bold text-xs">{totalHomeScore}</div>
                   </div>
                 </>
               )}
