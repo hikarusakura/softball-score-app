@@ -758,7 +758,7 @@ if (gameState === 'setup') {
                 {[1,2,3,4,5,6].map(i => (
                   <div key={i} className="text-xs">{i}</div>
                 ))}
-                <div className="font-bold text-xs">R</div>
+                <div className="font-bold text-sm">R</div>
               </div>
               
               {/* スコア表示（先攻・後攻に応じて表示順序を調整） */}
