@@ -740,6 +740,7 @@ if (gameState === 'setup') {
     const currentTeamName = getCurrentTeamName();
 
     return (
+      <div className="min-h-screen bg-gray-100 flex flex-col">
       <div className="flex-1 bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-3">
@@ -747,21 +748,15 @@ if (gameState === 'setup') {
               <h1 className="text-lg font-bold">⚾ 試合進行中 ⚾</h1>
               <p className="text-xs truncate">若葉 vs {opponentTeam}</p>
             </div>
-            <button
-              onClick={() => setGameState('playing')}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
-            >
-              入力画面に戻る
-            </button>
           </div>
           
 {/* スコアボード */}
 <div className="bg-black bg-opacity-50 rounded-lg p-4 mb-4">
   <div className="text-center text-sm">
     <div className="grid grid-cols-9 gap-1 mb-2 border-b border-gray-500 pb-2">
-      <div className="text-left text-xs min-w-[50px]">チーム</div>
+      <div className="text-left text-xs">チーム</div>
       {[1,2,3,4,5,6].map(i => (
-        <div key={i} className="text-xs text-center min-w-[28px]">{i}</div>
+        <div key={i} className="text-xs text-center">{i}</div>
       ))}
       <div className="font-bold text-xs text-center min-w-[32px]">R</div>
     </div>
@@ -861,6 +856,7 @@ if (gameState === 'setup') {
             </div>
           </div>
         </div>
+      </div>
       </div>
     );
   }
