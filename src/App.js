@@ -152,10 +152,6 @@ const SoftballScoreApp = () => {
       alert('対戦相手のチーム名を入力してください');
       return;
     }
-    setGameState('playing');
-    // 先攻・後攻の正しい実装
-    setCurrentTeamBatting('away'); // 1回表は常に先攻チーム
-    addToTimeline('試合開始！');
 
   
     // ゲームIDを生成
@@ -170,7 +166,8 @@ const SoftballScoreApp = () => {
 
     setGameState('playing');
     setCurrentTeamBatting('away');
-    addToTimeline('試合開始！');
+    const startMessage = `試合開始！ゲームID: ${newGameId}`;
+    addToTimeline(startMessage);
 
         // 共有ダイアログを表示
     setShowShareDialog(true);
