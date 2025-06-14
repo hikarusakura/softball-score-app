@@ -744,7 +744,7 @@ if (gameState === 'setup') {
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-3">
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-800">⚾ 試合進行中 ⚾</h1>
+              <h1 className="text-lg font-bold">⚾ 試合進行中 ⚾</h1>
               <p className="text-xs truncate">若葉 vs {opponentTeam}</p>
             </div>
             <button
@@ -759,48 +759,48 @@ if (gameState === 'setup') {
 <div className="bg-black bg-opacity-50 rounded-lg p-4 mb-4">
   <div className="text-center text-sm">
     <div className="grid grid-cols-9 gap-1 mb-2 border-b border-gray-500 pb-2">
-      <div className="text-left text-xs">チーム</div>
+      <div className="text-left text-xs min-w-[50px]">チーム</div>
       {[1,2,3,4,5,6].map(i => (
-        <div key={i} className="text-xs text-center">{i}</div>
+        <div key={i} className="text-xs text-center min-w-[28px]">{i}</div>
       ))}
-      <div className="font-bold text-xs text-center">R</div>
+      <div className="font-bold text-xs text-center min-w-[32px]">R</div>
     </div>
     
     {/* スコア表示（先攻・後攻に応じて表示順序を調整） */}
     {isHomeTeam ? (
       <>
         <div className="grid grid-cols-9 gap-1 mb-1">
-          <div className="text-left text-xs truncate">{opponentTeam}</div>
+          <div className="text-left text-xs truncate min-w-[50px]">{opponentTeam}</div>
           {awayScore.map((score, i) => (
-            <div key={i} className="text-xs text-center">{score !== null ? score : '-'}</div>
+            <div key={i} className="text-xs text-center min-w-[28px]">{score !== null ? score : '-'}</div>
           ))}
-          <div className="font-bold text-sm text-center">{totalAwayScore}</div>
+          <div className="font-bold text-sm text-center min-w-[32px]">{totalAwayScore}</div>
         </div>
         
         <div className="grid grid-cols-9 gap-1">
-          <div className="text-left text-xs truncate">若葉</div>
+          <div className="text-left text-xs truncate min-w-[50px]">若葉</div>
           {homeScore.map((score, i) => (
-            <div key={i} className="text-xs text-center">{score !== null ? score : '-'}</div>
+            <div key={i} className="text-xs text-center min-w-[28px]">{score !== null ? score : '-'}</div>
           ))}
-          <div className="font-bold text-sm text-center">{totalHomeScore}</div>
+          <div className="font-bold text-sm text-center min-w-[32px]">{totalHomeScore}</div>
         </div>
       </>
     ) : (
       <>
         <div className="grid grid-cols-9 gap-1 mb-1">
-          <div className="text-left text-xs truncate">若葉</div>
+          <div className="text-left text-xs truncate min-w-[50px]">若葉</div>
           {awayScore.map((score, i) => (
-            <div key={i} className="text-xs text-center">{score !== null ? score : '-'}</div>
+            <div key={i} className="text-xs text-center min-w-[28px]">{score !== null ? score : '-'}</div>
           ))}
-          <div className="font-bold text-sm text-center">{totalAwayScore}</div>
+          <div className="font-bold text-sm text-center min-w-[32px]">{totalAwayScore}</div>
         </div>
         
         <div className="grid grid-cols-9 gap-1">
-          <div className="text-left text-xs truncate">{opponentTeam}</div>
+          <div className="text-left text-xs truncate min-w-[50px]">{opponentTeam}</div>
           {homeScore.map((score, i) => (
-            <div key={i} className="text-xs text-center">{score !== null ? score : '-'}</div>
+            <div key={i} className="text-xs text-center min-w-[28px]">{score !== null ? score : '-'}</div>
           ))}
-          <div className="font-bold text-sm text-center">{totalHomeScore}</div>
+          <div className="font-bold text-sm text-center min-w-[32px]">{totalHomeScore}</div>
         </div>
       </>
     )}
