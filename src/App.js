@@ -749,13 +749,13 @@ if (gameState === 'setup') {
           {/* スコアボード */}
           <div className="bg-black bg-opacity-50 rounded-lg p-6 mb-6">
             <div className="text-center">
-              <div className="grid grid-cols-9 gap-2 mb-4 border-b border-gray-500 pb-4">
-                <div className="text-left">チーム</div>
-                {[1,2,3,4,5,6].map(i => (
-                  <div key={i} className="font-bold">{i}</div>
-                ))}
-                <div className="font-bold">R</div>
-              </div>
+              <div className="grid grid-cols-9 gap-1 sm:gap-2 mb-3 pb-2">
+                <div className="text-left font-semibold min-w-[40px]">チーム</div>
+               {[1,2,3,4,5,6].map(i => (
+                 <div key={i} className="text-center font-bold min-w-[28px]">{i}</div>
+               ))}
+               <div className="text-center font-bold min-w-[32px]">R</div>
+          </div>
               
               {/* スコア表示（先攻・後攻に応じて表示順序を調整） */}
               {isHomeTeam ? (
