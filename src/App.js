@@ -14,9 +14,9 @@ let sharedGameState = {
 const SoftballScoreApp = () => {
   // 選手リスト（デフォルト）- きよはる追加
   const defaultPlayers = [
-    'せいや', 'りゅうせ', 'きよはる', 'きづき', 'れお', 'もあ',
-    'つかさ', 'はやと', 'あゆむ', 'はると', 'ゆいと',
-    'さほ', 'あいこ', 'しょうい', 'まひろ', 'じん'
+    'せいや⑩', 'りゅうせ②', 'きづき③', 'れお④', 'もあ⑤', 'きよはる⑥',
+    'はやと⑦', 'つかさ⑨', 'あゆむ⑨', 'はると⑪', 'あいこ⑫', 'ゆいと⑬',
+    'さほ⑭', 'しょうい⑮', 'まひろ⑯', 'そうま⑰', 'じん⑱'
   ];
 
   // 状態管理
@@ -711,7 +711,7 @@ if (gameState === 'setup') {
       <div className="max-w-md mx-auto bg-white rounded-xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">ソフトボール速報</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">若葉試合速報</h1>
           <p className="text-gray-600">試合情報を入力してください</p>
         </div>
         
@@ -738,7 +738,7 @@ if (gameState === 'setup') {
                 className="w-5 h-5 text-blue-600"
               />
               <span className="text-sm font-medium text-gray-700">
-                若葉が後攻（ホーム）
+                若葉が後攻
               </span>
             </label>
           </div>
@@ -973,7 +973,7 @@ if (gameState === 'setup') {
       <div className="flex-1 bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-3">
-            <h1 className="text-lg font-bold">⚾ ソフトボール速報 ⚾</h1>
+            <h1 className="text-lg font-bold">⚾ 若葉試合速報 ⚾</h1>
             <p className="text-xs truncate">若葉 vs {opponentTeam}</p>
           </div>
           
