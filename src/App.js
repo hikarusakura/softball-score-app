@@ -617,6 +617,7 @@ const addToTimeline = (message, eventDetails = {}) => {
     }
     
     const gameData = {
+      gameId: gameId,
       date: new Date().toLocaleDateString(),
       opponent: opponentTeam,
       homeScore: finalHomeScore,
@@ -789,7 +790,15 @@ if (gameState === 'setup') {
               return(
               <div key={index} className="bg-gray-50 p-3 rounded-lg mb-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{game.date}</span>
+                  <div>
+                    <span className="text-sm text-gray-600">{game.date}</span>
+                    {/* game.gameId が存在する場合のみ表示する */}
+                    {game.gameId && (
+                      <span className="ml-2 text-xs text-gray-500 bg-gray-200 px-1 rounded">
+                        ID: {game.gameId}
+                        </span>
+                        )}
+                        </div>
                   <span className="font-medium">vs {game.opponent}</span>
                 </div>
                 <button
