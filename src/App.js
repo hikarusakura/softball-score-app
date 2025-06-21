@@ -821,6 +821,7 @@ const SoftballScoreApp = () => {
               </div>
             </div>
           )}
+          
           {/* 既存の過去の試合表示 */}
           {pastGames.length > 0 && (
             <div className="mt-8">
