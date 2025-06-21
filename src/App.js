@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Users, Trophy, Clock, Target, Eye, ChevronLeft, Share2, Copy, Wifi, WifiOff } from 'lucide-react';
 import { saveGameState, watchGameState, stopWatching, generateGameId } from './firebase';
+import { CSVLink } from 'react-csv';
 
 
 let sharedGameState = {
@@ -63,6 +64,60 @@ const SoftballScoreApp = () => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [watchingGameId, setWatchingGameId] = useState('');
   const [firebaseListener, setFirebaseListener] = useState(null);
+
+  // エクスポート用にデータを整形する関数
+const prepareDataForExport = (gameData) => {
+  // 1. 基本情報とスコアボードの作成
+  const teamA = gameData.isHomeTeam ? gameData.opponent : '若葉';
+  const teamB = gameData.isHomeTeam ? '若葉' : gameData.opponent;
+  const scoreA = gameData.isHomeTeam ? gameData.awayScore : gameData.homeScore;
+  const scoreB = gameData.isHomeTeam ? gameData.homeScore : gameData.awayScore;
+  
+  // スコアボードのヘッダーと各チームの行
+  const scoreboardHeader = ['チーム', '1', '2', '3', '4', '5', '6', '合計'];
+  const teamARow = [teamA, ...gameData.timeline.reduce((acc, entry) => {
+      // 実際にはイニングごとのスコアが必要だが、ここでは簡略化のため合計スコアから逆算はしない
+      // endGameで保存したスコア配列を使うのが望ましい。
+      // 仮にgameDataにイニング別スコアが保存されていると仮定する
+      return gameData.isHomeTeam ? gameData.awayScoreInnings : gameData.homeScoreInnings;
+  }, Array(6).fill(0)), scoreA];
+
+  // endGame修正後の正しいスコアボードデータ作成
+  const homeScores = gameData.homeScoreInnings || Array(6).fill('-');
+  const awayScores = gameData.awayScoreInnings || Array(6).fill('-');
+
+  const teamRow1 = [gameData.isHomeTeam ? gameData.opponent : '若葉', ...(gameData.isHomeTeam ? awayScores : homeScores), gameData.isHomeTeam ? gameData.awayScore : gameData.homeScore];
+  const teamRow2 = [gameData.isHomeTeam ? '若葉' : gameData.opponent, ...(gameData.isHomeTeam ? homeScores : awayScores), gameData.isHomeTeam ? gameData.homeScore : gameData.awayScore];
+
+
+  // 2. タイムラインデータの作成
+  const timelineHeader = ['時刻', '回', 'アウト', 'チーム', '内容'];
+  const timelineRows = gameData.timeline.slice().reverse().map(entry => [
+    entry.time,
+    entry.inning,
+    entry.outCount,
+    entry.team,
+    entry.message.replace(/,/g, '、') // CSVでカンマが誤認識されないように置換
+  ]);
+
+  // 3. すべてのデータを結合
+  const exportData = [
+    ['対戦相手', gameData.opponent],
+    ['試合日', gameData.date],
+    ['スコア', `${teamRow2[0]} ${scoreB} - ${scoreA} ${teamRow1[0]}`],
+    [], // 空行
+    ['イニング別スコア'],
+    scoreboardHeader,
+    teamRow2,
+    teamRow1,
+    [], // 空行
+    ['タイムライン'],
+    timelineHeader,
+    ...timelineRows
+  ];
+
+  return exportData;
+};
 
   // URL パラメータからゲームIDを取得
   useEffect(() => {
@@ -568,7 +623,9 @@ const addToTimeline = (message, eventDetails = {}) => {
       awayScore: finalAwayScore,
       winner: winner,
       timeline: timeline,
-      isHomeTeam: isHomeTeam
+      isHomeTeam: isHomeTeam,
+      homeScoreInnings: homeScore.map(s => s === null ? 0 : s),
+      awayScoreInnings: awayScore.map(s => s === null ? 0 : s)
     };
     
     setPastGames(prev => [gameData, ...prev]);
@@ -734,7 +791,13 @@ if (gameState === 'setup') {
         {pastGames.length > 0 && (
           <div className="mt-8">
             <h2 className="text-lg font-bold text-gray-800 mb-4">過去の試合</h2>
-            {pastGames.slice(0, 3).map((game, index) => (
+            {pastGames.slice(0, 3).map((game, index) => {
+              // 各ゲームに対してエクスポート用データを準備
+              const exportData = prepareDataForExport(game);
+              // ファイル名を生成
+              const filename = `softball-score-${game.date.replace(/\//g, '-')}-${game.opponent}.csv`;
+
+              return(
               <div key={index} className="bg-gray-50 p-3 rounded-lg mb-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">{game.date}</span>
@@ -749,8 +812,20 @@ if (gameState === 'setup') {
                   </span>
                   <div className="text-xs text-gray-500 mt-1">クリックで詳細表示</div>
                 </button>
+                {/* ↓↓ ここにエクスポートボタンを追加します ↓↓ */}
+                <div className="text-center mt-2">
+                 <CSVLink
+                   data={exportData}
+                   filename={filename}
+                   className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1 px-3 rounded-lg transition-colors"
+                   target="_blank"
+                 >
+                   CSVエクスポート
+                 </CSVLink>
+                </div>
               </div>
-            ))}
+            );
+          })}
           </div>
         )}
       </div>
