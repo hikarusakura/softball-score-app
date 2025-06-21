@@ -32,10 +32,10 @@ const SoftballScoreApp = () => {
   const [currentBatter, setCurrentBatter] = useState('');
   const [customBatter, setCustomBatter] = useState('');
   const [useCustomBatter, setUseCustomBatter] = useState(false);
-  
+
   // 自由記入欄の状態
   const [freeComment, setFreeComment] = useState('');
-  
+
   // ベースランナー状態
   const [bases, setBases] = useState({
     first: false,
@@ -46,13 +46,13 @@ const SoftballScoreApp = () => {
   // スコア管理（6回分に変更）
   const [homeScore, setHomeScore] = useState(Array(6).fill(null));
   const [awayScore, setAwayScore] = useState(Array(6).fill(null));
-  
+
   // タイムライン
   const [timeline, setTimeline] = useState([]);
-  
+
   // 過去の試合データ
   const [pastGames, setPastGames] = useState([]);
-  
+
   // タイムライン表示用
   const [selectedGameTimeline, setSelectedGameTimeline] = useState(null);
 
@@ -66,64 +66,64 @@ const SoftballScoreApp = () => {
   const [firebaseListener, setFirebaseListener] = useState(null);
 
   // エクスポート用にデータを整形する関数
-const prepareDataForExport = (gameData) => {
-  // 1. 基本情報とスコアボードの作成
-  const teamA = gameData.isHomeTeam ? gameData.opponent : '若葉';
-  const teamB = gameData.isHomeTeam ? '若葉' : gameData.opponent;
-  const scoreA = gameData.isHomeTeam ? gameData.awayScore : gameData.homeScore;
-  const scoreB = gameData.isHomeTeam ? gameData.homeScore : gameData.awayScore;
-  
-  // スコアボードのヘッダーと各チームの行
-  const scoreboardHeader = ['チーム', '1', '2', '3', '4', '5', '6', '合計'];
-  const teamARow = [teamA, ...gameData.timeline.reduce((acc, entry) => {
+  const prepareDataForExport = (gameData) => {
+    // 1. 基本情報とスコアボードの作成
+    const teamA = gameData.isHomeTeam ? gameData.opponent : '若葉';
+    const teamB = gameData.isHomeTeam ? '若葉' : gameData.opponent;
+    const scoreA = gameData.isHomeTeam ? gameData.awayScore : gameData.homeScore;
+    const scoreB = gameData.isHomeTeam ? gameData.homeScore : gameData.awayScore;
+
+    // スコアボードのヘッダーと各チームの行
+    const scoreboardHeader = ['チーム', '1', '2', '3', '4', '5', '6', '合計'];
+    const teamARow = [teamA, ...gameData.timeline.reduce((acc, entry) => {
       // 実際にはイニングごとのスコアが必要だが、ここでは簡略化のため合計スコアから逆算はしない
       // endGameで保存したスコア配列を使うのが望ましい。
       // 仮にgameDataにイニング別スコアが保存されていると仮定する
       return gameData.isHomeTeam ? gameData.awayScoreInnings : gameData.homeScoreInnings;
-  }, Array(6).fill(0)), scoreA];
+    }, Array(6).fill(0)), scoreA];
 
-  // endGame修正後の正しいスコアボードデータ作成
-  const homeScores = gameData.homeScoreInnings || Array(6).fill('-');
-  const awayScores = gameData.awayScoreInnings || Array(6).fill('-');
+    // endGame修正後の正しいスコアボードデータ作成
+    const homeScores = gameData.homeScoreInnings || Array(6).fill('-');
+    const awayScores = gameData.awayScoreInnings || Array(6).fill('-');
 
-  const teamRow1 = [gameData.isHomeTeam ? gameData.opponent : '若葉', ...(gameData.isHomeTeam ? awayScores : homeScores), gameData.isHomeTeam ? gameData.awayScore : gameData.homeScore];
-  const teamRow2 = [gameData.isHomeTeam ? '若葉' : gameData.opponent, ...(gameData.isHomeTeam ? homeScores : awayScores), gameData.isHomeTeam ? gameData.homeScore : gameData.awayScore];
+    const teamRow1 = [gameData.isHomeTeam ? gameData.opponent : '若葉', ...(gameData.isHomeTeam ? awayScores : homeScores), gameData.isHomeTeam ? gameData.awayScore : gameData.homeScore];
+    const teamRow2 = [gameData.isHomeTeam ? '若葉' : gameData.opponent, ...(gameData.isHomeTeam ? homeScores : awayScores), gameData.isHomeTeam ? gameData.homeScore : gameData.awayScore];
 
 
-  // 2. タイムラインデータの作成
-  const timelineHeader = ['時刻', '回', 'アウト', 'チーム', '内容'];
-  const timelineRows = gameData.timeline.slice().reverse().map(entry => [
-    entry.time,
-    entry.inning,
-    entry.outCount,
-    entry.team,
-    entry.message.replace(/,/g, '、') // CSVでカンマが誤認識されないように置換
-  ]);
+    // 2. タイムラインデータの作成
+    const timelineHeader = ['時刻', '回', 'アウト', 'チーム', '内容'];
+    const timelineRows = gameData.timeline.slice().reverse().map(entry => [
+      entry.time,
+      entry.inning,
+      entry.outCount,
+      entry.team,
+      entry.message.replace(/,/g, '、') // CSVでカンマが誤認識されないように置換
+    ]);
 
-  // 3. すべてのデータを結合
-  const exportData = [
-    ['対戦相手', gameData.opponent],
-    ['試合日', gameData.date],
-    ['スコア', `${teamRow2[0]} ${scoreB} - ${scoreA} ${teamRow1[0]}`],
-    [], // 空行
-    ['イニング別スコア'],
-    scoreboardHeader,
-    teamRow2,
-    teamRow1,
-    [], // 空行
-    ['タイムライン'],
-    timelineHeader,
-    ...timelineRows
-  ];
+    // 3. すべてのデータを結合
+    const exportData = [
+      ['対戦相手', gameData.opponent],
+      ['試合日', gameData.date],
+      ['スコア', `${teamRow2[0]} ${scoreB} - ${scoreA} ${teamRow1[0]}`],
+      [], // 空行
+      ['イニング別スコア'],
+      scoreboardHeader,
+      teamRow2,
+      teamRow1,
+      [], // 空行
+      ['タイムライン'],
+      timelineHeader,
+      ...timelineRows
+    ];
 
-  return exportData;
-};
+    return exportData;
+  };
 
   // URL パラメータからゲームIDを取得
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const gameIdFromUrl = urlParams.get('gameId');
-    
+
     if (gameIdFromUrl) {
       // 観戦モードで開始
       setWatchingGameId(gameIdFromUrl);
@@ -139,7 +139,7 @@ const prepareDataForExport = (gameData) => {
   const startWatchingGame = (gameId) => {
     const listener = watchGameState(gameId, (data) => {
       console.log('ゲーム状態を受信:', data);
-      
+
       // 受信したデータで状態を更新
       if (data.opponentTeam) setOpponentTeam(data.opponentTeam);
       if (data.isHomeTeam !== undefined) setIsHomeTeam(data.isHomeTeam);
@@ -153,10 +153,10 @@ const prepareDataForExport = (gameData) => {
       if (data.currentBatter) setCurrentBatter(data.currentBatter);
       if (data.customBatter) setCustomBatter(data.customBatter);
       if (data.useCustomBatter !== undefined) setUseCustomBatter(data.useCustomBatter);
-      
+
       setIsConnected(true);
     });
-    
+
     setFirebaseListener(listener);
   };
 
@@ -196,8 +196,8 @@ const prepareDataForExport = (gameData) => {
       saveCurrentGameState();
     }
   }, [
-    opponentTeam, currentInning, currentTeamBatting, outCount, 
-    bases, homeScore, awayScore, timeline, currentBatter, 
+    opponentTeam, currentInning, currentTeamBatting, outCount,
+    bases, homeScore, awayScore, timeline, currentBatter,
     customBatter, useCustomBatter
   ]);
 
@@ -208,13 +208,13 @@ const prepareDataForExport = (gameData) => {
       return;
     }
 
-  
+
     // ゲームIDを生成
     const newGameId = generateGameId();
     setGameId(newGameId);
     setIsGameCreator(true);
     setIsWatchingMode(false);
-    
+
     // 共有URLを生成
     const url = `${window.location.origin}${window.location.pathname}?gameId=${newGameId}`;
     setShareUrl(url);
@@ -224,7 +224,7 @@ const prepareDataForExport = (gameData) => {
     const startMessage = `試合開始！ゲームID: ${newGameId}`;
     addToTimeline(startMessage);
 
-        // 共有ダイアログを表示
+    // 共有ダイアログを表示
     setShowShareDialog(true);
   };
 
@@ -234,21 +234,21 @@ const prepareDataForExport = (gameData) => {
   };
 
   // タイムラインに追加
-const addToTimeline = (message, eventDetails = {}) => {
-  const timestamp = new Date().toLocaleTimeString();
-  
-  // eventDetails に値があればそれを使い、なければ現在の state を使う
-  const newEntry = {
-    time: timestamp,
-    message: message,
-    inning: eventDetails.inning !== undefined ? eventDetails.inning : currentInning,
-    team: eventDetails.team !== undefined ? eventDetails.team : getCurrentTeamName(),
-    outCount: eventDetails.outCount !== undefined ? eventDetails.outCount : outCount,
-  };
-  setTimeline(prev => [newEntry, ...prev]);
+  const addToTimeline = (message, eventDetails = {}) => {
+    const timestamp = new Date().toLocaleTimeString();
+
+    // eventDetails に値があればそれを使い、なければ現在の state を使う
+    const newEntry = {
+      time: timestamp,
+      message: message,
+      inning: eventDetails.inning !== undefined ? eventDetails.inning : currentInning,
+      team: eventDetails.team !== undefined ? eventDetails.team : getCurrentTeamName(),
+      outCount: eventDetails.outCount !== undefined ? eventDetails.outCount : outCount,
+    };
+    setTimeline(prev => [newEntry, ...prev]);
   };
 
-    // チーム名を短縮する関数
+  // チーム名を短縮する関数
   const truncateTeamName = (name) => {
     if (name.length > 4) {
       return name.substring(0, 2) + '..';
@@ -268,7 +268,7 @@ const addToTimeline = (message, eventDetails = {}) => {
     }
   };
 
-    // URLをクリップボードにコピー
+  // URLをクリップボードにコピー
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -292,7 +292,7 @@ const addToTimeline = (message, eventDetails = {}) => {
       alert('ゲームIDを入力してください');
       return;
     }
-    
+
     setGameId(watchingGameId);
     setIsGameCreator(false);
     setIsWatchingMode(true);
@@ -311,11 +311,11 @@ const addToTimeline = (message, eventDetails = {}) => {
           <p className="text-sm text-gray-600 mb-4">
             このURLを共有すると、他の人がリアルタイムで試合を観戦できます
           </p>
-          
+
           <div className="bg-gray-100 p-3 rounded-lg mb-4 break-all text-sm">
             {shareUrl}
           </div>
-          
+
           <div className="flex space-x-3">
             <button
               onClick={copyToClipboard}
@@ -331,7 +331,7 @@ const addToTimeline = (message, eventDetails = {}) => {
               閉じる
             </button>
           </div>
-          
+
           <div className="mt-3 text-center">
             <p className="text-xs text-gray-500">ゲームID: {gameId}</p>
           </div>
@@ -346,9 +346,8 @@ const addToTimeline = (message, eventDetails = {}) => {
 
     return (
       <div className="fixed top-4 right-4 z-40">
-        <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm ${
-          isConnected ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-        }`}>
+        <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm ${isConnected ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+          }`}>
           {isConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
           <span>{isConnected ? '接続中' : '切断'}</span>
         </div>
@@ -359,7 +358,7 @@ const addToTimeline = (message, eventDetails = {}) => {
   // 得点追加
   const addRun = () => {
     const teamName = getCurrentTeamName();
-    
+
     if ((isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away')) {
       // 若葉の得点
       if (isHomeTeam) {
@@ -399,7 +398,7 @@ const addToTimeline = (message, eventDetails = {}) => {
     const newOutCount = outCount + 1;
     setOutCount(newOutCount);
     addToTimeline(`アウト！ (${newOutCount}アウト)`);
-    
+
     if (newOutCount >= 3) {
       changeInning();
     }
@@ -448,37 +447,37 @@ const addToTimeline = (message, eventDetails = {}) => {
       }
     }
 
-      // 1. 「次の」状態をすべて計算します
+    // 1. 「次の」状態をすべて計算します
     let nextInning;
     let nextTeamBatting;
 
     if (currentTeamBatting === 'away') {
-        // 現在が「表」なら、次は「裏」
-        nextTeamBatting = 'home';
-        nextInning = currentInning; // イニング数は同じ
+      // 現在が「表」なら、次は「裏」
+      nextTeamBatting = 'home';
+      nextInning = currentInning; // イニング数は同じ
     } else {
-        // 現在が「裏」なら、次は次のイニングの「表」
-        nextTeamBatting = 'away';
-        nextInning = currentInning + 1; // イニング数を1増やす
+      // 現在が「裏」なら、次は次のイニングの「表」
+      nextTeamBatting = 'away';
+      nextInning = currentInning + 1; // イニング数を1増やす
     }
 
     // 2. 「次の」攻撃チーム名を取得します
     let nextTeamName;
     const teamNameOpponent = truncateTeamName(opponentTeam);
     if (isHomeTeam) { // 若葉が後攻の場合
-        nextTeamName = (nextTeamBatting === 'away') ? teamNameOpponent : '若葉';
+      nextTeamName = (nextTeamBatting === 'away') ? teamNameOpponent : '若葉';
     } else { // 若葉が先攻の場合
-        nextTeamName = (nextTeamBatting === 'away') ? '若葉' : teamNameOpponent;
+      nextTeamName = (nextTeamBatting === 'away') ? '若葉' : teamNameOpponent;
     }
 
     // 3. 計算した「次の」情報を使ってタイムラインを更新します
     const inningHalf = (nextTeamBatting === 'home') ? '裏' : '表';
     const message = `${nextInning}回${inningHalf}開始`;
-    
+
     addToTimeline(message, {
-        inning: nextInning,
-        team: nextTeamName,
-        outCount: 0 // チェンジ直後は必ず0アウト
+      inning: nextInning,
+      team: nextTeamName,
+      outCount: 0 // チェンジ直後は必ず0アウト
     });
 
     // 4. 最後に、計算済みの値でstateを更新します
@@ -542,8 +541,8 @@ const addToTimeline = (message, eventDetails = {}) => {
       case '四球':
       case '死球':
         // ランナー進塁処理（簡略化）
-        setBases(prev => ({ 
-          first: true, 
+        setBases(prev => ({
+          first: true,
           second: prev.first && prev.second ? true : prev.second,
           third: prev.first && prev.second && prev.third ? true : prev.third
         }));
@@ -553,7 +552,7 @@ const addToTimeline = (message, eventDetails = {}) => {
     // 得点を追加
     if (runsScored > 0) {
       const teamName = getCurrentTeamName();
-      
+
       if ((isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away')) {
         // 若葉の得点
         if (isHomeTeam) {
@@ -589,7 +588,7 @@ const addToTimeline = (message, eventDetails = {}) => {
     }
 
     addToTimeline(message);
-    
+
     // 入力フィールドをリセット
     setCurrentBatter('');
     setCustomBatter('');
@@ -608,7 +607,7 @@ const addToTimeline = (message, eventDetails = {}) => {
   const endGame = () => {
     const finalHomeScore = homeScore.reduce((a, b) => (a || 0) + (b || 0), 0);
     const finalAwayScore = awayScore.reduce((a, b) => (a || 0) + (b || 0), 0);
-    
+
     let winner;
     if (isHomeTeam) {
       winner = finalHomeScore > finalAwayScore ? '若葉' : opponentTeam;
@@ -616,14 +615,26 @@ const addToTimeline = (message, eventDetails = {}) => {
       winner = finalAwayScore > finalHomeScore ? '若葉' : opponentTeam;
     }
 
-  // 特定の試合データを削除する関数
-  const deleteGame = (idToDelete) => {
-  // ユーザーに最終確認を行う
-  if (window.confirm(`試合ID: ${idToDelete} のデータを本当に削除しますか？\nこの操作は元に戻せません。`)) {
-    setPastGames(prevGames => prevGames.filter(game => game.gameId !== idToDelete));
-    }
-  };
-    
+    // 特定の試合データを削除する関数
+    const deleteGame = (idToDelete) => {
+      // ユーザーに最終確認を行う
+      if (window.confirm(`試合ID: ${idToDelete} のデータを本当に削除しますか？\nこの操作は元に戻せません。`)) {
+        setPastGames(prevGames => prevGames.filter(game => game.gameId !== idToDelete));
+      }
+    };
+
+    // 試合IDをクリップボードにコピーする関数
+    const copyIdToClipboard = async (id) => {
+      if (!id) return;
+      try {
+        await navigator.clipboard.writeText(id);
+        alert(`試合ID「${id}」をコピーしました！`);
+      } catch (err) {
+        console.error('IDのコピーに失敗しました:', err);
+        alert('IDのコピーに失敗しました。');
+      }
+    };
+
     const gameData = {
       gameId: gameId,
       date: new Date().toLocaleDateString(),
@@ -636,9 +647,9 @@ const addToTimeline = (message, eventDetails = {}) => {
       homeScoreInnings: homeScore.map(s => s === null ? 0 : s),
       awayScoreInnings: awayScore.map(s => s === null ? 0 : s)
     };
-    
+
     setPastGames(prev => [gameData, ...prev]);
-    
+
     // ゲーム状態をリセット
     setGameState('setup');
     setCurrentInning(1);
@@ -689,7 +700,7 @@ const addToTimeline = (message, eventDetails = {}) => {
               </p>
             </div>
           </div>
-          
+
           <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
             <h3 className="font-bold mb-4 text-center">タイムライン</h3>
             {selectedGameTimeline.timeline.length === 0 ? (
@@ -713,141 +724,166 @@ const addToTimeline = (message, eventDetails = {}) => {
     );
   }
 
-// セットアップ画面の修正版
-if (gameState === 'setup') {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 p-4">
-      <div className="max-w-md mx-auto bg-white rounded-xl shadow-2xl p-8">
-        <div className="text-center mb-8">
-          <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">若葉試合速報</h1>
-          <p className="text-gray-600">試合情報を入力してください</p>
-        </div>
-        
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              対戦相手チーム名
-            </label>
-            <input
-              type="text"
-              value={opponentTeam}
-              onChange={(e) => setOpponentTeam(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="チーム名を入力"
-            />
+  // セットアップ画面の修正版
+  if (gameState === 'setup') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 p-4">
+        <div className="max-w-md mx-auto bg-white rounded-xl shadow-2xl p-8">
+          <div className="text-center mb-8">
+            <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">若葉試合速報</h1>
+            <p className="text-gray-600">試合情報を入力してください</p>
           </div>
-          
-          <div>
-            <label className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                checked={isHomeTeam}
-                onChange={(e) => setIsHomeTeam(e.target.checked)}
-                className="w-5 h-5 text-blue-600"
-              />
-              <span className="text-sm font-medium text-gray-700">
-                若葉が後攻
-              </span>
-            </label>
-          </div>
-          
-          <div className="space-y-3">
-            <button
-              onClick={startGame}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
-            >
-              <Play className="h-5 w-5" />
-              <span>試合開始（記録モード）</span>
-            </button>
-          </div>
-          
-          {/* 観戦モード用入力 */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
-            <div className="space-y-3">
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                対戦相手チーム名
+              </label>
               <input
                 type="text"
-                value={watchingGameId}
-                onChange={(e) => setWatchingGameId(e.target.value.toUpperCase())}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="ゲームIDを入力 (例: ABC123)"
-                maxLength={6}
+                value={opponentTeam}
+                onChange={(e) => setOpponentTeam(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="チーム名を入力"
               />
+            </div>
+
+            <div>
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={isHomeTeam}
+                  onChange={(e) => setIsHomeTeam(e.target.checked)}
+                  className="w-5 h-5 text-blue-600"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  若葉が後攻
+                </span>
+              </label>
+            </div>
+
+            <div className="space-y-3">
               <button
-                onClick={startWatchingFromId}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                onClick={startGame}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
-                <Eye className="h-5 w-5" />
-                <span>観戦開始</span>
+                <Play className="h-5 w-5" />
+                <span>試合開始（記録モード）</span>
               </button>
             </div>
-          </div>
-        </div>
-        
-        {/* 既存の過去の試合表示 */}
-        {pastGames.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">過去の試合</h2>
-            {pastGames.slice(0, 3).map((game, index) => {
-              // 各ゲームに対してエクスポート用データを準備
-              const exportData = prepareDataForExport(game);
-              // ファイル名を生成
-              const filename = `softball-score-${game.date.replace(/\//g, '-')}-${game.opponent}.csv`;
 
-              return(
-              <div key={index} className="bg-gray-50 p-3 rounded-lg mb-2">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <span className="text-sm text-gray-600">{game.date}</span>
-                    {/* game.gameId が存在する場合のみ表示する */}
-                    {game.gameId && (
-                      <span className="ml-2 text-xs text-gray-500 bg-gray-200 px-1 rounded">
-                        ID: {game.gameId}
-                        </span>
-                        )}
-                        </div>
-                  <span className="font-medium">vs {game.opponent}</span>
-                </div>
+            {/* 観戦モード用入力 */}
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={watchingGameId}
+                  onChange={(e) => setWatchingGameId(e.target.value.toUpperCase())}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="ゲームIDを入力 (例: ABC123)"
+                  maxLength={6}
+                />
                 <button
-                  onClick={() => showTimeline(game)}
-                  className="w-full text-center mt-1 hover:bg-gray-100 p-1 rounded transition-colors"
+                  onClick={startWatchingFromId}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
                 >
-                  <span className={`font-bold ${game.winner === '若葉' ? 'text-blue-600' : 'text-red-600'}`}>
-                    {game.isHomeTeam ? '若葉' : game.opponent} {game.isHomeTeam ? game.homeScore : game.awayScore} - {game.isHomeTeam ? game.awayScore : game.homeScore} {game.isHomeTeam ? game.opponent : '若葉'} ({game.winner}勝利)
-                  </span>
-                  <div className="text-xs text-gray-500 mt-1">クリックで詳細表示</div>
+                  <Eye className="h-5 w-5" />
+                  <span>観戦開始</span>
                 </button>
-                {/* エクスポートボタン */}
-                <div className="text-center mt-2">
-                 <CSVLink
-                   data={exportData}
-                   filename={filename}
-                   className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1 px-3 rounded-lg transition-colors"
-                   target="_blank"
-                 >
-                   CSVエクスポート
-                 </CSVLink>
-
-                {/* ↓↓ ここに削除ボタンを追加します ↓↓ */}
-                {game.gameId && (
-                 <button
-                   onClick={() => deleteGame(game.gameId)}
-                   className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-3 rounded-lg transition-colors"
-                 >
-                  削除
-                 </button>
-                )}
-                </div>
               </div>
-            );
-          })}
+            </div>
           </div>
-        )}
+
+          {/* ↓↓ このブロックを丸ごと追加 ↓↓ */}
+          {pastGames.filter(game => game.gameId).length > 0 && (
+            <div className="mt-8 border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">過去の試合IDリスト</h3>
+              <div className="space-y-2 bg-gray-50 p-3 rounded-lg max-h-48 overflow-y-auto">
+                {pastGames
+                  .filter(game => game.gameId) // gameIdを持つ試合のみを対象にする
+                  .map(game => (
+                    <div key={game.gameId} className="flex items-center justify-between text-sm p-2 bg-white rounded shadow-sm">
+                      <div>
+                        <span className="font-mono text-gray-700">{game.gameId}</span>
+                        <span className="ml-2 text-gray-500">(vs {game.opponent})</span>
+                      </div>
+                      <button
+                        onClick={() => copyIdToClipboard(game.gameId)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-2 rounded transition-colors"
+                      >
+                        コピー
+                      </button>
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+          )}
+          {/* 既存の過去の試合表示 */}
+          {pastGames.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-lg font-bold text-gray-800 mb-4">過去の試合</h2>
+              {pastGames.slice(0, 3).map((game, index) => {
+                // 各ゲームに対してエクスポート用データを準備
+                const exportData = prepareDataForExport(game);
+                // ファイル名を生成
+                const filename = `softball-score-${game.date.replace(/\//g, '-')}-${game.opponent}.csv`;
+
+                return (
+                  <div key={index} className="bg-gray-50 p-3 rounded-lg mb-2">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="text-sm text-gray-600">{game.date}</span>
+                        {/* game.gameId が存在する場合のみ表示する */}
+                        {game.gameId && (
+                          <span className="ml-2 text-xs text-gray-500 bg-gray-200 px-1 rounded">
+                            ID: {game.gameId}
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-medium">vs {game.opponent}</span>
+                    </div>
+                    <button
+                      onClick={() => showTimeline(game)}
+                      className="w-full text-center mt-1 hover:bg-gray-100 p-1 rounded transition-colors"
+                    >
+                      <span className={`font-bold ${game.winner === '若葉' ? 'text-blue-600' : 'text-red-600'}`}>
+                        {game.isHomeTeam ? '若葉' : game.opponent} {game.isHomeTeam ? game.homeScore : game.awayScore} - {game.isHomeTeam ? game.awayScore : game.homeScore} {game.isHomeTeam ? game.opponent : '若葉'} ({game.winner}勝利)
+                      </span>
+                      <div className="text-xs text-gray-500 mt-1">クリックで詳細表示</div>
+                    </button>
+                    {/* エクスポートボタン */}
+                    <div className="text-center mt-2">
+                      <CSVLink
+                        data={exportData}
+                        filename={filename}
+                        className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1 px-3 rounded-lg transition-colors"
+                        target="_blank"
+                      >
+                        CSVエクスポート
+                      </CSVLink>
+
+                      {/* ↓↓ ここに削除ボタンを追加します ↓↓ */}
+                      {game.gameId && (
+                        <button
+                          onClick={() => deleteGame(game.gameId)}
+                          className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-3 rounded-lg transition-colors"
+                        >
+                          削除
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   // 速報観戦画面
   if (gameState === 'watching') {
@@ -859,132 +895,132 @@ if (gameState === 'setup') {
     }, 0);
     const currentTeamName = getCurrentTeamName();
 
-  return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      {/* 速報プレビュー画面（上半分） */}
-      <div className="flex-1 bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-3">
-            <h1 className="text-lg font-bold">⚾ 速報中 ⚾</h1>
-            <p className="text-xs truncate">若葉 vs {opponentTeam}</p>
-          </div>
-          
-          {/* スコアボード（6回分、1行ずつ） */}
-          <div className="bg-black bg-opacity-50 rounded-lg p-4 mb-4">
-            <div className="text-center text-sm">
-              {/* ヘッダー */}
-              <div className="grid grid-cols-9 gap-1 mb-2 border-b border-gray-500 pb-2">
-                <div className="text-left text-xs">チーム</div>
-                {[1,2,3,4,5,6].map(i => (
-                  <div key={i} className="text-xs">{i}</div>
-                ))}
-                <div className="font-bold text-xs">R</div>
-              </div>
-              
-              {/* スコア表示（先攻・後攻に応じて表示順序を調整） */}
-              {isHomeTeam ? (
-                <>
-                  {/* 若葉が後攻の場合：相手チーム（先攻）が上 */}
-                  <div className="grid grid-cols-9 gap-1 mb-1">
-                    <div className="text-left text-xs truncate">{opponentTeam}</div>
-                    {[...Array(6)].map((_, i) => (
-  <div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>
-))}
-                    <div className="font-bold text-xs">{totalAwayScore}</div>
-                  </div>
-                  
-                  <div className="grid grid-cols-9 gap-1">
-                    <div className="text-left text-xs truncate">若葉</div>
-                    {[...Array(6)].map((_, i) => (
-  <div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>
-))}
-                    <div className="font-bold text-xs">{totalHomeScore}</div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* 若葉が先攻の場合：若葉が上 */}
-                  <div className="grid grid-cols-9 gap-1 mb-1">
-                    <div className="text-left text-xs truncate">若葉</div>
-                    {[...Array(6)].map((_, i) => (
-  <div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>
-))}
-                    <div className="font-bold text-xs">{totalAwayScore}</div>
-                  </div>
-                  
-                  <div className="grid grid-cols-9 gap-1">
-                    <div className="text-left text-xs truncate">{opponentTeam}</div>
-                    {[...Array(6)].map((_, i) => (
-  <div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>
-))}
-                    <div className="font-bold text-xs">{totalHomeScore}</div>
-                  </div>
-                </>
-              )}
+    return (
+      <div className="min-h-screen bg-gray-100 flex flex-col">
+        {/* 速報プレビュー画面（上半分） */}
+        <div className="flex-1 bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-3">
+              <h1 className="text-lg font-bold">⚾ 速報中 ⚾</h1>
+              <p className="text-xs truncate">若葉 vs {opponentTeam}</p>
             </div>
-          </div>
-          
-          {/* 現在の状況 */}
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
-              <div className="text-xs text-gray-300">現在</div>
-              <div className="font-bold text-sm">{currentInning}回{currentTeamBatting === 'away' ? '表' : '裏'}</div>
-              <div className="text-xs truncate">
-                {currentTeamName}
-              </div>
-            </div>
-            
-            <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
-              <div className="text-xs text-gray-300">アウト</div>
-              <div className="font-bold text-xl">{outCount}</div>
-            </div>
-            
-            <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
-              <div className="text-xs text-gray-300">打者</div>
-              <div className="font-bold text-xs truncate">
-                {useCustomBatter ? customBatter : currentBatter || '未選択'}
-              </div>
-            </div>
-          </div>
-          
-          {/* ダイアモンド */}
-          <div className="flex justify-center mb-3">
-            <div className="relative w-24 h-24">
-              <div className="absolute inset-0 border-2 border-white transform rotate-45"></div>
-              {/* 3塁 */}
-              <div className={`absolute top-1/2 left-0 w-3 h-3 -ml-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.third ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
-              {/* 2塁 */}
-              <div className={`absolute top-0 left-1/2 w-3 h-3 -ml-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.second ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
-              {/* 1塁 */}
-              <div className={`absolute top-1/2 right-0 w-3 h-3 -mr-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.first ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
-              {/* ホーム */}
-              <div className="absolute bottom-0 left-1/2 w-3 h-3 -ml-1.5 -mb-1.5 rounded-full border-2 border-white bg-red-600"></div>
-            </div>
-          </div>
-          
-          {/* タイムライン */}
-          <div className="bg-white bg-opacity-10 rounded-lg p-3">
-            <h3 className="font-bold mb-2 text-center text-sm">⚡ タイムライン ⚡</h3>
-            <div className="max-h-64 overflow-y-auto">
-            {timeline.length === 0 ? (
-              <p className="text-center text-gray-300 text-xs">まだプレイがありません</p>
-            ) : (
-              timeline.map((entry, index) => (
-                <div key={index} className="border-b border-gray-600 pb-1 mb-1 last:border-b-0">
-                  <div className="flex justify-between items-start text-xs">
-                    <span className="text-gray-300">{entry.time}</span>
-                    <span className="text-gray-300">{entry.inning}回 {entry.outCount}アウト</span>
-                  </div>
-                  <div className="text-xs">
-                    <span className="font-medium text-yellow-300">[{entry.team}]</span> {entry.message}
-                  </div>
+
+            {/* スコアボード（6回分、1行ずつ） */}
+            <div className="bg-black bg-opacity-50 rounded-lg p-4 mb-4">
+              <div className="text-center text-sm">
+                {/* ヘッダー */}
+                <div className="grid grid-cols-9 gap-1 mb-2 border-b border-gray-500 pb-2">
+                  <div className="text-left text-xs">チーム</div>
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <div key={i} className="text-xs">{i}</div>
+                  ))}
+                  <div className="font-bold text-xs">R</div>
                 </div>
-              ))
-            )}
+
+                {/* スコア表示（先攻・後攻に応じて表示順序を調整） */}
+                {isHomeTeam ? (
+                  <>
+                    {/* 若葉が後攻の場合：相手チーム（先攻）が上 */}
+                    <div className="grid grid-cols-9 gap-1 mb-1">
+                      <div className="text-left text-xs truncate">{opponentTeam}</div>
+                      {[...Array(6)].map((_, i) => (
+                        <div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>
+                      ))}
+                      <div className="font-bold text-xs">{totalAwayScore}</div>
+                    </div>
+
+                    <div className="grid grid-cols-9 gap-1">
+                      <div className="text-left text-xs truncate">若葉</div>
+                      {[...Array(6)].map((_, i) => (
+                        <div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>
+                      ))}
+                      <div className="font-bold text-xs">{totalHomeScore}</div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* 若葉が先攻の場合：若葉が上 */}
+                    <div className="grid grid-cols-9 gap-1 mb-1">
+                      <div className="text-left text-xs truncate">若葉</div>
+                      {[...Array(6)].map((_, i) => (
+                        <div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>
+                      ))}
+                      <div className="font-bold text-xs">{totalAwayScore}</div>
+                    </div>
+
+                    <div className="grid grid-cols-9 gap-1">
+                      <div className="text-left text-xs truncate">{opponentTeam}</div>
+                      {[...Array(6)].map((_, i) => (
+                        <div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>
+                      ))}
+                      <div className="font-bold text-xs">{totalHomeScore}</div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* 現在の状況 */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
+                <div className="text-xs text-gray-300">現在</div>
+                <div className="font-bold text-sm">{currentInning}回{currentTeamBatting === 'away' ? '表' : '裏'}</div>
+                <div className="text-xs truncate">
+                  {currentTeamName}
+                </div>
+              </div>
+
+              <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
+                <div className="text-xs text-gray-300">アウト</div>
+                <div className="font-bold text-xl">{outCount}</div>
+              </div>
+
+              <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
+                <div className="text-xs text-gray-300">打者</div>
+                <div className="font-bold text-xs truncate">
+                  {useCustomBatter ? customBatter : currentBatter || '未選択'}
+                </div>
+              </div>
+            </div>
+
+            {/* ダイアモンド */}
+            <div className="flex justify-center mb-3">
+              <div className="relative w-24 h-24">
+                <div className="absolute inset-0 border-2 border-white transform rotate-45"></div>
+                {/* 3塁 */}
+                <div className={`absolute top-1/2 left-0 w-3 h-3 -ml-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.third ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
+                {/* 2塁 */}
+                <div className={`absolute top-0 left-1/2 w-3 h-3 -ml-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.second ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
+                {/* 1塁 */}
+                <div className={`absolute top-1/2 right-0 w-3 h-3 -mr-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.first ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
+                {/* ホーム */}
+                <div className="absolute bottom-0 left-1/2 w-3 h-3 -ml-1.5 -mb-1.5 rounded-full border-2 border-white bg-red-600"></div>
+              </div>
+            </div>
+
+            {/* タイムライン */}
+            <div className="bg-white bg-opacity-10 rounded-lg p-3">
+              <h3 className="font-bold mb-2 text-center text-sm">⚡ タイムライン ⚡</h3>
+              <div className="max-h-64 overflow-y-auto">
+                {timeline.length === 0 ? (
+                  <p className="text-center text-gray-300 text-xs">まだプレイがありません</p>
+                ) : (
+                  timeline.map((entry, index) => (
+                    <div key={index} className="border-b border-gray-600 pb-1 mb-1 last:border-b-0">
+                      <div className="flex justify-between items-start text-xs">
+                        <span className="text-gray-300">{entry.time}</span>
+                        <span className="text-gray-300">{entry.inning}回 {entry.outCount}アウト</span>
+                      </div>
+                      <div className="text-xs">
+                        <span className="font-medium text-yellow-300">[{entry.team}]</span> {entry.message}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
       </div>
     );
   }
@@ -1003,19 +1039,19 @@ if (gameState === 'setup') {
             <h1 className="text-lg font-bold">⚾ 若葉試合速報 ⚾</h1>
             <p className="text-xs truncate">若葉 vs {opponentTeam}</p>
           </div>
-          
+
           {/* スコアボード（6回分、1行ずつ） */}
           <div className="bg-black bg-opacity-50 rounded-lg p-4 mb-4">
             <div className="text-center text-sm">
               {/* ヘッダー */}
               <div className="grid grid-cols-9 gap-1 mb-2 border-b border-gray-500 pb-2">
                 <div className="text-left text-xs">チーム</div>
-                {[1,2,3,4,5,6].map(i => (
+                {[1, 2, 3, 4, 5, 6].map(i => (
                   <div key={i} className="text-xs">{i}</div>
                 ))}
                 <div className="font-bold text-xs">R</div>
               </div>
-              
+
               {/* スコア表示（先攻・後攻に応じて表示順序を調整） */}
               {isHomeTeam ? (
                 <>
@@ -1027,7 +1063,7 @@ if (gameState === 'setup') {
                     ))}
                     <div className="font-bold text-sm">{totalAwayScore}</div>
                   </div>
-                  
+
                   <div className="grid grid-cols-9 gap-1">
                     <div className="text-left text-xs truncate">若葉</div>
                     {homeScore.map((score, i) => (
@@ -1046,7 +1082,7 @@ if (gameState === 'setup') {
                     ))}
                     <div className="font-bold text-sm">{totalAwayScore}</div>
                   </div>
-                  
+
                   <div className="grid grid-cols-9 gap-1">
                     <div className="text-left text-xs truncate">{opponentTeam}</div>
                     {homeScore.map((score, i) => (
@@ -1058,7 +1094,7 @@ if (gameState === 'setup') {
               )}
             </div>
           </div>
-          
+
           {/* 現在の状況 */}
           <div className="grid grid-cols-3 gap-2 mb-3">
             <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
@@ -1068,12 +1104,12 @@ if (gameState === 'setup') {
                 {currentTeamName}
               </div>
             </div>
-            
+
             <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
               <div className="text-xs text-gray-300">アウト</div>
               <div className="font-bold text-xl">{outCount}</div>
             </div>
-            
+
             <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
               <div className="text-xs text-gray-300">打者</div>
               <div className="font-bold text-xs truncate">
@@ -1081,7 +1117,7 @@ if (gameState === 'setup') {
               </div>
             </div>
           </div>
-          
+
           {/* ダイアモンド */}
           <div className="flex justify-center mb-3">
             <div className="relative w-24 h-24">
@@ -1096,7 +1132,7 @@ if (gameState === 'setup') {
               <div className="absolute bottom-0 left-1/2 w-3 h-3 -ml-1.5 -mb-1.5 rounded-full border-2 border-white bg-red-600"></div>
             </div>
           </div>
-          
+
           {/* タイムライン */}
           <div className="bg-white bg-opacity-10 rounded-lg p-3 max-h-32 overflow-y-auto">
             <h3 className="font-bold mb-2 text-center text-sm">⚡ タイムライン ⚡</h3>
@@ -1118,7 +1154,7 @@ if (gameState === 'setup') {
           </div>
         </div>
       </div>
-    
+
       {/* スコア入力画面（下半分） */}
       <div className="flex-1 bg-white p-3 overflow-auto">
         <div className="max-w-4xl mx-auto">
@@ -1139,7 +1175,7 @@ if (gameState === 'setup') {
               </button>
             </div>
           </div>
-          
+
           {/* 打者選択 */}
           <div className="mb-3">
             <label className="block text-xs font-medium text-gray-700 mb-1">打者選択</label>
@@ -1167,7 +1203,7 @@ if (gameState === 'setup') {
                 <label htmlFor="custom-batter" className="text-xs">自由入力</label>
               </div>
             </div>
-            
+
             {useCustomBatter ? (
               <input
                 type="text"
@@ -1189,7 +1225,7 @@ if (gameState === 'setup') {
               </select>
             )}
           </div>
-          
+
           {/* 打席結果ボタン */}
           <div className="mb-3">
             <label className="block text-xs font-medium text-gray-700 mb-1">打席結果</label>
@@ -1205,7 +1241,7 @@ if (gameState === 'setup') {
               ))}
             </div>
           </div>
-          
+
           {/* アウト・得点・ベース操作 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
             <div>
@@ -1216,7 +1252,7 @@ if (gameState === 'setup') {
                 アウト ({outCount}/3)
               </button>
             </div>
-            
+
             <div>
               <button
                 onClick={addRun}
@@ -1225,7 +1261,7 @@ if (gameState === 'setup') {
                 得点
               </button>
             </div>
-            
+
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">ベース操作</label>
               <div className="flex space-x-1">
@@ -1250,7 +1286,7 @@ if (gameState === 'setup') {
               </div>
             </div>
           </div>
-          
+
           {/* 自由記入欄 */}
           <div className="mb-3">
             <label className="block text-xs font-medium text-gray-700 mb-1">自由コメント投稿</label>
