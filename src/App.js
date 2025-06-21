@@ -615,6 +615,14 @@ const addToTimeline = (message, eventDetails = {}) => {
     } else {
       winner = finalAwayScore > finalHomeScore ? '若葉' : opponentTeam;
     }
+
+  // 特定の試合データを削除する関数
+  const deleteGame = (idToDelete) => {
+  // ユーザーに最終確認を行う
+  if (window.confirm(`試合ID: ${idToDelete} のデータを本当に削除しますか？\nこの操作は元に戻せません。`)) {
+    setPastGames(prevGames => prevGames.filter(game => game.gameId !== idToDelete));
+    }
+  };
     
     const gameData = {
       gameId: gameId,
@@ -810,7 +818,7 @@ if (gameState === 'setup') {
                   </span>
                   <div className="text-xs text-gray-500 mt-1">クリックで詳細表示</div>
                 </button>
-                {/* ↓↓ ここにエクスポートボタンを追加します ↓↓ */}
+                {/* エクスポートボタン */}
                 <div className="text-center mt-2">
                  <CSVLink
                    data={exportData}
@@ -820,6 +828,16 @@ if (gameState === 'setup') {
                  >
                    CSVエクスポート
                  </CSVLink>
+
+                {/* ↓↓ ここに削除ボタンを追加します ↓↓ */}
+                {game.gameId && (
+                 <button
+                   onClick={() => deleteGame(game.gameId)}
+                   className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-3 rounded-lg transition-colors"
+                 >
+                  削除
+                 </button>
+                )}
                 </div>
               </div>
             );
