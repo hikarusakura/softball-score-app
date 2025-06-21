@@ -751,17 +751,6 @@ if (gameState === 'setup') {
               <Play className="h-5 w-5" />
               <span>試合開始（記録モード）</span>
             </button>
-            
-            {/* 既存のゲーム観戦用ボタン */}
-            {gameId && isGameCreator && (
-              <button
-                onClick={() => setShowShareDialog(true)}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
-              >
-                <Share2 className="h-5 w-5" />
-                <span>観戦URLを共有</span>
-              </button>
-            )}
           </div>
           
           {/* 観戦モード用入力 */}
@@ -1109,22 +1098,6 @@ if (gameState === 'setup') {
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-bold text-gray-800">📝 スコア入力</h2>
             <div className="flex space-x-2">
-                {isGameCreator && (
-      <button
-        onClick={() => setShowShareDialog(true)}
-        className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors flex items-center space-x-1"
-      >
-        <Share2 className="h-4 w-4" />
-        <span>共有</span>
-      </button>
-    )}
-              <button
-      onClick={() => setGameState('watching')}
-      className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm transition-colors flex items-center space-x-1"
-    >
-      <Eye className="h-4 w-4" />
-      <span>観戦画面</span>
-    </button>
               <button
                 onClick={forceChange}
                 className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs transition-colors"
