@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Users, Trophy, Clock, Target, Eye, ChevronLeft, Share2, Copy, Wifi, WifiOff } from 'lucide-react';
-import { saveGameState, watchGameState, stopWatching, generateGameId } from './firebase';
+import { saveGameState, watchGameState, stopWatching, generateGameId, getAllGames } from './firebase';
 import { CSVLink } from 'react-csv';
 
 
@@ -16,7 +16,7 @@ const SoftballScoreApp = () => {
   const defaultPlayers = [
     'せいや⑩', 'りゅうせ②', 'きづき③', 'れお④', 'もあ⑤', 'きよはる⑥',
     'はやと⑦', 'つかさ⑨', 'あゆむ⑨', 'はると⑪', 'あいこ⑫', 'ゆいと⑬',
-    'さほ⑭', 'しょうい⑮', 'まひろ⑯', 'そうま⑰', 'じん⑱'
+    'しょうい⑮', 'まひろ⑯', 'そうま⑰', 'じん⑱'
   ];
 
   // 状態管理
@@ -32,6 +32,8 @@ const SoftballScoreApp = () => {
   const [currentBatter, setCurrentBatter] = useState('');
   const [customBatter, setCustomBatter] = useState('');
   const [useCustomBatter, setUseCustomBatter] = useState(false);
+  const [firebaseGames, setFirebaseGames] = useState([]); // Firebaseから取得した試合リスト
+  const [isLoading, setIsLoading] = useState(false);      // データ読み込み中の状態管理
 
   // 自由記入欄の状態
   const [freeComment, setFreeComment] = useState('');
@@ -615,6 +617,15 @@ const SoftballScoreApp = () => {
       winner = finalAwayScore > finalHomeScore ? '若葉' : opponentTeam;
     }
 
+    // 過去の試合を閲覧ボタンが押された時の処理（関数）を追加
+    const handleFetchFirebaseGames = async () => {
+    setIsLoading(true);
+    const games = await getAllGames();
+    setFirebaseGames(games);
+    setIsLoading(false);
+    setGameState('firebaseList'); // 新しい画面状態に切り替え
+    };
+
     // 特定の試合データを削除する関数
     const deleteGame = (idToDelete) => {
       // ユーザーに最終確認を行う
@@ -724,6 +735,65 @@ const SoftballScoreApp = () => {
     );
   }
 
+  // 過去の試合リストの画面
+  if (gameState === 'firebaseList') {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-700 to-gray-900 p-4">
+      <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-2xl p-6">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={() => setGameState('setup')}
+            className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Firebase 保存済み試合一覧</h1>
+            <p className="text-gray-600">試合IDをクリックすると観戦モードで開きます</p>
+          </div>
+        </div>
+
+        <div className="max-h-96 overflow-y-auto space-y-3">
+          {firebaseGames.length === 0 ? (
+            <p className="text-center text-gray-500 py-4">保存されている試合データがありません。</p>
+          ) : (
+            firebaseGames.map((game) => {
+              // スコアの合計を計算
+              const totalHomeScore = (game.homeScore || []).reduce((a, b) => a + b, 0);
+              const totalAwayScore = (game.awayScore || []).reduce((a, b) => a + b, 0);
+
+              return (
+                <div key={game.id} className="bg-gray-50 hover:bg-gray-100 p-3 rounded-lg transition-colors cursor-pointer"
+                     onClick={() => {
+                       setWatchingGameId(game.id);
+                       startWatchingFromId(game.id); // 既存の観戦開始関数を再利用
+                     }}>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm text-gray-600">
+                      {new Date(game.createdAt).toLocaleDateString()}
+                    </span>
+                    <span className="font-medium text-sm">vs {game.opponentTeam}</span>
+                  </div>
+                  <div className="text-center font-bold text-blue-600">
+                    {game.id}
+                  </div>
+                  <div className="text-center text-lg mt-1">
+                    <span>{game.isHomeTeam ? game.opponentTeam : '若葉'}</span>
+                    <span className="font-bold mx-2">{game.isHomeTeam ? totalAwayScore : totalHomeScore}</span>
+                    <span>-</span>
+                    <span className="font-bold mx-2">{game.isHomeTeam ? totalHomeScore : totalAwayScore}</span>
+                    <span>{game.isHomeTeam ? '若葉' : game.opponentTeam}</span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
   // セットアップ画面の修正版
   if (gameState === 'setup') {
     return (
@@ -770,6 +840,17 @@ const SoftballScoreApp = () => {
               >
                 <Play className="h-5 w-5" />
                 <span>試合開始（記録モード）</span>
+              </button>
+            </div>
+
+            <div className="border-t border-gray-200 pt-6 mt-6">
+             <button
+                onClick={handleFetchFirebaseGames}
+                disabled={isLoading}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300"
+             >
+              <Eye className="h-5 w-5" />
+              <span>{isLoading ? '読込中...' : 'Firebaseの試合を閲覧'}</span>
               </button>
             </div>
 
