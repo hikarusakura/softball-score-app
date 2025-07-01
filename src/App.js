@@ -850,7 +850,7 @@ const SoftballScoreApp = () => {
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300"
              >
               <Eye className="h-5 w-5" />
-              <span>{isLoading ? '読込中...' : 'Firebaseの試合を閲覧'}</span>
+              <span>{isLoading ? '読込中...' : '過去の試合を閲覧'}</span>
               </button>
             </div>
 
