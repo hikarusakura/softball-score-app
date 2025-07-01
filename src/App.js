@@ -34,6 +34,7 @@ const SoftballScoreApp = () => {
   const [useCustomBatter, setUseCustomBatter] = useState(false);
   const [firebaseGames, setFirebaseGames] = useState([]); // Firebaseから取得した試合リスト
   const [isLoading, setIsLoading] = useState(false);      // データ読み込み中の状態管理
+  const [gameStartDate, setGameStartDate] = useState(null);
 
   // 自由記入欄の状態
   const [freeComment, setFreeComment] = useState('');
@@ -58,7 +59,14 @@ const SoftballScoreApp = () => {
   // タイムライン表示用
   const [selectedGameTimeline, setSelectedGameTimeline] = useState(null);
 
-  // 新しく追加するstate（共有機能用）
+  // 日付フォーマット用のヘルパー関数
+  const formatDate = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  };
+
+  // 共有機能用
   const [gameId, setGameId] = useState(null);
   const [isGameCreator, setIsGameCreator] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
@@ -155,6 +163,7 @@ const SoftballScoreApp = () => {
       if (data.currentBatter) setCurrentBatter(data.currentBatter);
       if (data.customBatter) setCustomBatter(data.customBatter);
       if (data.useCustomBatter !== undefined) setUseCustomBatter(data.useCustomBatter);
+      if (data.gameStartDate) setGameStartDate(data.gameStartDate);
 
       setIsConnected(true);
     });
@@ -180,7 +189,8 @@ const SoftballScoreApp = () => {
       customBatter,
       useCustomBatter,
       gameState: 'playing',
-      createdAt: Date.now()
+      gameStartDate: gameStartDate, // Stateから日時を追加
+      createdAt: gameStartDate || Date.now() // 念のため、なければ現在時刻
     };
 
     try {
@@ -209,7 +219,7 @@ const SoftballScoreApp = () => {
       alert('対戦相手のチーム名を入力してください');
       return;
     }
-
+    setGameStartDate(Date.now()); // 現在のタイムスタンプを保存
 
     // ゲームIDを生成
     const newGameId = generateGameId();
@@ -984,6 +994,7 @@ const SoftballScoreApp = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-3">
               <h1 className="text-lg font-bold">⚾ 速報中 ⚾</h1>
+              <p className="text-xs text-gray-300">試合日時: {formatDate(gameStartDate)}</p>
               <p className="text-xs truncate">若葉 vs {opponentTeam}</p>
             </div>
 
@@ -1119,6 +1130,7 @@ const SoftballScoreApp = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-3">
             <h1 className="text-lg font-bold">⚾ 若葉試合速報 ⚾</h1>
+            <p className="text-xs text-gray-300">試合日時: {formatDate(gameStartDate)}</p>
             <p className="text-xs truncate">若葉 vs {opponentTeam}</p>
           </div>
 
