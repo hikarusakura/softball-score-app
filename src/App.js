@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Users, Trophy, Clock, Target, Eye, ChevronLeft, Share2, Copy, Wifi, WifiOff } from 'lucide-react';
-import { saveGameState, watchGameState, stopWatching, generateGameId, getAllGames } from './firebase';
+import { Play,  Trophy,  Eye, ChevronLeft,  Copy, Wifi, WifiOff } from 'lucide-react';
+import { saveGameState, watchGameState,  generateGameId, getAllGames } from './firebase';
 import { CSVLink } from 'react-csv';
 
 
