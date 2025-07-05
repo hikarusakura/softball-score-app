@@ -80,8 +80,8 @@ const SoftballScoreApp = () => {
   // エクスポート用にデータを整形する関数
   const prepareDataForExport = (gameData) => {
     // 1. 基本情報とスコアボードの作成
-    const teamA = gameData.isHomeTeam ? gameData.opponent : '若葉';
-    const teamB = gameData.isHomeTeam ? '若葉' : gameData.opponent;
+    const teamA = gameData.isHomeTeam ? gameData.opponentTeam : '若葉';
+    const teamB = gameData.isHomeTeam ? '若葉' : gameData.opponentTeam;
     const scoreA = gameData.isHomeTeam ? gameData.awayScore : gameData.homeScore;
     const scoreB = gameData.isHomeTeam ? gameData.homeScore : gameData.awayScore;
 
@@ -98,8 +98,8 @@ const SoftballScoreApp = () => {
     const homeScores = gameData.homeScoreInnings || Array(6).fill('-');
     const awayScores = gameData.awayScoreInnings || Array(6).fill('-');
 
-    const teamRow1 = [gameData.isHomeTeam ? gameData.opponent : '若葉', ...(gameData.isHomeTeam ? awayScores : homeScores), gameData.isHomeTeam ? gameData.awayScore : gameData.homeScore];
-    const teamRow2 = [gameData.isHomeTeam ? '若葉' : gameData.opponent, ...(gameData.isHomeTeam ? homeScores : awayScores), gameData.isHomeTeam ? gameData.homeScore : gameData.awayScore];
+    const teamRow1 = [gameData.isHomeTeam ? gameData.opponentTeam : '若葉', ...(gameData.isHomeTeam ? awayScores : homeScores), gameData.isHomeTeam ? gameData.awayScore : gameData.homeScore];
+    const teamRow2 = [gameData.isHomeTeam ? '若葉' : gameData.opponentTeam, ...(gameData.isHomeTeam ? homeScores : awayScores), gameData.isHomeTeam ? gameData.homeScore : gameData.awayScore];
 
 
     // 2. タイムラインデータの作成
@@ -114,7 +114,7 @@ const SoftballScoreApp = () => {
 
     // 3. すべてのデータを結合
     const exportData = [
-      ['対戦相手', gameData.opponent],
+      ['対戦相手', gameData.opponentTeam],
       ['試合日', gameData.date],
       ['スコア', `${teamRow2[0]} ${scoreB} - ${scoreA} ${teamRow1[0]}`],
       [], // 空行
@@ -596,17 +596,17 @@ const SoftballScoreApp = () => {
   
 
     const gameData = {
-      gameId: gameId,
-      date: new Date().toLocaleDateString(),
-      opponent: opponentTeam,
-      homeScore: finalHomeScore,
-      awayScore: finalAwayScore,
-      winner: winner,
-      timeline: timeline,
-      isHomeTeam: isHomeTeam,
-      homeScoreInnings: homeScore.map(s => s === null ? 0 : s),
-      awayScoreInnings: awayScore.map(s => s === null ? 0 : s)
-    };
+      gameId: gameId,
+      date: new Date().toLocaleDateString(),
+      opponentTeam: opponentTeam,
+      homeScore: finalHomeScore,
+      awayScore: finalAwayScore,
+      winner: winner,
+      timeline: timeline,
+      isHomeTeam: isHomeTeam,
+      homeScoreInnings: homeScore.map(s => s === null ? 0 : s),
+      awayScoreInnings: awayScore.map(s => s === null ? 0 : s)
+    };
 
     setPastGames(prev => [gameData, ...prev]);
 
@@ -637,25 +637,26 @@ const loadGame = (id, mode = 'watch') => {
 
   const newListener = watchGameState(
     gameIdToLoad,
-    (doc) => { // 成功時の処理
+    (doc) => {
       if (doc.exists()) {
         const data = doc.data();
 
-        if (data.opponent) setOpponentTeam(data.opponent); 
-        if (data.isHomeTeam !== undefined) setIsHomeTeam(data.isHomeTeam);
-        if (data.currentInning) setCurrentInning(data.currentInning);
-        if (data.currentTeamBatting) setCurrentTeamBatting(data.currentTeamBatting);
-        if (data.outCount !== undefined) setOutCount(data.outCount);
-        if (data.bases) setBases(data.bases);
-        if (data.homeScore) setHomeScore(data.homeScore);
-        if (data.awayScore) setAwayScore(data.awayScore);
-        if (data.timeline) setTimeline(data.timeline);
-        if (data.currentBatter) setCurrentBatter(data.currentBatter);
-        if (data.customBatter) setCustomBatter(data.customBatter);
-        if (data.useCustomBatter !== undefined) setUseCustomBatter(data.useCustomBatter);
-        if (data.gameStartDate) setGameStartDate(data.gameStartDate);
+        // --- 防御的なデータ更新処理 ---
+        setOpponentTeam(data.opponentTeam || '');
+        setIsHomeTeam(data.isHomeTeam === true);
+        setCurrentInning(typeof data.currentInning === 'number' ? data.currentInning : 1);
+        setCurrentTeamBatting(data.currentTeamBatting || 'away');
+        setOutCount(typeof data.outCount === 'number' ? data.outCount : 0);
+        setBases(data.bases && typeof data.bases === 'object' ? data.bases : { first: false, second: false, third: false });
+        setHomeScore(Array.isArray(data.homeScore) ? data.homeScore : Array(6).fill(null));
+        setAwayScore(Array.isArray(data.awayScore) ? data.awayScore : Array(6).fill(null));
+        setTimeline(Array.isArray(data.timeline) ? data.timeline : []);
+        setCurrentBatter(data.currentBatter || '');
+        setCustomBatter(data.customBatter || '');
+        setUseCustomBatter(data.useCustomBatter === true);
+        setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
         
-        // 画面遷移ロジック
+        // --- 画面遷移ロジック ---
         if (mode === 'watch') {
           setGameId(gameIdToLoad);
           setIsGameCreator(false);
@@ -670,7 +671,7 @@ const loadGame = (id, mode = 'watch') => {
         returnToSetup();
       }
     },
-    (error) => { // エラー時の処理
+    (error) => {
       console.error('[App.js] Firebaseからのデータ取得でエラーが発生しました。', error);
       alert('データの読み込みに失敗しました。コンソールでエラーを確認してください。');
       returnToSetup();
@@ -748,10 +749,10 @@ const returnToSetup = () => {
             <div>
               <h1 className="text-2xl font-bold text-gray-800">試合振り返り</h1>
               <p className="text-gray-600">
-                {selectedGameTimeline.date} vs {selectedGameTimeline.opponent}
-              </p>
-              <p className="text-lg font-bold">
-                {selectedGameTimeline.isHomeTeam ? '若葉' : selectedGameTimeline.opponent} {selectedGameTimeline.isHomeTeam ? selectedGameTimeline.homeScore : selectedGameTimeline.awayScore} - {selectedGameTimeline.isHomeTeam ? selectedGameTimeline.awayScore : selectedGameTimeline.homeScore} {selectedGameTimeline.isHomeTeam ? selectedGameTimeline.opponent : '若葉'}
+  {selectedGameTimeline.date} vs {selectedGameTimeline.opponentTeam}
+</p>
+<p className="text-lg font-bold">
+  {selectedGameTimeline.isHomeTeam ? '若葉' : selectedGameTimeline.opponentTeam} {selectedGameTimeline.isHomeTeam ? selectedGameTimeline.homeScore : selectedGameTimeline.awayScore} - {selectedGameTimeline.isHomeTeam ? selectedGameTimeline.awayScore : selectedGameTimeline.homeScore} {selectedGameTimeline.isHomeTeam ? selectedGameTimeline.opponentTeam : '若葉'}
                 <span className={`ml-2 ${selectedGameTimeline.winner === '若葉' ? 'text-blue-600' : 'text-red-600'}`}>
                   ({selectedGameTimeline.winner}勝利)
                 </span>
@@ -890,7 +891,7 @@ const returnToSetup = () => {
         value={watchingGameId}
         onChange={(e) => setWatchingGameId(e.target.value.toUpperCase())}
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-        placeholder="観戦したい試合のIDを入力"
+        placeholder="観戦したい試合のIDを入力."
         maxLength={6}
       />
       <button
@@ -947,7 +948,7 @@ const returnToSetup = () => {
                     <div key={game.gameId} className="flex items-center justify-between text-sm p-2 bg-white rounded shadow-sm">
                       <div>
                         <span className="font-mono text-gray-700">{game.gameId}</span>
-                        <span className="ml-2 text-gray-500">(vs {game.opponent})</span>
+                        <span className="ml-2 text-gray-500">(vs {game.opponentTeam})</span>
                       </div>
                       <button
                         onClick={() => copyIdToClipboard(game.gameId)}
@@ -970,7 +971,7 @@ const returnToSetup = () => {
                 // 各ゲームに対してエクスポート用データを準備
                 const exportData = prepareDataForExport(game);
                 // ファイル名を生成
-                const filename = `softball-score-${game.date.replace(/\//g, '-')}-${game.opponent}.csv`;
+                const filename = `softball-score-${game.date.replace(/\//g, '-')}-${game.opponentTeam}.csv`;
 
                 return (
                   <div key={index} className="bg-gray-50 p-3 rounded-lg mb-2">
@@ -984,14 +985,14 @@ const returnToSetup = () => {
                           </span>
                         )}
                       </div>
-                      <span className="font-medium">vs {game.opponent}</span>
+                      <span className="font-medium">vs {game.opponentTeam}</span>
                     </div>
                     <button
                       onClick={() => showTimeline(game)}
                       className="w-full text-center mt-1 hover:bg-gray-100 p-1 rounded transition-colors"
                     >
                       <span className={`font-bold ${game.winner === '若葉' ? 'text-blue-600' : 'text-red-600'}`}>
-                        {game.isHomeTeam ? '若葉' : game.opponent} {game.isHomeTeam ? game.homeScore : game.awayScore} - {game.isHomeTeam ? game.awayScore : game.homeScore} {game.isHomeTeam ? game.opponent : '若葉'} ({game.winner}勝利)
+                        {game.isHomeTeam ? '若葉' : game.opponentTeam} {game.isHomeTeam ? game.homeScore : game.awayScore} - {game.isHomeTeam ? game.awayScore : game.homeScore} {game.isHomeTeam ? game.opponentTeam : '若葉'} ({game.winner}勝利)
                       </span>
                       <div className="text-xs text-gray-500 mt-1">クリックで詳細表示</div>
                     </button>
