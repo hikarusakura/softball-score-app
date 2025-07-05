@@ -119,3 +119,29 @@ export const testReadGame = async (gameId) => {
     alert("Firebaseとの接続中に重大なエラーが発生しました。コンソールを確認してください。");
   }
 };
+
+// onSnapshotが機能するかどうかだけをテストする最終診断用の関数
+export const finalOnSnapshotTest = (gameId) => {
+  console.log(`【最終診断】onSnapshotの単体テストを開始します。ID: ${gameId}`);
+  try {
+    const gameRef = doc(db, 'games', gameId);
+    
+    onSnapshot(gameRef, 
+      (doc) => {
+        // ★★★ 成功：このメッセージが表示されれば、Firebaseとのリアルタイム接続は機能しています ★★★
+        console.log("★★★★★【最終診断】成功：onSnapshot のコールバックが実行されました！★★★★★");
+        if (doc.exists()) {
+          console.log("★★★★★【最終診断】ドキュメントが見つかりました。★★★★★");
+        } else {
+          console.log("★★★★★【最終診断】ドキュメントが存在しません。★★★★★");
+        }
+      }, 
+      (error) => {
+        // ★★★ 失敗：このメッセージが表示されれば、権限などのエラーです ★★★
+        console.error("★★★★★【最終診断】失敗：onSnapshot でエラーが発生しました:", error);
+      }
+    );
+  } catch (e) {
+    console.error("★★★★★【最終診断】失敗：onSnapshot の呼び出し自体でエラー:", e);
+  }
+};

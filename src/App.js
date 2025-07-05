@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Play,  Trophy,  Eye, ChevronLeft,  Copy, Wifi, WifiOff } from 'lucide-react';
-import { db, saveGameState, watchGameState, stopWatching,  generateGameId, getAllGames, testReadGame } from './firebase';
+import { db, saveGameState, watchGameState, stopWatching,  generateGameId, getAllGames, testReadGame, finalOnSnapshotTest } from './firebase';
 import { doc, onSnapshot } from "firebase/firestore";
 import { CSVLink } from 'react-csv';
 
@@ -880,6 +880,15 @@ const returnToSetup = () => {
     <Play className="h-5 w-5" />
     <span>試合開始（新規記録）</span>
   </button>
+
+<button
+  // ★★★ 必ず存在する試合ID（例：'06L740'）を直接指定してください ★★★
+  onClick={() => finalOnSnapshotTest('06L740')}
+  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-6 rounded-lg mt-4"
+>
+  onSnapshot 単体テストを実行
+</button>
+
 
   
   {/* --- ② 観戦開始 --- */}
