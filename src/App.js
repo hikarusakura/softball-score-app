@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Play,  Trophy,  Eye, ChevronLeft,  Copy, Wifi, WifiOff } from 'lucide-react';
-import { saveGameState, watchGameState,  generateGameId, getAllGames } from './firebase';
+import { saveGameState, watchGameState, stopWatching,  generateGameId, getAllGames } from './firebase';
 import { CSVLink } from 'react-csv';
 
 
@@ -148,7 +148,13 @@ const SoftballScoreApp = () => {
 
   // 観戦モードでゲーム状態を監視
   const startWatchingGame = (gameId) => {
-    const listener = watchGameState(gameId, (data) => {
+    // 既存のリスナーがあれば、念のため停止する
+  if (firebaseListener) {
+    stopWatching(firebaseListener);
+  }
+  
+  // 新しいリスナーを設定
+  const newListener = watchGameState(gameId, (data) => {
       console.log('ゲーム状態を受信:', data);
 
       // 受信したデータで状態を更新
@@ -169,7 +175,7 @@ const SoftballScoreApp = () => {
       setIsConnected(true);
     });
 
-    setFirebaseListener(listener);
+    setFirebaseListener(newListener); // 新しいリスナーをstateに保存
   };
 
   // ゲーム状態をFirebaseに保存
@@ -723,6 +729,15 @@ const resumeGame = () => {
   alert(`試合ID: ${resumeGameId} の記録を再開します。`);
 };
 
+// 接続を解除してセットアップ画面に戻るための新しい関数
+const returnToSetup = () => {
+  if (firebaseListener) {
+    stopWatching(firebaseListener); // 監視を停止する
+    setFirebaseListener(null);      // listenerの状態をリセット
+  }
+  setGameState('setup');
+};
+
 
   // タイムライン表示
   const showTimeline = (game) => {
@@ -743,7 +758,7 @@ const resumeGame = () => {
         <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-2xl p-6">
           <div className="flex items-center mb-6">
             <button
-              onClick={backToSetup}
+              onClick={returnToSetup}
               className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -792,7 +807,7 @@ const resumeGame = () => {
       <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-2xl p-6">
         <div className="flex items-center mb-6">
           <button
-            onClick={() => setGameState('setup')}
+            onClick={returnToSetup}
             className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -1044,7 +1059,7 @@ const resumeGame = () => {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col relative">
         <button
-        onClick={() => setGameState('setup')}
+        onClick={returnToSetup}
         className="absolute top-4 left-4 z-40 p-2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white rounded-full transition-colors"
         aria-label="セットアップに戻る"
       >
