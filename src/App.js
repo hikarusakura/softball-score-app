@@ -219,7 +219,10 @@ const SoftballScoreApp = () => {
       saveCurrentGameState();
     }
   }, [
-    isGameCreator, gameState, saveCurrentGameState ]);
+    opponentTeam, currentInning, currentTeamBatting, outCount,
+  bases, homeScore, awayScore, timeline, currentBatter,
+  customBatter, useCustomBatter,
+  isGameCreator, gameState, saveCurrentGameState ]);
 
   // 試合開始
   const startGame = () => {
