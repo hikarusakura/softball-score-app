@@ -35,6 +35,7 @@ const SoftballScoreApp = () => {
   const [firebaseGames, setFirebaseGames] = useState([]); // Firebaseから取得した試合リスト
   const [isLoading, setIsLoading] = useState(false);      // データ読み込み中の状態管理
   const [gameStartDate, setGameStartDate] = useState(null);
+  const [resumeGameId, setResumeGameId] = useState('');
 
   // 自由記入欄の状態
   const [freeComment, setFreeComment] = useState('');
@@ -688,6 +689,39 @@ const SoftballScoreApp = () => {
     }
   };
 
+  // App.js 内に追加
+const resumeGame = () => {
+  if (!resumeGameId) {
+    alert('継続する試合のIDを入力してください。');
+    return;
+  }
+  
+  // 既存の観戦ロジックを流用してゲームデータを取得・監視
+  const unsubscribe = watchGameState(resumeGameId, (data) => {
+    // 取得したデータでStateを更新
+    if (data.opponentTeam) setOpponentTeam(data.opponentTeam);
+    if (data.isHomeTeam !== undefined) setIsHomeTeam(data.isHomeTeam);
+    if (data.currentInning) setCurrentInning(data.currentInning);
+    if (data.currentTeamBatting) setCurrentTeamBatting(data.currentTeamBatting);
+    if (data.outCount !== undefined) setOutCount(data.outCount);
+    if (data.bases) setBases(data.bases);
+    if (data.homeScore) setHomeScore(data.homeScore);
+    if (data.awayScore) setAwayScore(data.awayScore);
+    if (data.timeline) setTimeline(data.timeline);
+    if (data.currentBatter) setCurrentBatter(data.currentBatter);
+    if (data.customBatter) setCustomBatter(data.customBatter);
+    if (data.useCustomBatter !== undefined) setUseCustomBatter(data.useCustomBatter);
+    if (data.gameStartDate) setGameStartDate(data.gameStartDate);
+  });
+  
+  // 重要な設定
+  setGameId(resumeGameId);       // 現在の試合IDをセット
+  setIsGameCreator(true);      // あなたを記録者として設定
+  setGameState('playing');     // 試合入力画面に遷移
+  // setFirebaseListener(unsubscribe); // 必要に応じて監視停止処理も設定
+  
+  alert(`試合ID: ${resumeGameId} の記録を再開します。`);
+};
 
 
   // タイムライン表示
@@ -822,76 +856,90 @@ const SoftballScoreApp = () => {
           </div>
 
           <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                対戦相手チーム名
-              </label>
-              <input
-                type="text"
-                value={opponentTeam}
-                onChange={(e) => setOpponentTeam(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="チーム名を入力"
-              />
-            </div>
+            {/* --- ① 試合開始 --- */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">対戦相手チーム名</label>
+    <input
+      type="text"
+      value={opponentTeam}
+      onChange={(e) => setOpponentTeam(e.target.value)}
+      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      placeholder="チーム名を入力"
+    />
+  </div>
+  <div>
+    <label className="flex items-center space-x-3">
+      <input
+        type="checkbox"
+        checked={isHomeTeam}
+        onChange={(e) => setIsHomeTeam(e.target.checked)}
+        className="w-5 h-5 text-blue-600"
+      />
+      <span className="text-sm font-medium text-gray-700">若葉が後攻</span>
+    </label>
+  </div>
+  <button
+    onClick={startGame}
+    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+  >
+    <Play className="h-5 w-5" />
+    <span>試合開始（新規記録）</span>
+  </button>
+  
+  {/* --- ② 観戦開始 --- */}
+  <div className="border-t border-gray-200 pt-6">
+    <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
+    <div className="space-y-3">
+      <input
+        type="text"
+        value={watchingGameId}
+        onChange={(e) => setWatchingGameId(e.target.value.toUpperCase())}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        placeholder="観戦したい試合のIDを入力"
+        maxLength={6}
+      />
+      <button
+        onClick={startWatchingFromId}
+        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+      >
+        <Eye className="h-5 w-5" />
+        <span>観戦開始</span>
+      </button>
+    </div>
+  </div>
 
-            <div>
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={isHomeTeam}
-                  onChange={(e) => setIsHomeTeam(e.target.checked)}
-                  className="w-5 h-5 text-blue-600"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  若葉が後攻
-                </span>
-              </label>
-            </div>
-
-            <div className="space-y-3">
-              <button
-                onClick={startGame}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
-              >
-                <Play className="h-5 w-5" />
-                <span>試合開始（記録モード）</span>
-              </button>
-            </div>
-
-            <div className="border-t border-gray-200 pt-6 mt-6">
-             <button
-                onClick={handleFetchFirebaseGames}
-                disabled={isLoading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300"
-             >
-              <Eye className="h-5 w-5" />
-              <span>{isLoading ? '読込中...' : '過去の試合を閲覧'}</span>
-              </button>
-            </div>
-
-            {/* 観戦モード用入力 */}
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  value={watchingGameId}
-                  onChange={(e) => setWatchingGameId(e.target.value.toUpperCase())}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="ゲームIDを入力 (例: ABC123)"
-                  maxLength={6}
-                />
-                <button
-                  onClick={startWatchingFromId}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                >
-                  <Eye className="h-5 w-5" />
-                  <span>観戦開始</span>
-                </button>
-              </div>
-            </div>
-          </div>
+  {/* --- ③ 過去の試合を閲覧 --- */}
+  <div className="border-t border-gray-200 pt-6">
+    <button
+      onClick={handleFetchFirebaseGames}
+      disabled={isLoading}
+      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300"
+    >
+      <span>{isLoading ? '読込中...' : '過去の試合を閲覧'}</span>
+    </button>
+  </div>
+  
+  {/* --- ④ 速報継続 --- */}
+  <div className="border-t border-gray-200 pt-6">
+    <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">記録の再開</h3>
+    <div className="space-y-3">
+      <input
+        type="text"
+        value={resumeGameId}
+        onChange={(e) => setResumeGameId(e.target.value.toUpperCase())}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+        placeholder="記録を再開する試合のIDを入力"
+        maxLength={6}
+      />
+      <button
+        onClick={resumeGame}
+        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+      >
+        <span>速報を継続</span>
+      </button>
+    </div>
+  </div>
+</div>
 
           {/* ↓↓ このブロックを丸ごと追加 ↓↓ */}
           {pastGames.filter(game => game.gameId).length > 0 && (
@@ -994,7 +1042,14 @@ const SoftballScoreApp = () => {
     const currentTeamName = getCurrentTeamName();
 
     return (
-      <div className="min-h-screen bg-gray-100 flex flex-col">
+      <div className="min-h-screen bg-gray-100 flex flex-col relative">
+        <button
+        onClick={() => setGameState('setup')}
+        className="absolute top-4 left-4 z-40 p-2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white rounded-full transition-colors"
+        aria-label="セットアップに戻る"
+      >
+        <ChevronLeft className="h-6 w-6" />
+      </button>
         {/* 速報プレビュー画面（上半分） */}
         <div className="flex-1 bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
           <div className="max-w-4xl mx-auto">
