@@ -646,7 +646,7 @@ const SoftballScoreApp = () => {
       console.log('[App.js] Firebaseからデータを受信しました。'); // ログ追加
       if (doc.exists()) {
         console.log('[App.js] ドキュメントが見つかりました。画面を更新します。'); // ログ追加
-        const data = doc.data();
+        //const data = doc.data();
       
       // State更新
       /*if (data.opponentTeam) setOpponentTeam(data.opponentTeam);
