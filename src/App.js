@@ -914,7 +914,7 @@ const returnToSetup = () => {
         value={watchingGameId}
         onChange={(e) => setWatchingGameId(e.target.value.toUpperCase())}
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-        placeholder="観戦したい試合のIDを入力"
+        placeholder="観戦したい試合のIDを入力。"
         maxLength={6}
       />
       <button
