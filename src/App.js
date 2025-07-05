@@ -649,8 +649,8 @@ const SoftballScoreApp = () => {
         const data = doc.data();
       
       // State更新
-      if (data.opponentTeam) setOpponentTeam(data.opponentTeam);
-      /*if (data.isHomeTeam !== undefined) setIsHomeTeam(data.isHomeTeam);
+      /*if (data.opponentTeam) setOpponentTeam(data.opponentTeam);
+      if (data.isHomeTeam !== undefined) setIsHomeTeam(data.isHomeTeam);
       if (data.currentInning) setCurrentInning(data.currentInning);
       if (data.currentTeamBatting) setCurrentTeamBatting(data.currentTeamBatting);
       if (data.outCount !== undefined) setOutCount(data.outCount);
