@@ -15,6 +15,7 @@ const firebaseConfig = {
   appId: "1:752191549444:web:f914184a01593a555f0551"
 };
 
+
 // Firebaseアプリを初期化
 const app = initializeApp(firebaseConfig);
 
