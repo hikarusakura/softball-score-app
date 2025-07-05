@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Play,  Trophy,  Eye, ChevronLeft,  Copy, Wifi, WifiOff } from 'lucide-react';
-import { saveGameState, watchGameState, stopWatching,  generateGameId, getAllGames, testReadGame } from './firebase';
+import { db, saveGameState, watchGameState, stopWatching,  generateGameId, getAllGames, testReadGame } from './firebase';
+import { doc, onSnapshot } from "firebase/firestore";
 import { CSVLink } from 'react-csv';
 
 
