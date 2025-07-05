@@ -624,55 +624,48 @@ const SoftballScoreApp = () => {
   };
 
 
-  const loadGame = (id, mode = 'watch') => {
+const loadGame = (id, mode = 'watch') => {
   const gameIdToLoad = id;
-  console.log(`[App.js] loadGame が呼び出されました。ID: ${gameIdToLoad},モード: ${mode}`); // ログ追加
-
   if (!gameIdToLoad || gameIdToLoad.trim() === '') {
-    alert('試合IDが入力されていません。');
+    alert('試合IDを入力してください。');
     return;
   }
 
-  // 既存のリスナーがもし残っていれば、必ず停止する
   if (firebaseListener) {
     stopWatching(firebaseListener);
-    console.log('[App.js] 既存のリスナーを停止しました。'); // ログ追加
   }
 
-  
   const newListener = watchGameState(
     gameIdToLoad,
     (doc) => { // 成功時の処理
-      console.log('[App.js] Firebaseからデータを受信しました。'); // ログ追加
       if (doc.exists()) {
-        console.log('[App.js] ドキュメントが見つかりました。画面を更新します。'); // ログ追加
-        //const data = doc.data();
-      
-      // State更新
-      /*if (data.opponentTeam) setOpponentTeam(data.opponentTeam);
-      if (data.isHomeTeam !== undefined) setIsHomeTeam(data.isHomeTeam);
-      if (data.currentInning) setCurrentInning(data.currentInning);
-      if (data.currentTeamBatting) setCurrentTeamBatting(data.currentTeamBatting);
-      if (data.outCount !== undefined) setOutCount(data.outCount);
-      if (data.bases) setBases(data.bases);
-      if (data.homeScore) setHomeScore(data.homeScore);
-      if (data.awayScore) setAwayScore(data.awayScore);
-      if (data.timeline) setTimeline(data.timeline);
-      if (data.currentBatter) setCurrentBatter(data.currentBatter);
-      if (data.customBatter) setCustomBatter(data.customBatter);
-      if (data.useCustomBatter !== undefined) setUseCustomBatter(data.useCustomBatter);
-      if (data.gameStartDate) setGameStartDate(data.gameStartDate);
-      */
-      // モードに応じて最終的な画面状態を決定
-      if (mode === 'watch') {
-        setGameState('watching');
-      } else if (mode === 'resume') {
-        setGameId(gameIdToLoad);
-        setIsGameCreator(true); // 記録者として設定
-        setGameState('playing');  // 入力画面へ
+        const data = doc.data();
+
+        if (data.opponent) setOpponentTeam(data.opponent); 
+        if (data.isHomeTeam !== undefined) setIsHomeTeam(data.isHomeTeam);
+        if (data.currentInning) setCurrentInning(data.currentInning);
+        if (data.currentTeamBatting) setCurrentTeamBatting(data.currentTeamBatting);
+        if (data.outCount !== undefined) setOutCount(data.outCount);
+        if (data.bases) setBases(data.bases);
+        if (data.homeScore) setHomeScore(data.homeScore);
+        if (data.awayScore) setAwayScore(data.awayScore);
+        if (data.timeline) setTimeline(data.timeline);
+        if (data.currentBatter) setCurrentBatter(data.currentBatter);
+        if (data.customBatter) setCustomBatter(data.customBatter);
+        if (data.useCustomBatter !== undefined) setUseCustomBatter(data.useCustomBatter);
+        if (data.gameStartDate) setGameStartDate(data.gameStartDate);
+        
+        // 画面遷移ロジック
+        if (mode === 'watch') {
+          setGameId(gameIdToLoad);
+          setIsGameCreator(false);
+          setGameState('watching');
+        } else if (mode === 'resume') {
+          setGameId(gameIdToLoad);
+          setIsGameCreator(true);
+          setGameState('playing');
         }
-    } else {
-      console.log('[App.js] ドキュメントが見つかりませんでした。'); // ログ追加
+      } else {
         alert('指定された試合IDが見つかりませんでした。');
         returnToSetup();
       }
@@ -684,8 +677,6 @@ const SoftballScoreApp = () => {
     }
   );
 
-
-  // 新しいリスナーをStateに保存
   setFirebaseListener(newListener);
 };
 
