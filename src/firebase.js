@@ -89,5 +89,3 @@ export const getAllGames = async () => {
     return []; // エラーの場合は空の配列を返す
   }
 };
-
-export { database };
