@@ -624,21 +624,27 @@ const SoftballScoreApp = () => {
 
   const loadGame = (id, mode = 'watch') => {
   const gameIdToLoad = id;
+  console.log(`[App.js] loadGame が呼び出されました。ID: ${gameIdToLoad},モード: ${mode}`); // ログ追加
+
   if (!gameIdToLoad || gameIdToLoad.trim() === '') {
-    alert('試合IDを入力してください。');
+    alert('試合IDが入力されていません。');
     return;
   }
 
   // 既存のリスナーがもし残っていれば、必ず停止する
   if (firebaseListener) {
     stopWatching(firebaseListener);
+    console.log('[App.js] 既存のリスナーを停止しました。'); // ログ追加
   }
 
   
-  const newListener = watchGameState(gameIdToLoad, (doc) => {
-    if (doc.exists()) {
-      // ドキュメントが存在する場合、データを取得してStateを更新
-      const data = doc.data();
+  const newListener = watchGameState(
+    gameIdToLoad,
+    (doc) => { // 成功時の処理
+      console.log('[App.js] Firebaseからデータを受信しました。'); // ログ追加
+      if (doc.exists()) {
+        console.log('[App.js] ドキュメントが見つかりました。画面を更新します。'); // ログ追加
+        const data = doc.data();
       
       // State更新
       if (data.opponentTeam) setOpponentTeam(data.opponentTeam);
@@ -664,14 +670,20 @@ const SoftballScoreApp = () => {
         setGameId(gameIdToLoad);
         setIsGameCreator(true); // 記録者として設定
         setGameState('playing');  // 入力画面へ
-        alert(`試合ID: ${gameIdToLoad} の記録を再開しました。`);
-      }
+        }
     } else {
-      // ドキュメントが存在しない場合
-      alert('指定された試合IDが見つかりませんでした。');
-      returnToSetup(); // セットアップ画面に戻す
+      console.log('[App.js] ドキュメントが見つかりませんでした。'); // ログ追加
+        alert('指定された試合IDが見つかりませんでした。');
+        returnToSetup();
+      }
+    },
+    (error) => { // エラー時の処理
+      console.error('[App.js] Firebaseからのデータ取得でエラーが発生しました。', error);
+      alert('データの読み込みに失敗しました。コンソールでエラーを確認してください。');
+      returnToSetup();
     }
-  });
+  );
+
 
   // 新しいリスナーをStateに保存
   setFirebaseListener(newListener);

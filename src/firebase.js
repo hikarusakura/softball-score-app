@@ -37,12 +37,23 @@ export const saveGameState = async (gameId, gameState) => {
 };
 
 // ゲーム状態を監視する関数
-export const watchGameState = (gameId, callback) => {
+export const watchGameState = (gameId, callback, errorCallback) => {
   const gameRef = doc(db, 'games', gameId);
-  const unsubscribe = onSnapshot(gameRef, (doc) => {
-    // データだけでなく、docオブジェクト全体をコールバックに渡す
-    callback(doc);
-  });
+  console.log(`[firebase.js] 試合ID: ${gameId} の監視を開始します。`); // ログ追加
+
+  const unsubscribe = onSnapshot(gameRef, 
+    (doc) => {
+      // 成功時のコールバック
+      callback(doc);
+    }, 
+    (error) => {
+      // エラー時のコールバック
+      console.error("[firebase.js] 監視中にエラーが発生しました:", error);
+      if (errorCallback) {
+        errorCallback(error);
+      }
+    }
+  );
   return unsubscribe;
 };
 
