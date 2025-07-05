@@ -1,7 +1,7 @@
 // src/firebase.js
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, onValue, off, push } from 'firebase/database';
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { getDatabase, ref, set, onValue, off } from 'firebase/database'; // Realtime Database用
+import { getFirestore, collection, getDocs, orderBy, query } from "firebase/firestore"; // Firestore用
 
 const firebaseConfig = {
   apiKey: "AIzaSyAz0Lm3rKe5W9r0R_Efye9sIkT7WDQwYvo",
@@ -16,8 +16,11 @@ const firebaseConfig = {
 // Firebaseアプリを初期化
 const app = initializeApp(firebaseConfig);
 
-// データベースの参照を取得
+// 1. Realtime Databaseを初期化 (既存の機能用)
 const database = getDatabase(app);
+
+// 2. Firestoreを初期化し、「db」としてexport (新しい機能用)
+export const db = getFirestore(app);
 
 // ゲーム状態を保存する関数
 export const saveGameState = async (gameId, gameState) => {

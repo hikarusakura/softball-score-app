@@ -4,12 +4,12 @@ import { saveGameState, watchGameState,  generateGameId, getAllGames } from './f
 import { CSVLink } from 'react-csv';
 
 
-let sharedGameState = {
-  isActive: false,
-  inputUserId: null,
-  gameData: null,
-  lastUpdated: null
-};
+// let sharedGameState = {
+//   isActive: false,
+//   inputUserId: null,
+//   gameData: null,
+//   lastUpdated: null
+// };
 
 const SoftballScoreApp = () => {
   // 選手リスト（デフォルト）- きよはる追加
@@ -210,7 +210,8 @@ const SoftballScoreApp = () => {
   }, [
     opponentTeam, currentInning, currentTeamBatting, outCount,
     bases, homeScore, awayScore, timeline, currentBatter,
-    customBatter, useCustomBatter
+    customBatter, useCustomBatter,
+    gameState, isGameCreator, saveCurrentGameState
   ]);
 
   // 試合開始
@@ -558,6 +559,8 @@ const SoftballScoreApp = () => {
           second: prev.first && prev.second ? true : prev.second,
           third: prev.first && prev.second && prev.third ? true : prev.third
         }));
+        default:
+        // 何もしない、または予期せぬ結果のログを出力
         break;
     }
 
@@ -626,35 +629,8 @@ const SoftballScoreApp = () => {
     } else {
       winner = finalAwayScore > finalHomeScore ? '若葉' : opponentTeam;
     }
-
-    // 過去の試合を閲覧ボタンが押された時の処理（関数）を追加
-    const handleFetchFirebaseGames = async () => {
-    setIsLoading(true);
-    const games = await getAllGames();
-    setFirebaseGames(games);
-    setIsLoading(false);
-    setGameState('firebaseList'); // 新しい画面状態に切り替え
-    };
-
-    // 特定の試合データを削除する関数
-    const deleteGame = (idToDelete) => {
-      // ユーザーに最終確認を行う
-      if (window.confirm(`試合ID: ${idToDelete} のデータを本当に削除しますか？\nこの操作は元に戻せません。`)) {
-        setPastGames(prevGames => prevGames.filter(game => game.gameId !== idToDelete));
-      }
-    };
-
-    // 試合IDをクリップボードにコピーする関数
-    const copyIdToClipboard = async (id) => {
-      if (!id) return;
-      try {
-        await navigator.clipboard.writeText(id);
-        alert(`試合ID「${id}」をコピーしました！`);
-      } catch (err) {
-        console.error('IDのコピーに失敗しました:', err);
-        alert('IDのコピーに失敗しました。');
-      }
-    };
+  
+  
 
     const gameData = {
       gameId: gameId,
@@ -683,6 +659,36 @@ const SoftballScoreApp = () => {
     setOpponentTeam('');
     setFreeComment('');
   };
+
+      // Firebaseから全試合データを取得する関数
+    const handleFetchFirebaseGames = async () => {
+    setIsLoading(true);
+    const games = await getAllGames();
+    setFirebaseGames(games);
+    setIsLoading(false);
+    setGameState('firebaseList');
+  };
+
+  // 試合IDをクリップボードにコピーする関数
+  const copyIdToClipboard = async (id) => {
+    if (!id) return;
+    try {
+      await navigator.clipboard.writeText(id);
+      alert(`試合ID「${id}」をコピーしました！`);
+    } catch (err) {
+      console.error('IDのコピーに失敗しました:', err);
+      alert('IDのコピーに失敗しました。');
+    }
+  };
+
+  // 特定の試合データを削除する関数
+  const deleteGame = (idToDelete) => {
+    if (window.confirm(`試合ID: ${idToDelete} のデータを本当に削除しますか？\nこの操作は元に戻せません。`)) {
+      setPastGames(prevGames => prevGames.filter(game => game.gameId !== idToDelete));
+    }
+  };
+
+
 
   // タイムライン表示
   const showTimeline = (game) => {
