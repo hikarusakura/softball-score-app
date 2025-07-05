@@ -1,7 +1,9 @@
 // src/firebase.js
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, onValue, off } from 'firebase/database'; // Realtime Database用
-import { getFirestore, collection, getDocs, orderBy, query } from "firebase/firestore"; // Firestore用
+// Realtime Database用のimportは不要になるのでコメントアウトまたは削除
+// import { getDatabase, ref, set, onValue, off } from 'firebase/database';
+// Firestoreで必要な命令を追加
+import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, orderBy, query } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAz0Lm3rKe5W9r0R_Efye9sIkT7WDQwYvo",
@@ -25,32 +27,35 @@ export const db = getFirestore(app);
 // ゲーム状態を保存する関数
 export const saveGameState = async (gameId, gameState) => {
   try {
-    const gameRef = ref(database, `games/${gameId}`);
-    await set(gameRef, {
+    const gameRef = doc(db, 'games', gameId);
+    await setDoc(gameRef, {
       ...gameState,
       lastUpdated: Date.now()
     });
-    console.log('ゲーム状態を保存しました');
+    // console.log('ゲーム状態をFirestoreに保存しました');
   } catch (error) {
-    console.error('保存エラー:', error);
+    console.error('Firestoreへの保存エラー:', error);
   }
 };
 
 // ゲーム状態を監視する関数
 export const watchGameState = (gameId, callback) => {
-  const gameRef = ref(database, `games/${gameId}`);
-  onValue(gameRef, (snapshot) => {
-    const data = snapshot.val();
+  const gameRef = doc(db, 'games', gameId);
+  // onSnapshotで変更をリアルタイムに監視し、unsubscribe関数を返す
+  const unsubscribe = onSnapshot(gameRef, (doc) => {
+    const data = doc.data();
     if (data) {
       callback(data);
     }
   });
-  return gameRef; // 後でリスナーを停止するために返す
+  return unsubscribe; // 後でリスナーを停止するために返す
 };
 
 // リスナーを停止する関数
-export const stopWatching = (gameRef) => {
-  off(gameRef);
+export const stopWatching = (unsubscribe) => {
+  if (unsubscribe) {
+    unsubscribe(); // onSnapshotから返された関数を実行して監視を停止
+  }
 };
 
 // ユニークなゲームIDを生成する関数
