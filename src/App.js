@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Play,  Trophy,  Eye, ChevronLeft,  Copy, Wifi, WifiOff } from 'lucide-react';
 import { saveGameState, watchGameState, stopWatching,  generateGameId, getAllGames } from './firebase';
 import { CSVLink } from 'react-csv';
@@ -179,35 +179,39 @@ const SoftballScoreApp = () => {
   };
 
   // ゲーム状態をFirebaseに保存
-  const saveCurrentGameState = async () => {
+  const saveCurrentGameState = useCallback(async () => {
     if (!gameId || !isGameCreator) return;
 
     const currentState = {
-      opponentTeam,
-      isHomeTeam,
-      currentInning,
-      currentTeamBatting,
-      outCount,
-      bases,
-      homeScore,
-      awayScore,
-      timeline,
-      currentBatter,
-      customBatter,
-      useCustomBatter,
-      gameState: 'playing',
-      gameStartDate: gameStartDate, // Stateから日時を追加
-      createdAt: gameStartDate || Date.now() // 念のため、なければ現在時刻
-    };
-
-    try {
-      await saveGameState(gameId, currentState);
-      setIsConnected(true);
-    } catch (error) {
-      console.error('保存失敗:', error);
-      setIsConnected(false);
-    }
+    opponentTeam,
+    isHomeTeam,
+    currentInning,
+    currentTeamBatting,
+    outCount,
+    bases,
+    homeScore,
+    awayScore,
+    timeline,
+    currentBatter,
+    customBatter,
+    useCustomBatter,
+    gameState: 'playing',
+    gameStartDate: gameStartDate,
+    createdAt: gameStartDate || Date.now()
   };
+
+  try {
+    await saveGameState(gameId, currentState);
+    setIsConnected(true);
+  } catch (error) {
+    console.error('保存失敗:', error);
+    setIsConnected(false);
+  }
+}, [
+  gameId, isGameCreator, opponentTeam, isHomeTeam, currentInning, 
+  currentTeamBatting, outCount, bases, homeScore, awayScore, 
+  timeline, currentBatter, customBatter, useCustomBatter, gameStartDate
+]);
 
   // 状態が変更されたときにFirebaseに保存
   useEffect(() => {
@@ -215,11 +219,7 @@ const SoftballScoreApp = () => {
       saveCurrentGameState();
     }
   }, [
-    opponentTeam, currentInning, currentTeamBatting, outCount,
-    bases, homeScore, awayScore, timeline, currentBatter,
-    customBatter, useCustomBatter,
-    gameState, isGameCreator, saveCurrentGameState
-  ]);
+    isGameCreator, gameState, saveCurrentGameState ]);
 
   // 試合開始
   const startGame = () => {
