@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play,  Trophy,  Eye, ChevronLeft,  Copy, Wifi, WifiOff } from 'lucide-react';
 import { db, saveGameState, watchGameState, stopWatching,  generateGameId, getAllGames, testReadGame, finalOnSnapshotTest } from './firebase';
 import { doc, onSnapshot } from "firebase/firestore";
@@ -75,7 +75,7 @@ const SoftballScoreApp = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [watchingGameId, setWatchingGameId] = useState('');
-  const [firebaseListener, setFirebaseListener] = useState(null);
+  const firebaseListener = useRef(null);
 
   // エクスポート用にデータを整形する関数
   const prepareDataForExport = (gameData) => {
@@ -631,8 +631,9 @@ const loadGame = (id, mode = 'watch') => {
     return;
   }
 
-  if (firebaseListener) {
-    stopWatching(firebaseListener);
+  // useRefの値は .current でアクセス
+  if (firebaseListener.current) {
+    stopWatching(firebaseListener.current);
   }
 
   const newListener = watchGameState(
@@ -640,8 +641,8 @@ const loadGame = (id, mode = 'watch') => {
     (doc) => {
       if (doc.exists()) {
         const data = doc.data();
-
-        // --- 防御的なデータ更新処理 ---
+        
+        // 防御的なデータ更新
         setOpponentTeam(data.opponentTeam || '');
         setIsHomeTeam(data.isHomeTeam === true);
         setCurrentInning(typeof data.currentInning === 'number' ? data.currentInning : 1);
@@ -656,7 +657,7 @@ const loadGame = (id, mode = 'watch') => {
         setUseCustomBatter(data.useCustomBatter === true);
         setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
         
-        // --- 画面遷移ロジック ---
+        // 画面遷移
         if (mode === 'watch') {
           setGameId(gameIdToLoad);
           setIsGameCreator(false);
@@ -673,12 +674,13 @@ const loadGame = (id, mode = 'watch') => {
     },
     (error) => {
       console.error('[App.js] Firebaseからのデータ取得でエラーが発生しました。', error);
-      alert('データの読み込みに失敗しました。コンソールでエラーを確認してください。');
+      alert('データの読み込みに失敗しました。');
       returnToSetup();
     }
   );
 
-  setFirebaseListener(newListener);
+  // setFirebaseListenerの代わりに、.current に直接代入する
+  firebaseListener.current = newListener;
 };
 
 
@@ -714,9 +716,9 @@ const loadGame = (id, mode = 'watch') => {
 
 // 接続を解除してセットアップ画面に戻るための新しい関数
 const returnToSetup = () => {
-  if (firebaseListener) {
-    stopWatching(firebaseListener); // 監視を停止する
-    setFirebaseListener(null);      // listenerの状態をリセット
+  if (firebaseListener.current) {
+    stopWatching(firebaseListener.current);
+    firebaseListener.current = null;
   }
   setGameState('setup');
 };
@@ -880,14 +882,6 @@ const returnToSetup = () => {
     <Play className="h-5 w-5" />
     <span>試合開始（新規記録）</span>
   </button>
-
-<button
-  // ★★★ 必ず存在する試合ID（例：'06L740'）を直接指定してください ★★★
-  onClick={() => finalOnSnapshotTest('06L740')}
-  className="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-6 rounded-lg mt-4"
->
-  onSnapshot 単体テストを実行
-</button>
 
 
   
