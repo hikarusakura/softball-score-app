@@ -644,8 +644,8 @@ const SoftballScoreApp = () => {
       console.log('[App.js] Firebaseからデータを受信しました。'); // ログ追加
       if (doc.exists()) {
         console.log('[App.js] ドキュメントが見つかりました。画面を更新します。'); // ログ追加
-        const data = doc.data();
-      
+       // const data = doc.data();
+      /*
       // State更新
       if (data.opponentTeam) setOpponentTeam(data.opponentTeam);
       if (data.isHomeTeam !== undefined) setIsHomeTeam(data.isHomeTeam);
@@ -660,11 +660,9 @@ const SoftballScoreApp = () => {
       if (data.customBatter) setCustomBatter(data.customBatter);
       if (data.useCustomBatter !== undefined) setUseCustomBatter(data.useCustomBatter);
       if (data.gameStartDate) setGameStartDate(data.gameStartDate);
-      
+      */
       // モードに応じて最終的な画面状態を決定
       if (mode === 'watch') {
-        setGameId(gameIdToLoad);
-        setIsGameCreator(false);
         setGameState('watching');
       } else if (mode === 'resume') {
         setGameId(gameIdToLoad);
