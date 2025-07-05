@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 // Realtime Database用のimportは不要になるのでコメントアウトまたは削除
 // import { getDatabase, ref, set, onValue, off } from 'firebase/database';
 // Firestoreで必要な命令を追加
-import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, orderBy, query } from "firebase/firestore";
+import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, orderBy, query, getDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAz0Lm3rKe5W9r0R_Efye9sIkT7WDQwYvo",
@@ -96,5 +96,26 @@ export const getAllGames = async () => {
   } catch (error) {
     console.error("Firebaseからのデータ取得に失敗しました:", error);
     return []; // エラーの場合は空の配列を返す
+  }
+};
+
+
+// 特定の試合データを1回だけ読み込むテスト関数
+export const testReadGame = async (gameId) => {
+  try {
+    console.log(`[testReadGame] 読み込みテスト開始: games/${gameId}`);
+    const gameRef = doc(db, 'games', gameId);
+    const docSnap = await getDoc(gameRef);
+
+    if (docSnap.exists()) {
+      console.log("[testReadGame] 成功！ドキュメントが見つかりました:", docSnap.data());
+      alert("Firebaseとの接続に成功しました！");
+    } else {
+      console.log("[testReadGame] 失敗！ドキュメントが見つかりませんでした。");
+      alert("接続はできましたが、指定されたIDの試合は見つかりませんでした。");
+    }
+  } catch (error) {
+    console.error("[testReadGame] 重大なエラーが発生しました:", error);
+    alert("Firebaseとの接続中に重大なエラーが発生しました。コンソールを確認してください。");
   }
 };

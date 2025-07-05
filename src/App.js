@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Play,  Trophy,  Eye, ChevronLeft,  Copy, Wifi, WifiOff } from 'lucide-react';
-import { saveGameState, watchGameState, stopWatching,  generateGameId, getAllGames } from './firebase';
+import { saveGameState, watchGameState, stopWatching,  generateGameId, getAllGames, testReadGame } from './firebase';
 import { CSVLink } from 'react-csv';
 
 
@@ -689,6 +689,16 @@ const SoftballScoreApp = () => {
   setFirebaseListener(newListener);
 };
 
+// App.js のコンポーネント内に追加
+const handleTestConnection = () => {
+  // ★★★ Firebaseコンソールで確認した、確実に存在する試合IDをここに入力してください ★★★
+  const testGameId = "1S6NJA"; // 例：1S6NJA
+  if (!testGameId) {
+    alert("テスト用の試合IDをコード内に直接入力してください。");
+    return;
+  }
+  testReadGame(testGameId);
+};
 
       // Firebaseから全試合データを取得する関数
     const handleFetchFirebaseGames = async () => {
@@ -888,6 +898,14 @@ const returnToSetup = () => {
     <Play className="h-5 w-5" />
     <span>試合開始（新規記録）</span>
   </button>
+
+  <button
+  onClick={handleTestConnection}
+  className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-4 rounded-lg"
+>
+  Firebase接続テスト
+</button>
+
   
   {/* --- ② 観戦開始 --- */}
   <div className="border-t border-gray-200 pt-6">
