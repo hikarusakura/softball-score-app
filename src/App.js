@@ -634,8 +634,7 @@ const SoftballScoreApp = () => {
     stopWatching(firebaseListener);
   }
 
-  alert(`試合ID: ${gameIdToLoad} のデータを読み込みます...`);
-
+  
   const newListener = watchGameState(gameIdToLoad, (doc) => {
     if (doc.exists()) {
       // ドキュメントが存在する場合、データを取得してStateを更新
