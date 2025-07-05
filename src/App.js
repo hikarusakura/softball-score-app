@@ -137,46 +137,10 @@ const SoftballScoreApp = () => {
 
     if (gameIdFromUrl) {
       // 観戦モードで開始
-      setWatchingGameId(gameIdFromUrl);
-      setGameId(gameIdFromUrl);
-      setIsGameCreator(false);
-      setIsWatchingMode(true);
-      setGameState('watching');
-      startWatchingGame(gameIdFromUrl);
+      loadGame(gameIdFromUrl, 'watch'); 
     }
   }, []);
 
-  // 観戦モードでゲーム状態を監視
-  const startWatchingGame = (gameId) => {
-    // 既存のリスナーがあれば、念のため停止する
-  if (firebaseListener) {
-    stopWatching(firebaseListener);
-  }
-  
-  // 新しいリスナーを設定
-  const newListener = watchGameState(gameId, (data) => {
-      console.log('ゲーム状態を受信:', data);
-
-      // 受信したデータで状態を更新
-      if (data.opponentTeam) setOpponentTeam(data.opponentTeam);
-      if (data.isHomeTeam !== undefined) setIsHomeTeam(data.isHomeTeam);
-      if (data.currentInning) setCurrentInning(data.currentInning);
-      if (data.currentTeamBatting) setCurrentTeamBatting(data.currentTeamBatting);
-      if (data.outCount !== undefined) setOutCount(data.outCount);
-      if (data.bases) setBases(data.bases);
-      if (data.homeScore) setHomeScore(data.homeScore);
-      if (data.awayScore) setAwayScore(data.awayScore);
-      if (data.timeline) setTimeline(data.timeline);
-      if (data.currentBatter) setCurrentBatter(data.currentBatter);
-      if (data.customBatter) setCustomBatter(data.customBatter);
-      if (data.useCustomBatter !== undefined) setUseCustomBatter(data.useCustomBatter);
-      if (data.gameStartDate) setGameStartDate(data.gameStartDate);
-
-      setIsConnected(true);
-    });
-
-    setFirebaseListener(newListener); // 新しいリスナーをstateに保存
-  };
 
   // ゲーム状態をFirebaseに保存
   const saveCurrentGameState = useCallback(async () => {
@@ -309,19 +273,7 @@ const SoftballScoreApp = () => {
     }
   };
 
-  // 観戦モード開始（URLから）
-  const startWatchingFromId = () => {
-    if (!watchingGameId) {
-      alert('ゲームIDを入力してください');
-      return;
-    }
 
-    setGameId(watchingGameId);
-    setIsGameCreator(false);
-    setIsWatchingMode(true);
-    setGameState('watching');
-    startWatchingGame(watchingGameId);
-  };
 
   // 共有ダイアログ
   const ShareDialog = () => {
@@ -670,6 +622,63 @@ const SoftballScoreApp = () => {
     setFreeComment('');
   };
 
+  const loadGame = (id, mode = 'watch') => {
+  const gameIdToLoad = id;
+  if (!gameIdToLoad || gameIdToLoad.trim() === '') {
+    alert('試合IDを入力してください。');
+    return;
+  }
+
+  // 既存のリスナーがもし残っていれば、必ず停止する
+  if (firebaseListener) {
+    stopWatching(firebaseListener);
+  }
+
+  alert(`試合ID: ${gameIdToLoad} のデータを読み込みます...`);
+
+  const newListener = watchGameState(gameIdToLoad, (doc) => {
+    if (doc.exists()) {
+      // ドキュメントが存在する場合、データを取得してStateを更新
+      const data = doc.data();
+      
+      // State更新
+      if (data.opponentTeam) setOpponentTeam(data.opponentTeam);
+      if (data.isHomeTeam !== undefined) setIsHomeTeam(data.isHomeTeam);
+      if (data.currentInning) setCurrentInning(data.currentInning);
+      if (data.currentTeamBatting) setCurrentTeamBatting(data.currentTeamBatting);
+      if (data.outCount !== undefined) setOutCount(data.outCount);
+      if (data.bases) setBases(data.bases);
+      if (data.homeScore) setHomeScore(data.homeScore);
+      if (data.awayScore) setAwayScore(data.awayScore);
+      if (data.timeline) setTimeline(data.timeline);
+      if (data.currentBatter) setCurrentBatter(data.currentBatter);
+      if (data.customBatter) setCustomBatter(data.customBatter);
+      if (data.useCustomBatter !== undefined) setUseCustomBatter(data.useCustomBatter);
+      if (data.gameStartDate) setGameStartDate(data.gameStartDate);
+      
+      // モードに応じて最終的な画面状態を決定
+      if (mode === 'watch') {
+        setGameId(gameIdToLoad);
+        setIsGameCreator(false);
+        setGameState('watching');
+      } else if (mode === 'resume') {
+        setGameId(gameIdToLoad);
+        setIsGameCreator(true); // 記録者として設定
+        setGameState('playing');  // 入力画面へ
+        alert(`試合ID: ${gameIdToLoad} の記録を再開しました。`);
+      }
+    } else {
+      // ドキュメントが存在しない場合
+      alert('指定された試合IDが見つかりませんでした。');
+      returnToSetup(); // セットアップ画面に戻す
+    }
+  });
+
+  // 新しいリスナーをStateに保存
+  setFirebaseListener(newListener);
+};
+
+
       // Firebaseから全試合データを取得する関数
     const handleFetchFirebaseGames = async () => {
     setIsLoading(true);
@@ -698,39 +707,7 @@ const SoftballScoreApp = () => {
     }
   };
 
-  // App.js 内に追加
-const resumeGame = () => {
-  if (!resumeGameId) {
-    alert('継続する試合のIDを入力してください。');
-    return;
-  }
-  
-  // 既存の観戦ロジックを流用してゲームデータを取得・監視
-  const unsubscribe = watchGameState(resumeGameId, (data) => {
-    // 取得したデータでStateを更新
-    if (data.opponentTeam) setOpponentTeam(data.opponentTeam);
-    if (data.isHomeTeam !== undefined) setIsHomeTeam(data.isHomeTeam);
-    if (data.currentInning) setCurrentInning(data.currentInning);
-    if (data.currentTeamBatting) setCurrentTeamBatting(data.currentTeamBatting);
-    if (data.outCount !== undefined) setOutCount(data.outCount);
-    if (data.bases) setBases(data.bases);
-    if (data.homeScore) setHomeScore(data.homeScore);
-    if (data.awayScore) setAwayScore(data.awayScore);
-    if (data.timeline) setTimeline(data.timeline);
-    if (data.currentBatter) setCurrentBatter(data.currentBatter);
-    if (data.customBatter) setCustomBatter(data.customBatter);
-    if (data.useCustomBatter !== undefined) setUseCustomBatter(data.useCustomBatter);
-    if (data.gameStartDate) setGameStartDate(data.gameStartDate);
-  });
-  
-  // 重要な設定
-  setGameId(resumeGameId);       // 現在の試合IDをセット
-  setIsGameCreator(true);      // あなたを記録者として設定
-  setGameState('playing');     // 試合入力画面に遷移
-  // setFirebaseListener(unsubscribe); // 必要に応じて監視停止処理も設定
-  
-  alert(`試合ID: ${resumeGameId} の記録を再開します。`);
-};
+
 
 // 接続を解除してセットアップ画面に戻るための新しい関数
 const returnToSetup = () => {
@@ -832,10 +809,7 @@ const returnToSetup = () => {
 
               return (
                 <div key={game.id} className="bg-gray-50 hover:bg-gray-100 p-3 rounded-lg transition-colors cursor-pointer"
-                     onClick={() => {
-                       setWatchingGameId(game.id);
-                       startWatchingFromId(game.id); // 既存の観戦開始関数を再利用
-                     }}>
+                     onClick={() => loadGame(game.id, 'watch')}>
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-sm text-gray-600">
                       {new Date(game.createdAt).toLocaleDateString()}
@@ -917,7 +891,7 @@ const returnToSetup = () => {
         maxLength={6}
       />
       <button
-        onClick={startWatchingFromId}
+        onClick={() => loadGame(watchingGameId, 'watch')}
         className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
       >
         <Eye className="h-5 w-5" />
@@ -950,7 +924,7 @@ const returnToSetup = () => {
         maxLength={6}
       />
       <button
-        onClick={resumeGame}
+        onClick={() => loadGame(resumeGameId, 'resume')}
         className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
       >
         <span>速報を継続</span>

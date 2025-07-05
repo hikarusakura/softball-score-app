@@ -39,14 +39,11 @@ export const saveGameState = async (gameId, gameState) => {
 // ゲーム状態を監視する関数
 export const watchGameState = (gameId, callback) => {
   const gameRef = doc(db, 'games', gameId);
-  // onSnapshotで変更をリアルタイムに監視し、unsubscribe関数を返す
   const unsubscribe = onSnapshot(gameRef, (doc) => {
-    const data = doc.data();
-    if (data) {
-      callback(data);
-    }
+    // データだけでなく、docオブジェクト全体をコールバックに渡す
+    callback(doc);
   });
-  return unsubscribe; // 後でリスナーを停止するために返す
+  return unsubscribe;
 };
 
 // リスナーを停止する関数
