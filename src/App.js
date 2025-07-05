@@ -622,6 +622,50 @@ const SoftballScoreApp = () => {
     setFreeComment('');
   };
 
+// App.js に追加
+const finalConnectionTest = () => {
+  console.log("【最終テスト】テストを開始します。");
+
+  // Firebaseコンソールで存在が確認できている試合IDを直接書き込みます
+  const testGameId = "1S6NJA"; 
+  if (!testGameId) {
+    alert("コード内のtestGameIdを、存在するIDに書き換えてください。");
+    return;
+  }
+
+  console.log(`【最終テスト】ID: ${testGameId} で onSnapshot を呼び出します。`);
+
+  try {
+    const gameRef = doc(db, 'games', testGameId);
+    
+    onSnapshot(gameRef,
+      (doc) => {
+        // このコールバックが一度でも実行されれば、接続は成功している
+        console.log("【最終テスト】onSnapshotのコールバックが実行されました！");
+        if (doc.exists()) {
+          console.log("【最終テスト】ドキュメントは存在します。データ:", doc.data());
+          alert("テスト成功：Firebaseとのリアルタイム接続が確立できました！");
+          setGameState('watching'); // 画面遷移を試みる
+        } else {
+          console.log("【最終テスト】ドキュメントが存在しません。");
+          alert("テスト失敗：指定したIDのドキュメントが見つかりません。");
+        }
+      },
+      (error) => {
+        // エラーが発生した場合
+        console.error("【最終テスト】onSnapshotでエラーが発生しました:", error);
+        alert("テスト失敗：リアルタイム接続中にエラーが発生しました。");
+      }
+    );
+  } catch (e) {
+    // onSnapshotを呼び出す前の同期的なエラー
+    console.error("【最終テスト】onSnapshotの呼び出し自体でエラーが発生しました:", e);
+    alert("テスト失敗：予期せぬエラーです。");
+  }
+};
+
+
+
   const loadGame = (id, mode = 'watch') => {
   const gameIdToLoad = id;
   console.log(`[App.js] loadGame が呼び出されました。ID: ${gameIdToLoad},モード: ${mode}`); // ログ追加
@@ -902,6 +946,13 @@ const returnToSetup = () => {
   className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-4 rounded-lg"
 >
   Firebase接続テスト
+</button>
+
+<button
+  onClick={finalConnectionTest}
+  className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-lg mt-2"
+>
+  最終接続テストを実行
 </button>
 
   
