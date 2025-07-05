@@ -18,10 +18,7 @@ const firebaseConfig = {
 // Firebaseアプリを初期化
 const app = initializeApp(firebaseConfig);
 
-// 1. Realtime Databaseを初期化 (既存の機能用)
-const database = getDatabase(app);
-
-// 2. Firestoreを初期化し、「db」としてexport (新しい機能用)
+// Firestoreを初期化し、「db」としてexport
 export const db = getFirestore(app);
 
 // ゲーム状態を保存する関数
