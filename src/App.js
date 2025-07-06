@@ -611,16 +611,8 @@ const SoftballScoreApp = () => {
     setPastGames(prev => [gameData, ...prev]);
 
     // ゲーム状態をリセット
+    resetGameStates();
     setGameState('setup');
-    setCurrentInning(1);
-    setCurrentTeamBatting('away');
-    setOutCount(0);
-    setBases({ first: false, second: false, third: false });
-    setHomeScore(Array(6).fill(null));
-    setAwayScore(Array(6).fill(null));
-    setTimeline([]);
-    setOpponentTeam('');
-    setFreeComment('');
   };
 
 
@@ -683,6 +675,30 @@ const loadGame = (id, mode = 'watch') => {
   firebaseListener.current = newListener;
 };
 
+// すべての試合情報をリセットする関数
+const resetGameStates = () => {
+  setOpponentTeam('');
+  setIsHomeTeam(true);
+  setCurrentInning(1);
+  setCurrentTeamBatting('away');
+  setOutCount(0);
+  setBases({ first: false, second: false, third: false });
+  setHomeScore(Array(6).fill(null));
+  setAwayScore(Array(6).fill(null));
+  setTimeline([]);
+  setCurrentBatter('');
+  setCustomBatter('');
+  setUseCustomBatter(false);
+  setFreeComment('');
+  setGameStartDate(null);
+  setGameId(null);
+  setIsGameCreator(false);
+  setShareUrl('');
+  setWatchingGameId('');
+  setResumeGameId('');
+  setSelectedGameTimeline(null);
+};
+
 
       // Firebaseから全試合データを取得する関数
     const handleFetchFirebaseGames = async () => {
@@ -720,6 +736,9 @@ const returnToSetup = () => {
     stopWatching(firebaseListener.current);
     firebaseListener.current = null;
   }
+  // すべての試合Stateをリセット
+  resetGameStates();
+  // セットアップ画面に遷移
   setGameState('setup');
 };
 
