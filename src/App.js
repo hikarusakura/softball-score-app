@@ -826,9 +826,9 @@ const returnToSetup = () => {
                   </div>
                   <div className="text-center text-lg mt-1">
                     <span>{game.isHomeTeam ? game.opponentTeam : '若葉'}</span>
-                    <span className="font-bold mx-2">{game.isHomeTeam ? totalAwayScore : totalHomeScore}</span>
+                    <span className="font-bold mx-2">{totalAwayScore}</span>
                     <span>-</span>
-                    <span className="font-bold mx-2">{game.isHomeTeam ? totalHomeScore : totalAwayScore}</span>
+                    <span className="font-bold mx-2">{totalHomeScore}</span>
                     <span>{game.isHomeTeam ? '若葉' : game.opponentTeam}</span>
                   </div>
                 </div>
