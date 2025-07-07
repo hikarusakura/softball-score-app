@@ -37,6 +37,7 @@ const SoftballScoreApp = () => {
   const [isLoading, setIsLoading] = useState(false);      // データ読み込み中の状態管理
   const [gameStartDate, setGameStartDate] = useState(null);
   const [resumeGameId, setResumeGameId] = useState('');
+  const [history, setHistory] = useState([]); //履歴を保存するためのState
 
   // 自由記入欄の状態
   const [freeComment, setFreeComment] = useState('');
@@ -333,6 +334,7 @@ const SoftballScoreApp = () => {
 
   // 得点追加
   const addRun = () => {
+    saveStateToHistory();
     const teamName = getCurrentTeamName();
 
     if ((isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away')) {
@@ -371,6 +373,7 @@ const SoftballScoreApp = () => {
 
   // アウトカウント増加
   const addOut = () => {
+    saveStateToHistory();
     const newOutCount = outCount + 1;
     setOutCount(newOutCount);
     addToTimeline(`アウト！ (${newOutCount}アウト)`);
@@ -382,6 +385,7 @@ const SoftballScoreApp = () => {
 
   // イニング変更
   const changeInning = () => {
+    saveStateToHistory();
     // 得点が入らなかった場合、スコア表に0を記録
     if ((isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away')) {
       // 若葉の攻撃終了
@@ -470,6 +474,7 @@ const SoftballScoreApp = () => {
 
   // 自由コメント投稿
   const postFreeComment = () => {
+    saveStateToHistory();
     if (!freeComment.trim()) {
       alert('コメントを入力してください');
       return;
@@ -480,6 +485,7 @@ const SoftballScoreApp = () => {
 
   // 打席結果処理
   const handleBattingResult = (result) => {
+    saveStateToHistory();
     const batterName = useCustomBatter ? customBatter : currentBatter;
     if (!batterName) {
       alert('打者名を選択または入力してください');
@@ -575,6 +581,7 @@ const SoftballScoreApp = () => {
 
   // ベース状態切り替え
   const toggleBase = (base) => {
+    saveStateToHistory();
     setBases(prev => ({
       ...prev,
       [base]: !prev[base]
@@ -610,6 +617,42 @@ const handleDeleteFirebaseGame = async (gameIdToDelete) => {
   }
 };
 
+// 変更前の状態を履歴に保存する関数
+const saveStateToHistory = () => {
+  const currentState = {
+    outCount,
+    homeScore: [...homeScore],
+    awayScore: [...awayScore],
+    bases: { ...bases },
+    timeline: [...timeline],
+    // 元に戻したい他のStateがあればここに追加
+  };
+  // 履歴の最大数を10件に制限（メモリを使いすぎないため）
+  setHistory(prev => [...prev, currentState].slice(-10));
+};
+
+// 「元に戻す」を実行する関数
+const undoLastAction = () => {
+  if (history.length === 0) {
+    alert("元に戻せる操作がありません。");
+    return;
+  }
+
+  // 履歴の最後の状態を取り出す
+  const lastState = history[history.length - 1];
+
+  // 取り出した状態でStateを復元する
+  setOutCount(lastState.outCount);
+  setHomeScore(lastState.homeScore);
+  setAwayScore(lastState.awayScore);
+  setBases(lastState.bases);
+  setTimeline(lastState.timeline);
+
+  // 使用した履歴を配列から削除する
+  setHistory(prev => prev.slice(0, -1));
+  
+  alert("直前の操作を取り消しました。");
+};
 
   // 試合終了
   const endGame = () => {
@@ -886,7 +929,7 @@ const returnToSetup = () => {
         onClick={() => handleDeleteFirebaseGame(game.id)}
         className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-3 rounded-lg transition-colors"
       >
-        この試合を削除
+        削除
       </button>
     </div>
                 </div>
@@ -1373,6 +1416,13 @@ const returnToSetup = () => {
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-bold text-gray-800">📝 スコア入力</h2>
             <div className="flex space-x-2">
+              <button
+               onClick={undoLastAction}
+               disabled={history.length === 0}
+               className="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-xs transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+               元に戻す
+              </button>
               <button
                 onClick={forceChange}
                 className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs transition-colors"
