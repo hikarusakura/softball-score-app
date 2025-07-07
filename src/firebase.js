@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 // Realtime Database用のimportは不要になるのでコメントアウトまたは削除
 // import { getDatabase, ref, set, onValue, off } from 'firebase/database';
 // Firestoreで必要な命令を追加
-import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, orderBy, query, getDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, orderBy, query, getDoc, deleteDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAz0Lm3rKe5W9r0R_Efye9sIkT7WDQwYvo",
@@ -99,4 +99,16 @@ export const getAllGames = async () => {
   }
 };
 
-
+// 指定されたIDの試合ドキュメントをFirebaseから削除する関数
+export const deleteGameFromFirebase = async (gameId) => {
+  try {
+    const gameRef = doc(db, 'games', gameId);
+    await deleteDoc(gameRef);
+    console.log(`ドキュメント ${gameId} が正常に削除されました。`);
+    return true; // 成功したことを示すためにtrueを返す
+  } catch (error) {
+    console.error("ドキュメントの削除中にエラーが発生しました:", error);
+    alert("データの削除に失敗しました。");
+    return false; // 失敗したことを示すためにfalseを返す
+  }
+};

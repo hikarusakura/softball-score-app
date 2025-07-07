@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play,  Trophy,  Eye, ChevronLeft,  Copy, Wifi, WifiOff } from 'lucide-react';
-import { db, saveGameState, watchGameState, stopWatching,  generateGameId, getAllGames, testReadGame, finalOnSnapshotTest } from './firebase';
+import { db, saveGameState, watchGameState, stopWatching,  generateGameId, getAllGames, testReadGame, finalOnSnapshotTest, deleteGameFromFirebase } from './firebase';
 import { doc, onSnapshot } from "firebase/firestore";
 import { CSVLink } from 'react-csv';
 
@@ -581,6 +581,36 @@ const SoftballScoreApp = () => {
     }));
   };
 
+// 削除処理の関数
+
+const handleDeleteFirebaseGame = async (gameIdToDelete) => {
+  // パスワードの入力を求める
+  const password = prompt("削除するにはパスワードを入力してください：");
+  
+  // パスワードがキャンセルされた場合は何もしない
+  if (password === null) {
+    return;
+  }
+  
+  // パスワードが間違っている場合
+  if (password !== 'wakaba') {
+    alert('パスワードが違います。');
+    return;
+  }
+  
+  // 最終確認
+  if (window.confirm(`試合ID: ${gameIdToDelete} のデータを完全に削除します。\nこの操作は元に戻せません。よろしいですか？`)) {
+    const success = await deleteGameFromFirebase(gameIdToDelete);
+    
+    // 削除が成功した場合、画面のリストからも削除する
+    if (success) {
+      setFirebaseGames(prevGames => prevGames.filter(game => game.id !== gameIdToDelete));
+      alert('試合データを削除しました。');
+    }
+  }
+};
+
+
   // 試合終了
   const endGame = () => {
     const finalHomeScore = homeScore.reduce((a, b) => (a || 0) + (b || 0), 0);
@@ -817,7 +847,7 @@ const returnToSetup = () => {
             <ChevronLeft className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Firebase 保存済み試合一覧</h1>
+            <h1 className="text-2xl font-bold text-gray-800">過去の試合一覧</h1>
             <p className="text-gray-600">試合IDをクリックすると観戦モードで開きます</p>
           </div>
         </div>
@@ -850,6 +880,15 @@ const returnToSetup = () => {
                     <span className="font-bold mx-2">{totalHomeScore}</span>
                     <span>{game.isHomeTeam ? '若葉' : game.opponentTeam}</span>
                   </div>
+                  {/* 削除ボタンのエリア */}
+                  <div className="text-right mt-2 border-t pt-2">
+      <button
+        onClick={() => handleDeleteFirebaseGame(game.id)}
+        className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-3 rounded-lg transition-colors"
+      >
+        この試合を削除
+      </button>
+    </div>
                 </div>
               );
             })
