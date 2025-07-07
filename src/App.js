@@ -371,17 +371,23 @@ const SoftballScoreApp = () => {
     addToTimeline(`得点！ (${teamName})`);
   };
 
-  // アウトカウント増加
-  const addOut = () => {
-    saveStateToHistory();
-    const newOutCount = outCount + 1;
-    setOutCount(newOutCount);
-    addToTimeline(`アウト！ (${newOutCount}アウト)`);
+  // アウトカウントを処理する中心的な関数
+const processOut = () => {
+  const newOutCount = outCount + 1;
+  setOutCount(newOutCount);
+  if (newOutCount >= 3) {
+    changeInning();
+  }
+  return newOutCount; // 後のタイムライン表示で使うために、新しいアウトカウントを返す
+};
 
-    if (newOutCount >= 3) {
-      changeInning();
-    }
-  };
+  // アウトカウント増加
+const addOut = () => {
+  saveStateToHistory();
+  const newOutCount = processOut();
+  addToTimeline(`アウト！ (${newOutCount}アウト)`);
+};
+
 
   // イニング変更
   const changeInning = () => {
@@ -494,6 +500,7 @@ const SoftballScoreApp = () => {
 
     let message = `${batterName}: ${result}`;
     let runsScored = 0;
+    let isAnOut = false; // ★アウトになる打席結果かを判断するフラグ
 
     // 結果に応じた処理
     switch (result) {
@@ -501,9 +508,9 @@ const SoftballScoreApp = () => {
       case 'ゴロ':
       case 'ライナー':
       case 'フライ':
-        addOut();
+        isAnOut = true; // ★アウトフラグを立てるだけにする
         break;
-        
+
       case 'ヒット':
         // ランナー進塁処理（簡略化）
         if (bases.third) runsScored++;
@@ -578,7 +585,14 @@ const SoftballScoreApp = () => {
       message += ` (${runsScored}点獲得！)`;
     }
 
+    // 1. 先に打席結果をタイムラインに追加する
     addToTimeline(message);
+
+    // 2. もしアウトになる打席結果だった場合、その後にアウト処理を行う
+    if (isAnOut) {
+      const newOutCount = processOut();
+      addToTimeline(`アウト！ (${newOutCount}アウト)`);
+    }
 
     // 入力フィールドをリセット
     setCurrentBatter('');
