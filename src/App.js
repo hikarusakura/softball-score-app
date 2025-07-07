@@ -497,6 +497,13 @@ const SoftballScoreApp = () => {
 
     // 結果に応じた処理
     switch (result) {
+      case '三振':
+      case 'ゴロ':
+      case 'ライナー':
+      case 'フライ':
+        addOut();
+        break;
+        
       case 'ヒット':
         // ランナー進塁処理（簡略化）
         if (bases.third) runsScored++;
