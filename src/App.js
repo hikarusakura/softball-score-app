@@ -39,6 +39,7 @@ const SoftballScoreApp = () => {
   const [resumeGameId, setResumeGameId] = useState('');
   const [history, setHistory] = useState([]); //履歴を保存するためのState
   const [selectedPosition, setSelectedPosition] = useState(null);//ポジション名の対応表
+  const [tournamentName, setTournamentName] = useState('');//大会名
 
   // ポジション対応表
 const positionMap = {
@@ -163,6 +164,7 @@ const positionMap = {
     if (!gameId || !isGameCreator) return;
 
     const currentState = {
+    tournamentName,
     opponentTeam,
     isHomeTeam,
     currentInning,
@@ -188,6 +190,7 @@ const positionMap = {
     setIsConnected(false);
   }
 }, [
+  tournamentName,
   gameId, isGameCreator, opponentTeam, isHomeTeam, currentInning, 
   currentTeamBatting, outCount, bases, homeScore, awayScore, 
   timeline, currentBatter, customBatter, useCustomBatter, gameStartDate
@@ -724,6 +727,7 @@ const undoLastAction = () => {
   
 
     const gameData = {
+      tournamentName: tournamentName,
       gameId: gameId,
       date: new Date().toLocaleDateString(),
       opponentTeam: opponentTeam,
@@ -763,6 +767,7 @@ const loadGame = (id, mode = 'watch') => {
         const data = doc.data();
         
         // 防御的なデータ更新
+        setTournamentName(data.tournamentName || '');
         setOpponentTeam(data.opponentTeam || '');
         setIsHomeTeam(data.isHomeTeam === true);
         setCurrentInning(typeof data.currentInning === 'number' ? data.currentInning : 1);
@@ -805,6 +810,7 @@ const loadGame = (id, mode = 'watch') => {
 
 // すべての試合情報をリセットする関数
 const resetGameStates = () => {
+  setTournamentName('');
   setOpponentTeam('');
   setIsHomeTeam(true);
   setCurrentInning(1);
@@ -1010,16 +1016,28 @@ const returnToSetup = () => {
 
           <div className="space-y-6">
             {/* --- ① 試合開始 --- */}
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-2">対戦相手チーム名</label>
-    <input
-      type="text"
-      value={opponentTeam}
-      onChange={(e) => setOpponentTeam(e.target.value)}
-      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      placeholder="チーム名を入力"
-    />
-  </div>
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    大会名（任意）
+  </label>
+  <input
+    type="text"
+    value={tournamentName}
+    onChange={(e) => setTournamentName(e.target.value)}
+    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    placeholder="大会名を入力"
+  />
+</div>
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">対戦相手チーム名</label>
+  <input
+    type="text"
+    value={opponentTeam}
+    onChange={(e) => setOpponentTeam(e.target.value)}
+    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    placeholder="チーム名を入力"
+  />
+</div>
   <div>
     <label className="flex items-center space-x-3">
       <input
@@ -1210,7 +1228,10 @@ const returnToSetup = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-3">
               <h1 className="text-lg font-bold">⚾ 速報中 ⚾</h1>
-              <p className="text-xs text-gray-300">試合日時: {formatDate(gameStartDate)}</p>
+              <p className="text-xs text-gray-300">
+  試合日時: {formatDate(gameStartDate)}
+  {tournamentName && ` (${tournamentName})`}
+</p>
               <p className="text-xs truncate">若葉 vs {opponentTeam}</p>
             </div>
 
