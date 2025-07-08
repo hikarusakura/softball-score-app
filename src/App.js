@@ -1025,25 +1025,21 @@ const returnToSetup = () => {
           <div className="space-y-6">
             {/* --- ① 試合開始 --- */}
 <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    大会名（任意）
-  </label>
   <input
     type="text"
     value={tournamentName}
     onChange={(e) => setTournamentName(e.target.value)}
     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-    placeholder="大会名を入力"
+    placeholder="大会名を入力（任意）"
   />
 </div>
 <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">対戦相手チーム名</label>
   <input
     type="text"
     value={opponentTeam}
     onChange={(e) => setOpponentTeam(e.target.value)}
     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-    placeholder="チーム名を入力"
+    placeholder="対戦相手チーム名を入力(必須)"
   />
 </div>
   <div>
@@ -1065,9 +1061,20 @@ const returnToSetup = () => {
     <span>試合開始（新規記録）</span>
   </button>
 
+  {/* --- ② 過去の試合を閲覧 --- */}
+  <div className="border-t border-gray-200 pt-6">
+    <button
+      onClick={handleFetchFirebaseGames}
+      disabled={isLoading}
+      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300"
+    >
+      <span>{isLoading ? '読込中...' : '過去の試合を閲覧'}</span>
+    </button>
+  </div>
+  
 
   
-  {/* --- ② 観戦開始 --- */}
+  {/* --- ③ 観戦開始 --- */}
   <div className="border-t border-gray-200 pt-6">
     <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
     <div className="space-y-3">
@@ -1089,17 +1096,7 @@ const returnToSetup = () => {
     </div>
   </div>
 
-  {/* --- ③ 過去の試合を閲覧 --- */}
-  <div className="border-t border-gray-200 pt-6">
-    <button
-      onClick={handleFetchFirebaseGames}
-      disabled={isLoading}
-      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300"
-    >
-      <span>{isLoading ? '読込中...' : '過去の試合を閲覧'}</span>
-    </button>
-  </div>
-  
+
   {/* --- ④ 速報継続 --- */}
   <div className="border-t border-gray-200 pt-6">
     <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">記録の再開</h3>
