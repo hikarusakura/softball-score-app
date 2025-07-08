@@ -611,13 +611,16 @@ const addOut = () => {
       message += ` (${runsScored}点獲得！)`;
     }
 
+    // もしアウトになるプレーなら、先に次のアウトカウントを計算しておく
+    const nextOutCount = isAnOut ? outCount + 1 : outCount;
+
     // 1. 先に打席結果をタイムラインに追加する
-    addToTimeline(message);
+    addToTimeline(message, { outCount: nextOutCount });
 
     // 2. もしアウトになる打席結果だった場合、その後にアウト処理を行う
     if (isAnOut) {
     const { newOutCount, inningShouldChange } = processOut();
-    addToTimeline(`アウト！ (${newOutCount}アウト)`);
+    addToTimeline(`アウト！ (${newOutCount}アウト)`, { outCount: newOutCount });
     // 3アウトになった場合は、タイムライン記録後にチェンジ
     if (inningShouldChange) {
       changeInning();
