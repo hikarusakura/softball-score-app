@@ -38,6 +38,20 @@ const SoftballScoreApp = () => {
   const [gameStartDate, setGameStartDate] = useState(null);
   const [resumeGameId, setResumeGameId] = useState('');
   const [history, setHistory] = useState([]); //履歴を保存するためのState
+  const [selectedPosition, setSelectedPosition] = useState(null);//ポジション名の対応表
+
+  // ポジション対応表
+const positionMap = {
+  '投': 'ピッチャー',
+  '捕': 'キャッチャー',
+  '一': 'ファースト',
+  '二': 'セカンド',
+  '三': 'サード',
+  '遊': 'ショート',
+  '左': 'レフト',
+  '中': 'センター',
+  '右': 'ライト'
+};
 
   // 自由記入欄の状態
   const [freeComment, setFreeComment] = useState('');
@@ -498,7 +512,16 @@ const addOut = () => {
       return;
     }
 
-    let message = `${batterName}: ${result}`;
+    let resultText = result;
+  // ポジションが選択されていれば、結果のテキストと結合する
+  if (selectedPosition && positionMap[selectedPosition]) {
+    // 'ゴロ' や 'フライ' などの結果の場合のみポジション名を付ける
+    if (['ゴロ', 'ライナー', 'フライ', 'バント', '三振'].includes(result)) {
+      resultText = positionMap[selectedPosition] + result;
+    }
+  }
+  let message = `${batterName}: ${resultText}`;
+
     let runsScored = 0;
     let isAnOut = false; // ★アウトになる打席結果かを判断するフラグ
 
@@ -598,6 +621,7 @@ const addOut = () => {
     setCurrentBatter('');
     setCustomBatter('');
     setUseCustomBatter(false);
+    setSelectedPosition(null);
   };
 
   // ベース状態切り替え
@@ -1511,6 +1535,25 @@ const returnToSetup = () => {
 
           {/* 打席結果ボタン */}
           <div className="mb-3">
+            <label className="block text-xs font-medium text-gray-700 mb-1">ポジション（任意）</label>
+  {/* ↓↓ ポジションボタンをここに追加 ↓↓ */}
+  <div className="grid grid-cols-9 gap-1">
+    {Object.keys(positionMap).map((pos) => (
+      <button
+        key={pos}
+        onClick={() => setSelectedPosition(pos)}
+        className={`px-2 py-1 text-white rounded-lg text-xs transition-colors ${
+          selectedPosition === pos ? 'bg-blue-700 font-bold' : 'bg-blue-500 hover:bg-blue-600'
+        }`}
+      >
+        {pos}
+      </button>
+    ))}
+  </div>
+
+  {/* 区切り線 */}
+  <hr className="my-2 border-gray-300" />
+
             <label className="block text-xs font-medium text-gray-700 mb-1">打席結果</label>
             <div className="grid grid-cols-4 gap-1">
               {['ヒット', '2ベース', '3ベース', 'ホームラン', '三振', '振り逃げ', 'ゴロ', 'ライナー', 'フライ', 'バント', '死球', '四球'].map((result) => (
