@@ -401,7 +401,7 @@ const processOut = () => {
 const addOut = () => {
   saveStateToHistory();
   const { newOutCount, inningShouldChange } = processOut();
-  addToTimeline(`アウト！ (${newOutCount}アウト)`);
+  addToTimeline(`アウト！ (${newOutCount}アウト)`, { outCount: newOutCount });
   // 3アウトになった場合は、タイムライン記録後にチェンジ
   if (inningShouldChange) {
     changeInning();
@@ -969,11 +969,19 @@ const returnToSetup = () => {
                 <div key={game.id} className="bg-gray-50 hover:bg-gray-100 p-3 rounded-lg transition-colors cursor-pointer"
                      onClick={() => loadGame(game.id, 'watch')}>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-gray-600">
-                      {new Date(game.createdAt).toLocaleDateString()}
-                    </span>
-                    <span className="font-medium text-sm">vs {game.opponentTeam}</span>
-                  </div>
+  <div className="flex items-center space-x-2">
+    <span className="text-sm text-gray-600">
+      {new Date(game.createdAt).toLocaleDateString()}
+    </span>
+    {/* 大会名が存在する場合のみバッジとして表示 */}
+    {game.tournamentName && (
+      <span className="text-xs text-white bg-blue-500 px-2 py-0.5 rounded-full">
+        {game.tournamentName}
+      </span>
+    )}
+  </div>
+  <span className="font-medium text-sm">vs {game.opponentTeam}</span>
+</div>
                   <div className="text-center font-bold text-blue-600">
                     {game.id}
                   </div>
@@ -1367,7 +1375,10 @@ const returnToSetup = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-3">
             <h1 className="text-lg font-bold">⚾ 若葉試合速報 ⚾</h1>
-            <p className="text-xs text-gray-300">試合日時: {formatDate(gameStartDate)}</p>
+            <p className="text-xs text-gray-300">
+  試合日時: {formatDate(gameStartDate)}
+  {tournamentName && ` (${tournamentName})`}
+</p>
             <p className="text-xs truncate">若葉 vs {opponentTeam}</p>
           </div>
 
