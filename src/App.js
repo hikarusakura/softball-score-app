@@ -389,17 +389,20 @@ const positionMap = {
 const processOut = () => {
   const newOutCount = outCount + 1;
   setOutCount(newOutCount);
-  if (newOutCount >= 3) {
-    changeInning();
-  }
-  return newOutCount; // 後のタイムライン表示で使うために、新しいアウトカウントを返す
+  // 3アウトになったかどうかを boolean で返す
+  const inningShouldChange = newOutCount >= 3;
+  return { newOutCount, inningShouldChange };
 };
 
   // アウトカウント増加
 const addOut = () => {
   saveStateToHistory();
-  const newOutCount = processOut();
+  const { newOutCount, inningShouldChange } = processOut();
   addToTimeline(`アウト！ (${newOutCount}アウト)`);
+  // 3アウトになった場合は、タイムライン記録後にチェンジ
+  if (inningShouldChange) {
+    changeInning();
+  }
 };
 
 
@@ -516,7 +519,7 @@ const addOut = () => {
   // ポジションが選択されていれば、結果のテキストと結合する
   if (selectedPosition && positionMap[selectedPosition]) {
     // 'ゴロ' や 'フライ' などの結果の場合のみポジション名を付ける
-    if (['ゴロ', 'ライナー', 'フライ', 'バント', '三振'].includes(result)) {
+    if (['ゴロ', 'ライナー', 'フライ', 'バント'].includes(result)) {
       resultText = positionMap[selectedPosition] + result;
     }
   }
@@ -613,9 +616,13 @@ const addOut = () => {
 
     // 2. もしアウトになる打席結果だった場合、その後にアウト処理を行う
     if (isAnOut) {
-      const newOutCount = processOut();
-      addToTimeline(`アウト！ (${newOutCount}アウト)`);
+    const { newOutCount, inningShouldChange } = processOut();
+    addToTimeline(`アウト！ (${newOutCount}アウト)`);
+    // 3アウトになった場合は、タイムライン記録後にチェンジ
+    if (inningShouldChange) {
+      changeInning();
     }
+  }
 
     // 入力フィールドをリセット
     setCurrentBatter('');
