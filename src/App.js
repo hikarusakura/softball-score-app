@@ -1037,7 +1037,9 @@ const movePlayerDown = (index) => {
                 <div className="absolute bottom-0 left-1/2 w-3 h-3 -ml-1.5 -mb-1.5 rounded-full border-2 border-white bg-red-600"></div>
               </div>
             </div>
-            <div className="bg-white bg-opacity-10 rounded-lg p-3 max-h-48 overflow-y-auto">
+            <div className={`bg-white bg-opacity-10 rounded-lg p-3 overflow-y-auto ${
+  isInputView ? 'max-h-48' : 'max-h-96'
+}`}>
               <h3 className="font-bold mb-2 text-center text-sm">⚡ タイムライン ⚡</h3>
               {timeline.length === 0 ? (
                 <p className="text-center text-gray-300 text-xs">まだプレイがありません</p>
