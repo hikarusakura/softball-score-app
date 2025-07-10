@@ -972,7 +972,7 @@ const movePlayerDown = (index) => {
             <div className="text-center mb-3">
               <div className="flex justify-center items-center space-x-1 text-yellow-300 text-xs">
                 <Eye className="h-4 w-4" />
-                <span>{0}</span>
+                <span>{viewCount}</span>
               </div>
               <h1 className="text-lg font-bold">⚾ 若葉試合速報 ⚾</h1>
               <p className="text-xs text-gray-300">
