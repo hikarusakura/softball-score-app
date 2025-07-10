@@ -579,6 +579,24 @@ const startGame = () => {
     }
   };
 
+
+  // 並び替え用の関数
+const movePlayerUp = (index) => {
+  if (index === 0) return; // 最初の選手は上に移動できない
+  const newPlayers = [...players];
+  const playerToMove = newPlayers.splice(index, 1)[0];
+  newPlayers.splice(index - 1, 0, playerToMove);
+  setPlayers(newPlayers);
+};
+
+const movePlayerDown = (index) => {
+  if (index === players.length - 1) return; // 最後の選手は下に移動できない
+  const newPlayers = [...players];
+  const playerToMove = newPlayers.splice(index, 1)[0];
+  newPlayers.splice(index + 1, 0, playerToMove);
+  setPlayers(newPlayers);
+};
+
   const handleAddPlayer = () => {
     if (!newPlayerName.trim()) {
       alert('追加する選手の名前を入力してください。');
@@ -588,7 +606,7 @@ const startGame = () => {
       alert('同じ名前の選手が既に存在します。');
       return;
     }
-    setPlayers(prev => [...prev, newPlayerName.trim()].sort());
+    setPlayers(prev => [...prev, newPlayerName.trim()]);
     setNewPlayerName('');
   };
 
@@ -759,13 +777,38 @@ const startGame = () => {
             <h2 className="text-lg font-semibold text-gray-800 mb-2">現在の選手リスト</h2>
             <div className="space-y-2 max-h-96 overflow-y-auto bg-gray-50 p-3 rounded-lg">
               {players.map((player, index) => (
-                <div key={index} className="flex justify-between items-center bg-white p-2 rounded-md shadow-sm">
-                  <span>{player}</span>
-                  <button onClick={() => handleDeletePlayer(player)} className="text-red-500 hover:text-red-700 font-bold">
-                    削除
-                  </button>
-                </div>
-              ))}
+  <div key={index} className="flex justify-between items-center bg-white p-2 rounded-md shadow-sm">
+    <span>{player}</span>
+    <div className="flex items-center space-x-2">
+      {/* 並び替えボタンエリア */}
+      <div className="flex flex-col">
+        <button 
+          onClick={() => movePlayerUp(index)} 
+          disabled={index === 0}
+          className="text-gray-500 hover:text-gray-800 disabled:opacity-25"
+          aria-label="上に移動"
+        >
+          ▲
+        </button>
+        <button 
+          onClick={() => movePlayerDown(index)} 
+          disabled={index === players.length - 1}
+          className="text-gray-500 hover:text-gray-800 disabled:opacity-25"
+          aria-label="下に移動"
+        >
+          ▼
+        </button>
+      </div>
+      {/* 削除ボタン */}
+      <button
+        onClick={() => handleDeletePlayer(player)}
+        className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1 px-2 rounded-lg"
+      >
+        削除
+      </button>
+    </div>
+  </div>
+))}
             </div>
           </div>
         </div>
