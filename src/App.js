@@ -243,9 +243,9 @@ const startGame = () => {
     alert('対戦相手のチーム名を入力してください');
     return;
   }
-  // resetGameStates(); // ← この行を削除またはコメントアウトします
 
-  // 新しい試合のために、一部のStateは個別にリセットします
+  // 新しい試合のために、スコアやイニングなど試合進行に関わる情報のみリセットします。
+  // opponentTeam と tournamentName はリセットしないのがポイントです。
   setHomeScore(Array(6).fill(null));
   setAwayScore(Array(6).fill(null));
   setTimeline([]);
@@ -253,6 +253,10 @@ const startGame = () => {
   setCurrentInning(1);
   setOutCount(0);
   setBases({ first: false, second: false, third: false });
+  setCurrentBatter('');
+  setCustomBatter('');
+  setUseCustomBatter(false);
+  setSelectedPosition(null);
   
   const newGameId = generateGameId();
   const url = `${window.location.origin}${window.location.pathname}?gameId=${newGameId}`;
