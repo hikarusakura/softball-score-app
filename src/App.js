@@ -49,6 +49,7 @@ const SoftballScoreApp = () => {
   const firebaseListener = useRef(null);
   const [firebaseGames, setFirebaseGames] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [viewCount, setViewCount] = useState(0);
   const [history, setHistory] = useState([]);
 
   // --- ポジション対応表 ---
