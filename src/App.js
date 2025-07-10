@@ -1099,9 +1099,17 @@ const movePlayerDown = (index) => {
               <label className="block text-xs font-medium text-gray-700 mb-1">ポジション（任意）</label>
               <div className="grid grid-cols-9 gap-1">
                 {Object.keys(positionMap).map((pos) => (
-                  <button key={pos} onClick={() => setSelectedPosition(prevSelected => prevSelected === pos ? null : pos)} className={`px-2 py-1 text-white rounded-lg text-xs transition-colors ${selectedPosition === pos ? 'bg-blue-700 font-bold' : 'bg-blue-500 hover:bg-blue-600'}`}>
-                    {pos}
-                  </button>
+                  <button
+  key={pos}
+  onClick={() => setSelectedPosition(prevSelected => prevSelected === pos ? null : pos)}
+  className={`px-2 py-1 text-white rounded-lg text-xs transition-colors ${
+    selectedPosition === pos
+      ? 'bg-orange-500 font-bold ring-2 ring-white'
+      : 'bg-blue-500 hover:bg-blue-600'
+  }`}
+>
+  {pos}
+</button>
                 ))}
               </div>
               <hr className="my-2 border-gray-300" />
