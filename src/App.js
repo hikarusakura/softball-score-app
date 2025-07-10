@@ -157,6 +157,7 @@ const SoftballScoreApp = () => {
     const newListener = watchGameState(gameIdToLoad, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
+        setIsConnected(true);
         setTournamentName(data.tournamentName || '');
         setOpponentTeam(data.opponentTeam || '');
         setIsHomeTeam(data.isHomeTeam === true);
