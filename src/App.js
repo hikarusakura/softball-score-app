@@ -238,23 +238,34 @@ useEffect(() => {
     alert("直前の操作を取り消しました。");
   };
 
-  const startGame = () => {
-    if (!opponentTeam) {
-      alert('対戦相手のチーム名を入力してください');
-      return;
-    }
-    resetGameStates();
-    const newGameId = generateGameId();
-    const url = `${window.location.origin}${window.location.pathname}?gameId=${newGameId}`;
-    setGameStartDate(Date.now());
-    setGameId(newGameId);
-    setShareUrl(url);
-    setIsGameCreator(true);
-    setGameState('playing');
-    setCurrentTeamBatting('away');
-    addToTimeline(`試合開始！ゲームID: ${newGameId}`);
-    setShowShareDialog(true);
-  };
+const startGame = () => {
+  if (!opponentTeam) {
+    alert('対戦相手のチーム名を入力してください');
+    return;
+  }
+  // resetGameStates(); // ← この行を削除またはコメントアウトします
+
+  // 新しい試合のために、一部のStateは個別にリセットします
+  setHomeScore(Array(6).fill(null));
+  setAwayScore(Array(6).fill(null));
+  setTimeline([]);
+  setHistory([]);
+  setCurrentInning(1);
+  setOutCount(0);
+  setBases({ first: false, second: false, third: false });
+  
+  const newGameId = generateGameId();
+  const url = `${window.location.origin}${window.location.pathname}?gameId=${newGameId}`;
+  
+  setGameStartDate(Date.now());
+  setGameId(newGameId);
+  setShareUrl(url);
+  setIsGameCreator(true);
+  setGameState('playing');
+  setCurrentTeamBatting('away');
+  addToTimeline(`試合開始！ゲームID: ${newGameId}`);
+  setShowShareDialog(true);
+};
 
   const addToTimeline = (message, eventDetails = {}) => {
     const timestamp = new Date().toLocaleTimeString();
