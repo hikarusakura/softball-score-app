@@ -427,7 +427,7 @@ const SoftballScoreApp = () => {
     }
     let resultText = result;
     if (selectedPosition && positionMap[selectedPosition]) {
-      if (['ゴロ', 'ライナー', 'フライ', 'バント', '三振'].includes(result)) {
+      if (['ゴロ', 'ライナー', 'フライ', 'バント'].includes(result)) {
         resultText = positionMap[selectedPosition] + result;
       }
     }
@@ -473,8 +473,39 @@ const SoftballScoreApp = () => {
         break;
     }
     if (runsScored > 0) {
-      // ... (得点追加のロジック、長いので省略)
+      const teamName = getCurrentTeamName();
+      if ((isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away')) {
+        if (isHomeTeam) {
+          setHomeScore(prev => {
+            const newScore = [...prev];
+            newScore[currentInning - 1] = (newScore[currentInning - 1] || 0) + runsScored;
+            return newScore;
+          });
+        } else {
+          setAwayScore(prev => {
+            const newScore = [...prev];
+            newScore[currentInning - 1] = (newScore[currentInning - 1] || 0) + runsScored;
+            return newScore;
+          });
+        }
+      } else {
+        if (isHomeTeam) {
+          setAwayScore(prev => {
+            const newScore = [...prev];
+            newScore[currentInning - 1] = (newScore[currentInning - 1] || 0) + runsScored;
+            return newScore;
+          });
+        } else {
+          setHomeScore(prev => {
+            const newScore = [...prev];
+            newScore[currentInning - 1] = (newScore[currentInning - 1] || 0) + runsScored;
+            return newScore;
+          });
+        }
+      }
+      message += ` (${runsScored}点獲得！)`;
     }
+    
     const nextOutCount = isAnOut ? outCount + 1 : outCount;
     addToTimeline(message, { outCount: nextOutCount });
     if (isAnOut) {
