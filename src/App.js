@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Trophy, Eye, ChevronLeft, Copy, Wifi, WifiOff } from 'lucide-react';
-import { db, saveGameState, watchGameState, stopWatching, generateGameId, getAllGames, deleteGameFromFirebase } from './firebase';
+import { db, saveGameState, watchGameState, stopWatching, generateGameId, getAllGames, deleteGameFromFirebase, incrementViewCount } from './firebase';
 import { CSVLink } from 'react-csv';
 
 const SoftballScoreApp = () => {
