@@ -209,11 +209,31 @@ useEffect(() => {
     }
   }, []);
 
-  useEffect(() => {
-    if (isGameCreator && gameState === 'playing') {
-      saveCurrentGameState();
-    }
-  }, [isGameCreator, gameState, saveCurrentGameState]);
+useEffect(() => {
+  // このuseEffectは試合記録中にのみ動作すれば良いので、
+  // isGameCreator と gameState === 'playing' の条件で早期リターンさせます。
+  if (!isGameCreator || gameState !== 'playing') {
+    return;
+  }
+  saveCurrentGameState();
+}, [
+  // ここでは保存すべきデータそのものを監視対象にします。
+  opponentTeam,
+  tournamentName,
+  isHomeTeam,
+  currentInning,
+  currentTeamBatting,
+  outCount,
+  bases,
+  homeScore,
+  awayScore,
+  timeline,
+  currentBatter,
+  customBatter,
+  useCustomBatter,
+  gameStartDate,
+  saveCurrentGameState // useCallbackの依存関係として正しい
+]);
 
   const saveStateToHistory = () => {
     const currentState = {
