@@ -1,5 +1,6 @@
 // src/firebase.js
 import { initializeApp } from "firebase/app";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 // Realtime Database用のimportは不要になるのでコメントアウトまたは削除
 // import { getDatabase, ref, set, onValue, off } from 'firebase/database';
 // Firestoreで必要な命令を追加
@@ -21,6 +22,9 @@ const app = initializeApp(firebaseConfig);
 
 // Firestoreを初期化し、「db」としてexport
 export const db = getFirestore(app);
+
+//認証インスタンスを取得
+export const auth = getAuth(app);
 
 // ゲーム状態を保存する関数
 export const saveGameState = async (gameId, gameState) => {
@@ -113,3 +117,16 @@ export const deleteGameFromFirebase = async (gameId) => {
   }
 };
 
+// ログイン・ログアウト等の関数
+
+export const login = (email, password) => {
+  return signInWithEmailAndPassword(auth, email, password);
+};
+
+export const logout = () => {
+  return signOut(auth);
+};
+
+export const onAuth = (callback) => {
+  return onAuthStateChanged(auth, callback);
+};
