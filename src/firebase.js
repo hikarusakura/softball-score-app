@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 // Realtime Database用のimportは不要になるのでコメントアウトまたは削除
 // import { getDatabase, ref, set, onValue, off } from 'firebase/database';
 // Firestoreで必要な命令を追加
-import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, orderBy, query, getDoc, deleteDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, orderBy, query, getDoc, deleteDoc, increment } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAz0Lm3rKe5W9r0R_Efye9sIkT7WDQwYvo",
@@ -110,5 +110,16 @@ export const deleteGameFromFirebase = async (gameId) => {
     console.error("ドキュメントの削除中にエラーが発生しました:", error);
     alert("データの削除に失敗しました。");
     return false; // 失敗したことを示すためにfalseを返す
+  }
+};
+
+export const incrementViewCount = async (gameId) => {
+  if (!gameId) return;
+  const gameRef = doc(db, 'games', gameId);
+  try {
+    // viewCountフィールドの値をアトミックに1増やす。なければ作成する。
+    await setDoc(gameRef, { viewCount: increment(1) }, { merge: true });
+  } catch (error) {
+    console.error("閲覧数の更新に失敗しました:", error);
   }
 };

@@ -175,6 +175,7 @@ const SoftballScoreApp = () => {
         setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
         
         if (mode === 'watch') {
+          incrementViewCount(gameIdToLoad);
           setGameId(gameIdToLoad);
           setIsGameCreator(false);
           setGameState('watching');
