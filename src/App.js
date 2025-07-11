@@ -189,10 +189,9 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     };
     try {
       await saveGameState(user.uid, gameId, currentState);
-      setIsConnected(true);
-    } catch (error) {
+       } catch (error) {
       console.error('保存失敗:', error);
-      setIsConnected(false);
+      
     }
   }, [
     user.uid, gameId, isGameCreator, tournamentName, opponentTeam, isHomeTeam, currentInning, 
@@ -212,7 +211,6 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     const newListener = watchGameState(user.uid, gameIdToLoad, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
-        setIsConnected(true);
         setTournamentName(data.tournamentName || '');
         setOpponentTeam(data.opponentTeam || '');
         setIsHomeTeam(data.isHomeTeam === true);
