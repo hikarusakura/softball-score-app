@@ -820,11 +820,7 @@ const movePlayerUp = (index) => {
               <Play className="h-5 w-5" />
               <span>試合開始（新規記録）</span>
             </button>
-            <div className="border-t border-gray-200 pt-6">
-              <button onClick={() => setGameState('playerManagement')} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
-                <span>選手名簿の管理</span>
-              </button>
-            </div>
+            
             <div className="border-t border-gray-200 pt-6">
               <button onClick={handleFetchFirebaseGames} disabled={isLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300">
                 <span>{isLoading ? '読込中...' : '過去の試合を閲覧'}</span>
@@ -848,6 +844,11 @@ const movePlayerUp = (index) => {
                   <span>速報を継続</span>
                 </button>
               </div>
+            </div>
+            <div className="border-t border-gray-200 pt-6">
+              <button onClick={() => setGameState('playerManagement')} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
+                <span>選手名簿の管理</span>
+              </button>
             </div>
           </div>
           {pastGames.length > 0 && (
