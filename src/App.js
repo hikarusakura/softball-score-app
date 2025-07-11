@@ -762,6 +762,11 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 p-4">
         <div className="max-w-md mx-auto bg-white rounded-xl shadow-2xl p-8">
+          <div className="text-right mb-4">
+          <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2 px-4 rounded-lg">
+            ログアウト
+          </button>
+        </div>
           <div className="text-center mb-8">
             <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
             <h1 className="text-3xl font-bold text-gray-800 mb-2">{teamName} 試合速報</h1>
@@ -918,6 +923,9 @@ const App = () => {
   if (error) {
     return <div className="min-h-screen flex items-center justify-center">エラー: {error} <button onClick={logout} className="ml-4 bg-blue-500 text-white px-3 py-1 rounded">再ログイン</button></div>;
   }
+
+  // ★★★ このログを追加して、teamDataの中身を確認します ★★★
+  console.log("Appコンポーネントが受け取ったチームデータ:", teamData);
 
   return user && teamData ? <SoftballScoreApp user={user} initialTeamData={teamData} /> : <LoginScreen onLogin={login} />;
 };
