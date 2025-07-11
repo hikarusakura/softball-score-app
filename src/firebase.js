@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, orderBy, query, getDoc, deleteDoc, increment } from "firebase/firestore";
+import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, orderBy, query, getDoc, deleteDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAz0Lm3rKe5W9r0R_Efye9sIkT7WDQwYvo",
@@ -76,8 +76,3 @@ export const deleteGameFromFirebase = async (teamId, gameId) => {
   }
 };
 
-export const incrementViewCount = async (teamId, gameId) => {
-  if (!teamId || !gameId) return;
-  const gameRef = doc(db, 'teams', teamId, 'games', gameId);
-  await setDoc(gameRef, { viewCount: increment(1) }, { merge: true });
-};

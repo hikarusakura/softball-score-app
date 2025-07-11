@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Play, Trophy, Eye, ChevronLeft, Copy, Wifi, WifiOff } from 'lucide-react';
+import { Play, Trophy, Eye, ChevronLeft, Copy } from 'lucide-react';
 import { 
   db, saveGameState, watchGameState, stopWatching, 
   generateGameId, getAllGames, deleteGameFromFirebase, 
@@ -97,14 +97,12 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [gameId, setGameId] = useState(null);
   const [isGameCreator, setIsGameCreator] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [watchingGameId, setWatchingGameId] = useState('');
   const [resumeGameId, setResumeGameId] = useState('');
   const firebaseListener = useRef(null);
   const [firebaseGames, setFirebaseGames] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [viewCount, setViewCount] = useState(0);
   const [history, setHistory] = useState([]);
 
   // --- ポジション対応表 ---
@@ -187,7 +185,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       useCustomBatter,
       gameStartDate,
       createdAt: gameStartDate || Date.now(),
-      viewCount: viewCount,
+      
     };
     try {
       await saveGameState(user.uid, gameId, currentState);
@@ -199,7 +197,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   }, [
     user.uid, gameId, isGameCreator, tournamentName, opponentTeam, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, 
-    timeline, currentBatter, customBatter, useCustomBatter, gameStartDate, viewCount
+    timeline, currentBatter, customBatter, useCustomBatter, gameStartDate
   ]);
 
   const loadGame = (id, mode = 'watch') => {
@@ -229,10 +227,9 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
         setCustomBatter(data.customBatter || '');
         setUseCustomBatter(data.useCustomBatter === true);
         setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
-        setViewCount(data.viewCount || 0);
-        
+                
         if (mode === 'watch' && user.uid !== gameIdToLoad) { 
-          incrementViewCount(user.uid, gameIdToLoad); 
+          
         }
 
         if (mode === 'watch') {
@@ -286,7 +283,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     opponentTeam, tournamentName, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, 
     timeline, currentBatter, customBatter, useCustomBatter, 
-    gameStartDate, saveCurrentGameState, isGameCreator, gameState, viewCount
+    gameStartDate, saveCurrentGameState, isGameCreator, gameState
   ]);
 
   const saveStateToHistory = () => {
@@ -638,8 +635,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
             {selectedGameTimeline.timeline.slice().reverse().map((entry, index) => (
               <div key={index} className="border-b border-gray-300 pb-2 mb-2 last:border-b-0">
                 <div className="flex justify-between items-start text-sm">
-                  <span className="text-gray-500">{entry.time}</span>
-                  <span className="text-gray-500">{entry.inning}回 {entry.outCount}アウト</span>
+                  <span className="text-gray-300">{entry.time}</span>
+                  <span className="text-gray-300">{entry.inning}回 {entry.outCount}アウト</span>
                 </div>
                 <div className="text-sm"><span className="font-medium text-blue-600">[{entry.team}]</span> {entry.message}</div>
               </div>
@@ -854,25 +851,14 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     );
   };
 
-  const ConnectionStatus = () => {
-    if (!gameId) return null;
-    return (
-      <div className="fixed top-4 right-4 z-40">
-        <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm ${isConnected ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
-          {isConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-          <span>{isConnected ? '接続中' : '切断'}</span>
-        </div>
-      </div>
-    );
-  };
+
 
   const isInputView = gameState === 'playing';
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <ShareDialog />
-      <ConnectionStatus />
-      
+            
       <div className={isInputView ? "h-1/2" : "h-full"}>
         <div className="h-full bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
           <div className="max-w-4xl mx-auto relative">
@@ -882,10 +868,6 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
               </button>
             )}
             <div className="text-center mb-3 pt-8">
-              <div className="flex justify-center items-center space-x-1 text-yellow-300 text-xs">
-                <Eye className="h-4 w-4" />
-                <span>{viewCount}</span>
-              </div>
               <h1 className="text-lg font-bold">⚾ {teamName} 試合速報 ⚾</h1>
               <p className="text-xs text-gray-300">
                 試合日時: {formatDate(gameStartDate)}
@@ -895,29 +877,29 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
             </div>
             <div className="bg-black bg-opacity-50 rounded-lg p-4 mb-4">
               <div className="text-center text-sm">
-                <div className="grid grid-cols-8 gap-1 mb-2 border-b border-gray-500 pb-2">
+                <div className="grid grid-cols-9 gap-1 mb-2 border-b border-gray-500 pb-2">
                   <div className="text-left text-xs col-span-2">チーム</div>
                   {[1,2,3,4,5,6].map(i => (<div key={i} className="text-xs">{i}</div>))}
                   <div className="font-bold text-xs">R</div>
                 </div>
                 {isHomeTeam ? (<>
-                  <div className="grid grid-cols-8 gap-1 mb-1">
+                  <div className="grid grid-cols-9 gap-1 mb-1">
                     <div className="text-left text-xs truncate col-span-2">{opponentTeam}</div>
                     {[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>))}
                     <div className="font-bold text-xs">{totalAwayScore}</div>
                   </div>
-                  <div className="grid grid-cols-8 gap-1">
+                  <div className="grid grid-cols-9 gap-1">
                     <div className="text-left text-xs truncate col-span-2">{teamName}</div>
                     {[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>))}
                     <div className="font-bold text-xs">{totalHomeScore}</div>
                   </div>
                 </>) : (<>
-                  <div className="grid grid-cols-8 gap-1 mb-1">
+                  <div className="grid grid-cols-9 gap-1 mb-1">
                     <div className="text-left text-xs truncate col-span-2">{teamName}</div>
                     {[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>))}
                     <div className="font-bold text-xs">{totalAwayScore}</div>
                   </div>
-                  <div className="grid grid-cols-8 gap-1">
+                  <div className="grid grid-cols-9 gap-1">
                     <div className="text-left text-xs truncate col-span-2">{opponentTeam}</div>
                     {[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>))}
                     <div className="font-bold text-xs">{totalHomeScore}</div>
@@ -956,7 +938,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
                   <div key={index} className="border-b border-gray-600 pb-1 mb-1 last:border-b-0">
                     <div className="flex justify-between items-start text-xs">
                       <span className="text-gray-300">{entry.time}</span>
-                      <span className="text-gray-500">{entry.inning}回 {entry.outCount}アウト</span>
+                      <span className="text-gray-300">{entry.inning}回 {entry.outCount}アウト</span>
                     </div>
                     <div className="text-xs"><span className="font-medium text-yellow-300">[{entry.team}]</span> {entry.message}</div>
                   </div>
