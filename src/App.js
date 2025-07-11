@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Trophy, Eye, ChevronLeft, Copy, Wifi, WifiOff } from 'lucide-react';
-import { db, saveGameState, watchGameState, stopWatching, generateGameId, getAllGames, deleteGameFromFirebase, incrementViewCount } from './firebase';
+import { db, saveGameState, watchGameState, stopWatching, generateGameId, getAllGames, deleteGameFromFirebase } from './firebase';
 import { CSVLink } from 'react-csv';
 
 const SoftballScoreApp = () => {
@@ -49,7 +49,6 @@ const SoftballScoreApp = () => {
   const firebaseListener = useRef(null);
   const [firebaseGames, setFirebaseGames] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [viewCount, setViewCount] = useState(0);
   const [history, setHistory] = useState([]);
 
   // --- ポジション対応表 ---
@@ -173,10 +172,8 @@ const SoftballScoreApp = () => {
         setCustomBatter(data.customBatter || '');
         setUseCustomBatter(data.useCustomBatter === true);
         setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
-        setViewCount(data.viewCount || 0);
-        
+                
         if (mode === 'watch') {
-          incrementViewCount(gameIdToLoad);
           setGameId(gameIdToLoad);
           setIsGameCreator(false);
           setGameState('watching');
@@ -916,10 +913,6 @@ const movePlayerUp = (index) => {
               </button>
             )}
             <div className="text-center mb-3">
-              <div className="flex justify-center items-center space-x-1 text-yellow-300 text-xs">
-                <Eye className="h-4 w-4" />
-                <span>{viewCount}</span>
-              </div>
               <h1 className="text-lg font-bold">⚾ 若葉試合速報 ⚾</h1>
               <p className="text-xs text-gray-300">
                 試合日時: {formatDate(gameStartDate)}
