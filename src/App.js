@@ -414,6 +414,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
 
   const changeInning = () => {
     saveStateToHistory();
+    // 得点が入らなかった場合、スコア表に0を記録
     if ((isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away')) {
       if (isHomeTeam) setHomeScore(prev => { const ns = [...prev]; if (ns[currentInning - 1] === null) ns[currentInning - 1] = 0; return ns; });
       else setAwayScore(prev => { const ns = [...prev]; if (ns[currentInning - 1] === null) ns[currentInning - 1] = 0; return ns; });
@@ -421,9 +422,20 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       if (isHomeTeam) setAwayScore(prev => { const ns = [...prev]; if (ns[currentInning - 1] === null) ns[currentInning - 1] = 0; return ns; });
       else setHomeScore(prev => { const ns = [...prev]; if (ns[currentInning - 1] === null) ns[currentInning - 1] = 0; return ns; });
     }
+    // 1. 「次の」状態をすべて計算します
     let nextInning = currentTeamBatting === 'away' ? currentInning : currentInning + 1;
     let nextTeamBatting = currentTeamBatting === 'away' ? 'home' : 'away';
-    let nextTeamName = getCurrentTeamName(); // Let's simplify this call
+    // 2. 「次の」攻撃チーム名を、より正確なロジックで取得します
+    let nextTeamName;
+  const myTeam = teamName || '若葉'; // ログインしているチーム名
+
+  if (nextTeamBatting === 'home') {
+    // 次に攻撃するのがホームチームの場合
+    nextTeamName = isHomeTeam ? myTeam : opponentTeam;
+  } else {
+    // 次に攻撃するのがアウェイチームの場合
+    nextTeamName = isHomeTeam ? opponentTeam : myTeam;
+  }
     const inningHalf = (nextTeamBatting === 'home') ? '裏' : '表';
     const message = `${nextInning}回${inningHalf}開始`;
     addToTimeline(message, { inning: nextInning, team: nextTeamName, outCount: 0 });
