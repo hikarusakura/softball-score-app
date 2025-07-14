@@ -85,6 +85,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [bases, setBases] = useState({ first: false, second: false, third: false });
   const [homeScore, setHomeScore] = useState(Array(6).fill(null));
   const [awayScore, setAwayScore] = useState(Array(6).fill(null));
+  const [homeHits, setHomeHits] = useState(0);
+  const [awayHits, setAwayHits] = useState(0);
   const [timeline, setTimeline] = useState([]);
   const [gameStartDate, setGameStartDate] = useState(null);
   const [currentBatter, setCurrentBatter] = useState('');
@@ -143,6 +145,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setBases({ first: false, second: false, third: false });
     setHomeScore(Array(6).fill(null));
     setAwayScore(Array(6).fill(null));
+    setHomeHits(0); 
+    setAwayHits(0);
     setTimeline([]);
     setCurrentBatter('');
     setCustomBatter('');
@@ -179,6 +183,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       bases,
       homeScore,
       awayScore,
+      homeHits,
+      awayHits,
       timeline,
       currentBatter,
       customBatter,
@@ -195,7 +201,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     }
   }, [
     user.uid, gameId, isGameCreator, tournamentName, opponentTeam, isHomeTeam, currentInning, 
-    currentTeamBatting, outCount, bases, homeScore, awayScore, 
+    currentTeamBatting, outCount, bases, homeScore, awayScore, homeHits, awayHits,
     timeline, currentBatter, customBatter, useCustomBatter, gameStartDate
   ]);
 
@@ -220,6 +226,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
         setBases(data.bases && typeof data.bases === 'object' ? data.bases : { first: false, second: false, third: false });
         setHomeScore(Array.isArray(data.homeScore) ? data.homeScore : Array(6).fill(null));
         setAwayScore(Array.isArray(data.awayScore) ? data.awayScore : Array(6).fill(null));
+        setHomeHits(data.homeHits || 0);
+        setAwayHits(data.awayHits || 0);
         setTimeline(Array.isArray(data.timeline) ? data.timeline : []);
         setCurrentBatter(data.currentBatter || '');
         setCustomBatter(data.customBatter || '');
@@ -323,6 +331,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setCurrentInning(1);
     setOutCount(0);
     setBases({ first: false, second: false, third: false });
+    setHomeHits(0);
+    setAwayHits(0);
     setCurrentBatter('');
     setCustomBatter('');
     setUseCustomBatter(false);
@@ -446,6 +456,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     let message = `${batterName}: ${resultText}`;
     let runsScored = 0;
     let isAnOut = false;
+    const isHit = ['ヒット', '2ベース', '3ベース', 'ホームラン'].includes(result);
     switch (result) {
       case '三振': case 'ゴロ': case 'ライナー': case 'フライ': isAnOut = true; break;
       case 'ヒット': if (bases.third) runsScored++; setBases(prev => ({ first: true, second: prev.first, third: prev.second })); break;
@@ -454,6 +465,18 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       case 'ホームラン': runsScored = 1 + (bases.first ? 1 : 0) + (bases.second ? 1 : 0) + (bases.third ? 1 : 0); setBases({ first: false, second: false, third: false }); break;
       case '四球': case '死球': if (bases.first && bases.second && bases.third) runsScored++; setBases(prev => ({ first: true, second: prev.first ? true : prev.second, third: prev.first && prev.second ? true : prev.third })); break;
       default: break;
+    }
+    if (isHit) {
+      const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
+      if (isMyTeamBatting) {
+        // 自分のチームの攻撃
+        if (isHomeTeam) setHomeHits(h => h + 1);
+        else setAwayHits(h => h + 1);
+      } else {
+        // 相手チームの攻撃
+        if (isHomeTeam) setAwayHits(h => h + 1);
+        else setHomeHits(h => h + 1);
+      }
     }
     if (runsScored > 0) {
       const currentScoringTeam = getCurrentTeamName();
@@ -875,32 +898,37 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
             </div>
             <div className="bg-black bg-opacity-50 rounded-lg p-4 mb-4">
               <div className="text-center text-sm">
-                <div className="grid grid-cols-9 gap-1 mb-2 border-b border-gray-500 pb-2">
+                <div className="grid grid-cols-10 gap-1 mb-2 border-b border-gray-500 pb-2">
                   <div className="text-left text-xs col-span-2">チーム</div>
                   {[1,2,3,4,5,6].map(i => (<div key={i} className="text-xs">{i}</div>))}
                   <div className="font-bold text-xs">R</div>
+                  <div className="font-bold text-xs">H</div>
                 </div>
                 {isHomeTeam ? (<>
-                  <div className="grid grid-cols-9 gap-1 mb-1">
+                  <div className="grid grid-cols-10 gap-1 mb-1">
                     <div className="text-left text-xs truncate col-span-2">{opponentTeam}</div>
                     {[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>))}
                     <div className="font-bold text-xs">{totalAwayScore}</div>
+                    <div className="font-bold text-xs">{awayHits}</div>
                   </div>
-                  <div className="grid grid-cols-9 gap-1">
+                  <div className="grid grid-cols-10 gap-1">
                     <div className="text-left text-xs truncate col-span-2">{teamName}</div>
                     {[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>))}
                     <div className="font-bold text-xs">{totalHomeScore}</div>
+                    <div className="font-bold text-xs">{homeHits}</div>
                   </div>
                 </>) : (<>
-                  <div className="grid grid-cols-9 gap-1 mb-1">
+                  <div className="grid grid-cols-10 gap-1 mb-1">
                     <div className="text-left text-xs truncate col-span-2">{teamName}</div>
                     {[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>))}
                     <div className="font-bold text-xs">{totalAwayScore}</div>
+                    <div className="font-bold text-xs">{awayHits}</div>
                   </div>
-                  <div className="grid grid-cols-9 gap-1">
+                  <div className="grid grid-cols-10 gap-1">
                     <div className="text-left text-xs truncate col-span-2">{opponentTeam}</div>
                     {[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>))}
                     <div className="font-bold text-xs">{totalHomeScore}</div>
+                    <div className="font-bold text-xs">{homeHits}</div>
                   </div>
                 </>)}
               </div>
