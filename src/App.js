@@ -299,6 +299,9 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       awayScore: [...awayScore],
       bases: { ...bases },
       timeline: [...timeline],
+      homeHits,
+      awayHits,
+
     };
     setHistory(prev => [...prev, currentState].slice(-10));
   };
@@ -314,6 +317,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setAwayScore(lastState.awayScore);
     setBases(lastState.bases);
     setTimeline(lastState.timeline);
+    setHomeHits(lastState.homeHits);
+    setAwayHits(lastState.awayHits);
     setHistory(prev => prev.slice(0, -1));
     alert("直前の操作を取り消しました。");
   };
