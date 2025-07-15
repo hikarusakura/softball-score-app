@@ -3,7 +3,7 @@ import { Play, Trophy, Eye, ChevronLeft, Copy } from 'lucide-react';
 import { 
   db, saveGameState, watchGameState, stopWatching, 
   generateGameId, getAllGames, deleteGameFromFirebase, 
-  incrementViewCount, login, logout, onAuth, getTeamData 
+  login, logout, onAuth, getTeamData, updatePlayerStats
 } from './firebase';
 import { doc, setDoc } from "firebase/firestore";
 import { CSVLink } from 'react-csv';
@@ -73,6 +73,7 @@ const LoginScreen = ({ onLogin }) => {
 const SoftballScoreApp = ({ user, initialTeamData }) => {
   // --- State管理セクション ---
   const [players, setPlayers] = useState(initialTeamData.players || []);
+  const [playerStats, setPlayerStats] = useState(initialTeamData.playerStats || {});
   const [teamName, setTeamName] = useState(initialTeamData.teamName || 'あなたのチーム');
   const [newPlayerName, setNewPlayerName] = useState('');
   const [gameState, setGameState] = useState('setup');
@@ -133,8 +134,18 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     } else {
       return currentTeamBatting === 'away' ? myTeam : truncateTeamName(opponentTeam);
     }
+  }; 
+
+  const getPlayerList = () => {
+    if (!playerStats) return [];
+    return Object.keys(playerStats).sort((a, b) => {
+      // 選手名から背番号を除外して、名前の部分だけでソートする（任意）
+      const nameA = a.replace(/⑩|②|③|④|⑤|⑥|⑦|⑧|⑨|⑪|⑫|⑬|⑮|⑯|⑰|⑱/g, '');
+      const nameB = b.replace(/⑩|②|③|④|⑤|⑥|⑦|⑧|⑨|⑪|⑫|⑬|⑮|⑯|⑰|⑱/g, '');
+      return nameA.localeCompare(nameB, 'ja');
+    });
   };
-  
+
   const resetGameStates = () => {
     setTournamentName('');
     setOpponentTeam('');
@@ -466,14 +477,26 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     }
     let resultText = result;
     if (selectedPosition && positionMap[selectedPosition]) {
-      if (['ゴロ', 'ライナー', 'フライ', 'バント', '三振'].includes(result)) {
+      if (['ゴロ', 'ライナー', 'フライ', 'バント'].includes(result)) {
         resultText = positionMap[selectedPosition] + result;
       }
     }
     let message = `${batterName}: ${resultText}`;
+
+
     let runsScored = 0;
     let isAnOut = false;
+    const statsUpdate = {};
     const isHit = ['ヒット', '2ベース', '3ベース', 'ホームラン'].includes(result);
+    const isWalkOrHBP = ['四球', '死球'].includes(result);
+    const isAtBat = !isWalkOrHBP;
+
+  if (isAtBat) {
+    statsUpdate.atBats = 1;
+  }
+  if (isHit) {
+    statsUpdate.hits = 1;
+  }
     switch (result) {
       case '三振': case 'ゴロ': case 'ライナー': case 'フライ': isAnOut = true; break;
       case 'ヒット': if (bases.third) runsScored++; setBases(prev => ({ first: true, second: prev.first, third: prev.second })); break;
@@ -516,6 +539,23 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
         changeInning();
       }
     }
+
+    // ★★★ 最後に成績を更新する ★★★
+  if (Object.keys(statsUpdate).length > 0) {
+    // Firestoreのデータを更新
+    updatePlayerStats(user.uid, batterName, statsUpdate);
+    // ローカルのStateも更新
+    setPlayerStats(prevStats => {
+      const newStats = { ...prevStats };
+      const player = newStats[batterName] || {};
+      for(const key in statsUpdate){
+        player[key] = (player[key] || 0) + 1;
+      }
+      newStats[batterName] = player;
+      return newStats;
+    });
+  }
+
     setCurrentBatter('');
     setCustomBatter('');
     setUseCustomBatter(false);
@@ -751,7 +791,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-2">現在の選手リスト</h2>
             <div className="space-y-2 max-h-96 overflow-y-auto bg-gray-50 p-3 rounded-lg">
-              {players.map((player, index) => (
+              {getPlayerList().map((player, index) => (
                 <div key={index} className="flex justify-between items-center bg-white p-2 rounded-md shadow-sm">
                   <span>{player}</span>
                   <div className="flex items-center space-x-2">
@@ -1020,7 +1060,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
               ) : (
                 <select value={currentBatter} onChange={(e) => setCurrentBatter(e.target.value)} className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                   <option value="">打者を選択</option>
-                  {players.map((player, index) => (<option key={index} value={player}>{player}</option>))}
+                  {getPlayerList().map((player, index) => (<option key={index} value={player}>{player}</option>))}
                 </select>
               )}
             </div>

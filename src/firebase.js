@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, orderBy, query, getDoc, deleteDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, orderBy, query, getDoc, deleteDoc, increment } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAz0Lm3rKe5W9r0R_Efye9sIkT7WDQwYvo",
@@ -76,3 +76,17 @@ export const deleteGameFromFirebase = async (teamId, gameId) => {
   }
 };
 
+// ★★★ 選手成績更新のロジックを修正 ★★★
+export const updatePlayerStats = async (teamId, playerName, statsToAdd) => {
+  const teamRef = doc(db, 'teams', teamId);
+  try {
+    const updateData = {};
+    for (const key in statsToAdd) {
+      // Firestoreのincrement命令をここで使う
+      updateData[`playerStats.${playerName}.${key}`] = increment(statsToAdd[key]);
+    }
+    await setDoc(teamRef, updateData, { merge: true });
+  } catch (error) {
+    console.error("選手成績の更新に失敗しました:", error);
+  }
+};
