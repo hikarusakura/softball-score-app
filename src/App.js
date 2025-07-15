@@ -136,9 +136,13 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     }
   }; 
 
-  const getPlayerList = () => {
-    if (!playerStats) return [];
-    return Object.keys(playerStats);
+const getPlayerList = () => {
+    // 選手名簿管理画面で並び替えた `players` Stateの順番を尊重する
+    if (!players || players.length === 0) {
+      // playersが空の場合は、playerStatsからキーを取得する（フォールバック）
+      return Object.keys(playerStats);
+    }
+    return players;
   };
 
   const resetGameStates = () => {
@@ -768,6 +772,58 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     );
   }
 
+  // 個人成績表示画面のJSX
+
+if (gameState === 'statsScreen') {
+  return (
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={() => setGameState('setup')}
+            className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-2xl font-bold text-gray-800">個人成績一覧</h1>
+        </div>
+
+        {/* 成績一覧テーブル */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white">
+            <thead className="bg-gray-800 text-white">
+              <tr>
+                <th className="text-left py-3 px-4 uppercase font-semibold text-sm">選手名</th>
+                <th className="py-3 px-4 uppercase font-semibold text-sm">打数</th>
+                <th className="py-3 px-4 uppercase font-semibold text-sm">安打</th>
+                <th className="py-3 px-4 uppercase font-semibold text-sm">打率</th>
+                {/* フェーズ4で項目を追加します */}
+              </tr>
+            </thead>
+            <tbody className="text-gray-700">
+              {getPlayerList().map((playerName, index) => {
+                const stats = playerStats[playerName] || {};
+                const atBats = stats.atBats || 0;
+                const hits = stats.hits || 0;
+                const battingAverage = atBats > 0 ? (hits / atBats).toFixed(3) : '.000';
+
+                return (
+                  <tr key={playerName} className="border-b border-gray-200 hover:bg-gray-100">
+                    <td className="text-left py-3 px-4">{playerName}</td>
+                    <td className="text-center py-3 px-4">{atBats}</td>
+                    <td className="text-center py-3 px-4">{hits}</td>
+                    <td className="text-center py-3 px-4">{battingAverage}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
   if (gameState === 'playerManagement') {
     return (
       <div className="min-h-screen bg-gray-100 p-4">
@@ -860,9 +916,18 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
                 </button>
               </div>
             </div>
-            <div className="border-t border-gray-200 pt-6">
-              <button onClick={() => setGameState('playerManagement')} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
+　　　　　　　<div className="grid grid-cols-2 gap-4 border-t border-gray-200 pt-6">
+              <button
+                onClick={() => setGameState('playerManagement')}
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm"
+              >
                 <span>選手名簿の管理</span>
+              </button>
+              <button
+                onClick={() => setGameState('statsScreen')}
+                className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm"
+              >
+                <span>個人成績の確認</span>
               </button>
             </div>
           </div>
