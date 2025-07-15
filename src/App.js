@@ -884,7 +884,6 @@ if (gameState === 'statsScreen') {
         </div>
 
         {/* 成績一覧テーブル */}
-// if (gameState === 'statsScreen') の return 内
 <div className="overflow-x-auto">
   <table className="min-w-full bg-white text-xs md:text-sm">
     <thead className="bg-gray-800 text-white">
