@@ -3,7 +3,7 @@ import { Play, Trophy, Eye, ChevronLeft, Copy } from 'lucide-react';
 import { 
   db, saveGameState, watchGameState, stopWatching, 
   generateGameId, getAllGames, deleteGameFromFirebase, 
-  login, logout, onAuth, getTeamData, updatePlayerStats
+  login, logout, onAuth, getTeamData, updatePlayerStats, setPlayerStats
 } from './firebase';
 import { doc, setDoc } from "firebase/firestore";
 import { CSVLink } from 'react-csv';
@@ -107,6 +107,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [firebaseGames, setFirebaseGames] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState([]);
+  const [editingPlayer, setEditingPlayer] = useState(null); // 編集中の選手名
+  const [tempStats, setTempStats] = useState({});       // 編集中の数値
 
   // --- ポジション対応表 ---
   const positionMap = {
@@ -659,6 +661,46 @@ const getPlayerList = () => {
     setPlayers(newPlayers);
   };
 
+  // App.js に追加
+
+// 編集モードを開始する関数
+const handleEditPlayer = (playerName) => {
+  setEditingPlayer(playerName);
+  setTempStats(playerStats[playerName] || {});
+};
+
+// 編集中の数値を一時Stateに反映させる関数
+const handleStatChange = (statName, value) => {
+  setTempStats(prev => ({
+    ...prev,
+    [statName]: parseInt(value, 10) || 0 // 数値に変換(空なら0)
+  }));
+};
+
+// 編集内容を保存する関数
+const handleSaveStats = async (playerName) => {
+  if (window.confirm(`「${playerName}」の成績を保存しますか？`)) {
+    const success = await setPlayerStats(user.uid, playerName, tempStats);
+    if (success) {
+      // ローカルのStateも更新
+      setPlayerStats(prev => ({
+        ...prev,
+        [playerName]: tempStats
+      }));
+      alert('成績を保存しました。');
+    } else {
+      alert('成績の保存に失敗しました。');
+    }
+    setEditingPlayer(null); // 編集モードを終了
+  }
+};
+
+// 編集をキャンセルする関数
+const handleCancelEdit = () => {
+  setEditingPlayer(null);
+  setTempStats({});
+};
+
   const prepareDataForExport = (gameData) => {
     const myTeamName = teamName || '若葉';
     const scoreA = gameData.isHomeTeam ? gameData.awayScore : gameData.homeScore;
@@ -789,36 +831,57 @@ if (gameState === 'statsScreen') {
         </div>
 
         {/* 成績一覧テーブル */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead className="bg-gray-800 text-white">
-              <tr>
-                <th className="text-left py-3 px-4 uppercase font-semibold text-sm">選手名</th>
-                <th className="py-3 px-4 uppercase font-semibold text-sm">打数</th>
-                <th className="py-3 px-4 uppercase font-semibold text-sm">安打</th>
-                <th className="py-3 px-4 uppercase font-semibold text-sm">打率</th>
-                {/* フェーズ4で項目を追加します */}
-              </tr>
-            </thead>
-            <tbody className="text-gray-700">
-              {getPlayerList().map((playerName, index) => {
-                const stats = playerStats[playerName] || {};
-                const atBats = stats.atBats || 0;
-                const hits = stats.hits || 0;
-                const battingAverage = atBats > 0 ? (hits / atBats).toFixed(3) : '.000';
+<div className="overflow-x-auto">
+  <table className="min-w-full bg-white">
+    <thead className="bg-gray-800 text-white">
+      <tr>
+        <th className="text-left py-3 px-4 uppercase font-semibold text-sm w-1/3">選手名</th>
+        <th className="py-3 px-4 uppercase font-semibold text-sm">打数</th>
+        <th className="py-3 px-4 uppercase font-semibold text-sm">安打</th>
+        <th className="py-3 px-4 uppercase font-semibold text-sm">打率</th>
+        <th className="py-3 px-4 uppercase font-semibold text-sm w-1/4">操作</th>
+      </tr>
+    </thead>
+    <tbody className="text-gray-700">
+      {getPlayerList().map((playerName) => {
+        const isEditing = editingPlayer === playerName;
+        const stats = isEditing ? tempStats : (playerStats[playerName] || {});
+        const atBats = stats.atBats || 0;
+        const hits = stats.hits || 0;
+        const battingAverage = atBats > 0 ? (hits / atBats).toFixed(3) : '.000';
 
-                return (
-                  <tr key={playerName} className="border-b border-gray-200 hover:bg-gray-100">
-                    <td className="text-left py-3 px-4">{playerName}</td>
-                    <td className="text-center py-3 px-4">{atBats}</td>
-                    <td className="text-center py-3 px-4">{hits}</td>
-                    <td className="text-center py-3 px-4">{battingAverage}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        return (
+          <tr key={playerName} className="border-b border-gray-200 hover:bg-gray-100">
+            <td className="text-left py-3 px-4">{playerName}</td>
+            
+            {isEditing ? (
+              // --- 編集モードの表示 ---
+              <>
+                <td><input type="number" value={atBats} onChange={(e) => handleStatChange('atBats', e.target.value)} className="w-16 text-center border rounded" /></td>
+                <td><input type="number" value={hits} onChange={(e) => handleStatChange('hits', e.target.value)} className="w-16 text-center border rounded" /></td>
+                <td className="text-center py-3 px-4">{battingAverage}</td>
+                <td className="text-center py-3 px-4">
+                  <button onClick={() => handleSaveStats(playerName)} className="bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded mr-1">保存</button>
+                  <button onClick={handleCancelEdit} className="bg-gray-500 text-white text-xs font-bold py-1 px-2 rounded">中止</button>
+                </td>
+              </>
+            ) : (
+              // --- 通常モードの表示 ---
+              <>
+                <td className="text-center py-3 px-4">{atBats}</td>
+                <td className="text-center py-3 px-4">{hits}</td>
+                <td className="text-center py-3 px-4">{battingAverage}</td>
+                <td className="text-center py-3 px-4">
+                  <button onClick={() => handleEditPlayer(playerName)} className="bg-green-500 text-white text-xs font-bold py-1 px-2 rounded">編集</button>
+                </td>
+              </>
+            )}
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+</div>
       </div>
     </div>
   );

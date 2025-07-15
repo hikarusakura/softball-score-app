@@ -90,3 +90,20 @@ export const updatePlayerStats = async (teamId, playerName, statsToAdd) => {
     console.error("選手成績の更新に失敗しました:", error);
   }
 };
+
+// 特定の選手の成績データを丸ごと上書きする関数
+export const setPlayerStats = async (teamId, playerName, newStats) => {
+  const teamRef = doc(db, 'teams', teamId);
+  try {
+    // ドット記法を使い、特定の選手のマップを新しいデータで上書きする
+    await setDoc(teamRef, {
+      playerStats: {
+        [playerName]: newStats
+      }
+    }, { merge: true }); // merge:trueで他の選手データを消さないようにする
+    return true;
+  } catch (error) {
+    console.error("選手成績の上書きに失敗しました:", error);
+    return false;
+  }
+};
