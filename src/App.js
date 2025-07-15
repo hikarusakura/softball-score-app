@@ -138,12 +138,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
 
   const getPlayerList = () => {
     if (!playerStats) return [];
-    return Object.keys(playerStats).sort((a, b) => {
-      // 選手名から背番号を除外して、名前の部分だけでソートする（任意）
-      const nameA = a.replace(/⑩|②|③|④|⑤|⑥|⑦|⑧|⑨|⑪|⑫|⑬|⑮|⑯|⑰|⑱/g, '');
-      const nameB = b.replace(/⑩|②|③|④|⑤|⑥|⑦|⑧|⑨|⑪|⑫|⑬|⑮|⑯|⑰|⑱/g, '');
-      return nameA.localeCompare(nameB, 'ja');
-    });
+    return Object.keys(playerStats);
   };
 
   const resetGameStates = () => {
