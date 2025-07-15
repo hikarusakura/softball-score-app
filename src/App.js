@@ -469,6 +469,57 @@ const getPlayerList = () => {
     setFreeComment('');
   };
 
+  // App.js内、handleBattingResultの近くに追加
+const handleSpecialRecord = (type) => {
+  saveStateToHistory();
+  const batterName = useCustomBatter ? customBatter : currentBatter;
+  if (!batterName) {
+    alert('記録を残す打者を選択してください');
+    return;
+  }
+
+  let statsUpdate = {};
+  let message = '';
+
+  switch (type) {
+    case 'stolenBase':
+      statsUpdate.stolenBases = 1;
+      message = `${batterName}: 盗塁成功！`;
+      break;
+    case 'rbi_sac_fly':
+      statsUpdate.rbi = 1;
+      // 犠牲フライは打数に含まない
+      message = `${batterName}: 犠牲フライ（1打点）`;
+      addOut(); // 犠牲フライはアウトも増える
+      break;
+    case 'rbi_other':
+      statsUpdate.rbi = 1;
+      message = `${batterName}: 打点1`;
+      break;
+    default:
+      return;
+  }
+
+  addToTimeline(message);
+  
+  if (Object.keys(statsUpdate).length > 0) {
+    updatePlayerStats(user.uid, batterName, statsUpdate);
+    setPlayerStats(prev => {
+      const newStats = { ...prev };
+      const player = newStats[batterName] || {};
+      for(const key in statsUpdate){
+        player[key] = (player[key] || 0) + 1;
+      }
+      newStats[batterName] = player;
+      return newStats;
+    });
+  }
+  
+  setCurrentBatter('');
+  setCustomBatter('');
+  setUseCustomBatter(false);
+};
+
   const handleBattingResult = (result) => {
     saveStateToHistory();
     const batterName = useCustomBatter ? customBatter : currentBatter;
@@ -483,21 +534,23 @@ const getPlayerList = () => {
       }
     }
     let message = `${batterName}: ${resultText}`;
-
-
     let runsScored = 0;
     let isAnOut = false;
+
     const statsUpdate = {};
     const isHit = ['ヒット', '2ベース', '3ベース', 'ホームラン'].includes(result);
     const isWalkOrHBP = ['四球', '死球'].includes(result);
-    const isAtBat = !isWalkOrHBP;
+    const isStrikeout = result === '三振';
+    // 打数がカウントされる打席か
+    const isAtBat = !isWalkOrHBP && result !== 'バント'; // バントも打数から除外する
+    if (isAtBat) statsUpdate.atBats = 1;
+    if (isHit) statsUpdate.hits = 1;
+    if (isWalkOrHBP) {
+      if(result === '四球') statsUpdate.walks = 1;
+      else statsUpdate.hitByPitches = 1;
+    }
+    if (isStrikeout) statsUpdate.strikeouts = 1;
 
-  if (isAtBat) {
-    statsUpdate.atBats = 1;
-  }
-  if (isHit) {
-    statsUpdate.hits = 1;
-  }
     switch (result) {
       case '三振': case 'ゴロ': case 'ライナー': case 'フライ': isAnOut = true; break;
       case 'ヒット': if (bases.third) runsScored++; setBases(prev => ({ first: true, second: prev.first, third: prev.second })); break;
@@ -831,51 +884,81 @@ if (gameState === 'statsScreen') {
         </div>
 
         {/* 成績一覧テーブル */}
+// if (gameState === 'statsScreen') の return 内
 <div className="overflow-x-auto">
-  <table className="min-w-full bg-white">
+  <table className="min-w-full bg-white text-xs md:text-sm">
     <thead className="bg-gray-800 text-white">
       <tr>
-        <th className="text-left py-3 px-4 uppercase font-semibold text-sm w-1/3">選手名</th>
-        <th className="py-3 px-4 uppercase font-semibold text-sm">打数</th>
-        <th className="py-3 px-4 uppercase font-semibold text-sm">安打</th>
-        <th className="py-3 px-4 uppercase font-semibold text-sm">打率</th>
-        <th className="py-3 px-4 uppercase font-semibold text-sm w-1/4">操作</th>
+        <th className="text-left py-2 px-3">選手名</th>
+        <th>打率</th><th>出塁率</th><th>打席</th><th>打数</th><th>安打</th><th>二塁打</th>
+        <th>三塁打</th><th>本塁打</th><th>打点</th><th>得点</th><th>三振</th>
+        <th>四球</th><th>死球</th><th>盗塁</th>
+        <th className="py-2 px-3">操作</th>
       </tr>
     </thead>
     <tbody className="text-gray-700">
       {getPlayerList().map((playerName) => {
         const isEditing = editingPlayer === playerName;
         const stats = isEditing ? tempStats : (playerStats[playerName] || {});
+        
         const atBats = stats.atBats || 0;
         const hits = stats.hits || 0;
-        const battingAverage = atBats > 0 ? (hits / atBats).toFixed(3) : '.000';
+        const doubles = stats.doubles || 0;
+        const triples = stats.triples || 0;
+        const homeRuns = stats.homeRuns || 0;
+        const rbi = stats.rbi || 0;
+        const runs = stats.runs || 0;
+        const strikeouts = stats.strikeouts || 0;
+        const walks = stats.walks || 0;
+        const hitByPitches = stats.hitByPitches || 0;
+        const stolenBases = stats.stolenBases || 0;
+
+        // 自動計算
+        const totalAtBats = atBats;
+        const plateAppearances = atBats + walks + hitByPitches; // 犠飛などは未対応
+        const battingAverage = totalAtBats > 0 ? (hits / totalAtBats).toFixed(3) : '.000';
+        const onBasePercentage = plateAppearances > 0 ? ((hits + walks + hitByPitches) / plateAppearances).toFixed(3) : '.000';
 
         return (
           <tr key={playerName} className="border-b border-gray-200 hover:bg-gray-100">
-            <td className="text-left py-3 px-4">{playerName}</td>
+            <td className="text-left py-2 px-3 font-medium">{playerName}</td>
+            <td className="text-center font-semibold">{battingAverage}</td>
+            <td className="text-center font-semibold">{onBasePercentage}</td>
+            <td className="text-center">{plateAppearances}</td>
             
             {isEditing ? (
-              // --- 編集モードの表示 ---
               <>
-                <td><input type="number" value={atBats} onChange={(e) => handleStatChange('atBats', e.target.value)} className="w-16 text-center border rounded" /></td>
-                <td><input type="number" value={hits} onChange={(e) => handleStatChange('hits', e.target.value)} className="w-16 text-center border rounded" /></td>
-                <td className="text-center py-3 px-4">{battingAverage}</td>
-                <td className="text-center py-3 px-4">
-                  <button onClick={() => handleSaveStats(playerName)} className="bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded mr-1">保存</button>
-                  <button onClick={handleCancelEdit} className="bg-gray-500 text-white text-xs font-bold py-1 px-2 rounded">中止</button>
-                </td>
+                <td><input type="number" value={atBats} onChange={(e) => handleStatChange('atBats', e.target.value)} className="w-12 text-center border rounded"/></td>
+                <td><input type="number" value={hits} onChange={(e) => handleStatChange('hits', e.target.value)} className="w-12 text-center border rounded"/></td>
+                <td><input type="number" value={doubles} onChange={(e) => handleStatChange('doubles', e.target.value)} className="w-12 text-center border rounded"/></td>
+                <td><input type="number" value={triples} onChange={(e) => handleStatChange('triples', e.target.value)} className="w-12 text-center border rounded"/></td>
+                <td><input type="number" value={homeRuns} onChange={(e) => handleStatChange('homeRuns', e.target.value)} className="w-12 text-center border rounded"/></td>
+                <td><input type="number" value={rbi} onChange={(e) => handleStatChange('rbi', e.target.value)} className="w-12 text-center border rounded"/></td>
+                <td><input type="number" value={runs} onChange={(e) => handleStatChange('runs', e.target.value)} className="w-12 text-center border rounded"/></td>
+                <td><input type="number" value={strikeouts} onChange={(e) => handleStatChange('strikeouts', e.target.value)} className="w-12 text-center border rounded"/></td>
+                <td><input type="number" value={walks} onChange={(e) => handleStatChange('walks', e.target.value)} className="w-12 text-center border rounded"/></td>
+                <td><input type="number" value={hitByPitches} onChange={(e) => handleStatChange('hitByPitches', e.target.value)} className="w-12 text-center border rounded"/></td>
+                <td><input type="number" value={stolenBases} onChange={(e) => handleStatChange('stolenBases', e.target.value)} className="w-12 text-center border rounded"/></td>
               </>
             ) : (
-              // --- 通常モードの表示 ---
               <>
-                <td className="text-center py-3 px-4">{atBats}</td>
-                <td className="text-center py-3 px-4">{hits}</td>
-                <td className="text-center py-3 px-4">{battingAverage}</td>
-                <td className="text-center py-3 px-4">
-                  <button onClick={() => handleEditPlayer(playerName)} className="bg-green-500 text-white text-xs font-bold py-1 px-2 rounded">編集</button>
-                </td>
+                <td className="text-center">{atBats}</td><td className="text-center">{hits}</td><td className="text-center">{doubles}</td>
+                <td className="text-center">{triples}</td><td className="text-center">{homeRuns}</td><td className="text-center">{rbi}</td>
+                <td className="text-center">{runs}</td><td className="text-center">{strikeouts}</td><td className="text-center">{walks}</td>
+                <td className="text-center">{hitByPitches}</td><td className="text-center">{stolenBases}</td>
               </>
             )}
+
+            <td className="text-center py-2 px-3">
+              {isEditing ? (
+                <>
+                  <button onClick={() => handleSaveStats(playerName)} className="bg-blue-500 text-white font-bold py-1 px-2 rounded-md text-xs mr-1">保存</button>
+                  <button onClick={handleCancelEdit} className="bg-gray-500 text-white font-bold py-1 px-2 rounded-md text-xs">中止</button>
+                </>
+              ) : (
+                <button onClick={() => handleEditPlayer(playerName)} className="bg-green-500 text-white font-bold py-1 px-2 rounded-md text-xs">編集</button>
+              )}
+            </td>
           </tr>
         );
       })}
@@ -1206,6 +1289,15 @@ if (gameState === 'statsScreen') {
                 ))}
               </div>
             </div>
+            <div className="mb-3">
+            <label className="block text-xs font-medium text-gray-700 mb-1">特殊記録（打者を選択してから押してください）</label>
+            <div className="grid grid-cols-4 gap-1">
+              <button onClick={() => handleSpecialRecord('stolenBase')} className="px-2 py-1 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs">盗塁</button>
+              <button onClick={() => handleSpecialRecord('rbi_sac_fly')} className="px-2 py-1 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs">犠飛打点</button>
+              <button onClick={() => handleSpecialRecord('rbi_other')} className="px-2 py-1 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs">その他打点</button>
+            </div>
+          </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
               <div>
                 <button onClick={addOut} className="w-full px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm transition-colors">アウト ({outCount}/3)</button>
