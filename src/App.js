@@ -3,7 +3,7 @@ import { Play, Trophy, Eye, ChevronLeft, Copy } from 'lucide-react';
 import { 
   db, saveGameState, watchGameState, stopWatching, 
   generateGameId, getAllGames, deleteGameFromFirebase, 
-  login, logout, onAuth, getTeamData, updatePlayerStats, setPlayerStats
+  login, logout, onAuth, getTeamData, updatePlayerStats
 } from './firebase';
 import { doc, setDoc } from "firebase/firestore";
 import { CSVLink } from 'react-csv';
@@ -72,7 +72,6 @@ const LoginScreen = ({ onLogin }) => {
 // --- ログイン後のメインアプリ本体 ---
 const SoftballScoreApp = ({ user, initialTeamData }) => {
   // --- State管理セクション ---
-  const [players, setPlayers] = useState(initialTeamData.players || []);
   const [playerStats, setPlayerStats] = useState(initialTeamData.playerStats || {});
   const [teamName, setTeamName] = useState(initialTeamData.teamName || 'あなたのチーム');
   const [newPlayerName, setNewPlayerName] = useState('');
@@ -140,12 +139,9 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   }; 
 
 const getPlayerList = () => {
-    // 選手名簿管理画面で並び替えた `players` Stateの順番を尊重する
-    if (!players || players.length === 0) {
-      // playersが空の場合は、playerStatsからキーを取得する（フォールバック）
-      return Object.keys(playerStats);
-    }
-    return players;
+    if (!playerStats) return [];
+    // playerStatsオブジェクトから選手名のリストを返すようにする
+    return Object.keys(playerStats);
   };
 
   const resetGameStates = () => {
@@ -277,13 +273,13 @@ const getPlayerList = () => {
   };
   
   useEffect(() => {
-    setPlayers(initialTeamData.players || []);
+  if (initialTeamData) {
+    setPlayerStats(initialTeamData.playerStats || {});
     setTeamName(initialTeamData.teamName || 'あなたのチーム');
-  }, [initialTeamData]);
+  }
+}, [initialTeamData]);
 
-  useEffect(() => {
-    localStorage.setItem(`softball_players_${user.uid}`, JSON.stringify(players));
-  }, [players, user.uid]);
+
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -308,6 +304,16 @@ const getPlayerList = () => {
     timeline, currentBatter, customBatter, useCustomBatter, 
     gameStartDate, saveCurrentGameState, isGameCreator, gameState
   ]);
+
+    useEffect(() => {
+    // teamDataが読み込まれた後、かつplayerStatsが空でない場合にのみ実行
+    if (!user || !initialTeamData) return;
+
+    const teamRef = doc(db, 'teams', user.uid);
+    // playerStatsオブジェクト全体でFirestoreを更新する
+    setDoc(teamRef, { playerStats: playerStats }, { merge: true });
+
+  }, [playerStats, user, initialTeamData]);
 
   const saveStateToHistory = () => {
     const currentState = {
@@ -692,48 +698,64 @@ const handleSpecialRecord = (type) => {
     }
   };
 
-  const handleAddPlayer = () => {
+const handleAddPlayer = () => {
     if (!newPlayerName.trim()) {
       alert('追加する選手の名前を入力してください。');
       return;
     }
-    if (players.includes(newPlayerName.trim())) {
+    const newPlayer = newPlayerName.trim();
+    if (playerStats[newPlayer]) {
       alert('同じ名前の選手が既に存在します。');
       return;
     }
-    const updatedPlayers = [...players, newPlayerName.trim()];
-    setPlayers(updatedPlayers);
-    const teamRef = doc(db, 'teams', user.uid);
-    setDoc(teamRef, { players: updatedPlayers }, { merge: true });
+    // 新しい選手に、全ての成績が0の初期データを作成する
+    const newStats = {
+      atBats: 0, hits: 0, doubles: 0, triples: 0, homeRuns: 0,
+      rbi: 0, runs: 0, strikeouts: 0, walks: 0, hitByPitches: 0, stolenBases: 0
+    };
+    const updatedStats = { ...playerStats, [newPlayer]: newStats };
+    setPlayerStats(updatedStats);
     setNewPlayerName('');
   };
 
   const handleDeletePlayer = (playerToDelete) => {
-    if (window.confirm(`「${playerToDelete}」を名簿から削除しますか？`)) {
-      const updatedPlayers = players.filter(player => player !== playerToDelete);
-      setPlayers(updatedPlayers);
-      const teamRef = doc(db, 'teams', user.uid);
-      setDoc(teamRef, { players: updatedPlayers }, { merge: true });
+    if (window.confirm(`「${playerToDelete}」を名簿から削除しますか？成績データも全て削除されます。`)) {
+      const updatedStats = { ...playerStats };
+      delete updatedStats[playerToDelete];
+      setPlayerStats(updatedStats);
     }
   };
 
-  const movePlayerUp = (index) => {
+const movePlayerUp = (index) => {
     if (index === 0) return;
-    const newPlayers = [...players];
-    const playerToMove = newPlayers.splice(index, 1)[0];
-    newPlayers.splice(index - 1, 0, playerToMove);
-    setPlayers(newPlayers);
+    const playerList = getPlayerList();
+    const newPlayerList = [...playerList];
+    const playerToMove = newPlayerList.splice(index, 1)[0];
+    newPlayerList.splice(index - 1, 0, playerToMove);
+    
+    // 新しい順番でplayerStatsオブジェクトを再構築
+    const reorderedStats = {};
+    newPlayerList.forEach(name => {
+      reorderedStats[name] = playerStats[name];
+    });
+    setPlayerStats(reorderedStats);
   };
 
-  const movePlayerDown = (index) => {
-    if (index === players.length - 1) return;
-    const newPlayers = [...players];
-    const playerToMove = newPlayers.splice(index, 1)[0];
-    newPlayers.splice(index + 1, 0, playerToMove);
-    setPlayers(newPlayers);
+const movePlayerDown = (index) => {
+    const playerList = getPlayerList();
+    if (index === playerList.length - 1) return;
+    const newPlayerList = [...playerList];
+    const playerToMove = newPlayerList.splice(index, 1)[0];
+    newPlayerList.splice(index + 1, 0, playerToMove);
+
+    // 新しい順番でplayerStatsオブジェクトを再構築
+    const reorderedStats = {};
+    newPlayerList.forEach(name => {
+      reorderedStats[name] = playerStats[name];
+    });
+    setPlayerStats(reorderedStats);
   };
 
-  // App.js に追加
 
 // 編集モードを開始する関数
 const handleEditPlayer = (playerName) => {
@@ -1012,7 +1034,7 @@ if (gameState === 'statsScreen') {
                   <div className="flex items-center space-x-2">
                     <div className="flex flex-col">
                       <button onClick={() => movePlayerUp(index)} disabled={index === 0} className="text-gray-500 hover:text-gray-800 disabled:opacity-25" aria-label="上に移動">▲</button>
-                      <button onClick={() => movePlayerDown(index)} disabled={index === players.length - 1} className="text-gray-500 hover:text-gray-800 disabled:opacity-25" aria-label="下に移動">▼</button>
+                      <button onClick={() => movePlayerDown(index)} disabled={index === getPlayerList().length - 1} className="text-gray-500 hover:text-gray-800 disabled:opacity-25" aria-label="下に移動">▼</button>
                     </div>
                     <button onClick={() => handleDeletePlayer(player)} className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1 px-2 rounded-lg">削除</button>
                   </div>
