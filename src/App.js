@@ -545,6 +545,7 @@ const handleSpecialRecord = (type) => {
     const isAtBat = !isWalkOrHBP && result !== 'バント'; // バントも打数から除外する
     if (isAtBat) statsUpdate.atBats = 1;
     if (isHit) statsUpdate.hits = 1;
+
     if (isWalkOrHBP) {
       if(result === '四球') statsUpdate.walks = 1;
       else statsUpdate.hitByPitches = 1;
@@ -552,14 +553,15 @@ const handleSpecialRecord = (type) => {
     if (isStrikeout) statsUpdate.strikeouts = 1;
 
     switch (result) {
-      case '三振': case 'ゴロ': case 'ライナー': case 'フライ': isAnOut = true; break;
-      case 'ヒット': if (bases.third) runsScored++; setBases(prev => ({ first: true, second: prev.first, third: prev.second })); break;
-      case '2ベース': if (bases.third) runsScored++; if (bases.second) runsScored++; setBases(prev => ({ first: false, second: true, third: prev.first })); break;
-      case '3ベース': if (bases.third) runsScored++; if (bases.second) runsScored++; if (bases.first) runsScored++; setBases({ first: false, second: false, third: true }); break;
-      case 'ホームラン': runsScored = 1 + (bases.first ? 1 : 0) + (bases.second ? 1 : 0) + (bases.third ? 1 : 0); setBases({ first: false, second: false, third: false }); break;
-      case '四球': case '死球': if (bases.first && bases.second && bases.third) runsScored++; setBases(prev => ({ first: true, second: prev.first ? true : prev.second, third: prev.first && prev.second ? true : prev.third })); break;
-      default: break;
+    case '三振': case 'ゴロ': case 'ライナー': case 'フライ': isAnOut = true; break;
+    case 'ヒット': if (bases.third) runsScored++; setBases(prev => ({ first: true, second: prev.first, third: prev.second })); break;
+    case '2ベース': statsUpdate.doubles = 1; if (bases.third) runsScored++; if (bases.second) runsScored++; setBases(prev => ({ first: false, second: true, third: prev.first })); break;
+    case '3ベース': statsUpdate.triples = 1; if (bases.third) runsScored++; if (bases.second) runsScored++; if (bases.first) runsScored++; setBases({ first: false, second: false, third: true }); break;
+    case 'ホームラン': statsUpdate.homeRuns = 1; runsScored = 1 + (bases.first ? 1 : 0) + (bases.second ? 1 : 0) + (bases.third ? 1 : 0); setBases({ first: false, second: false, third: false }); break;
+    case '四球': case '死球': if (bases.first && bases.second && bases.third) runsScored++; setBases(prev => ({ first: true, second: prev.first ? true : prev.second, third: prev.first && prev.second ? true : prev.third, })); break;
+    default: break;
     }
+
     if (isHit) {
       const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
       if (isMyTeamBatting) {
@@ -572,20 +574,28 @@ const handleSpecialRecord = (type) => {
         else setHomeHits(h => h + 1);
       }
     }
+    //if (runsScored > 0) {
+    //  const currentScoringTeam = getCurrentTeamName();
+    //  const isMyTeamScoring = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
+    //  if (isMyTeamScoring) {
+    //    if (isHomeTeam) setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
+    //    else setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
+    //  } else {
+    //    if (isHomeTeam) setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
+    //    else setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
+    //  }
+    //  message += ` (${runsScored}点獲得！)`;
+    //}
+
     if (runsScored > 0) {
-      const currentScoringTeam = getCurrentTeamName();
-      const isMyTeamScoring = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
-      if (isMyTeamScoring) {
-        if (isHomeTeam) setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
-        else setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
-      } else {
-        if (isHomeTeam) setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
-        else setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
-      }
-      message += ` (${runsScored}点獲得！)`;
-    }
+    statsUpdate.rbi = (statsUpdate.rbi || 0) + runsScored;
+    statsUpdate.runs = (statsUpdate.runs || 0) + runsScored; // 得点も記録
+    message += ` (${runsScored}点獲得！)`;
+  }
+
     const nextOutCount = isAnOut ? outCount + 1 : outCount;
     addToTimeline(message, { outCount: nextOutCount });
+
     if (isAnOut) {
       const { newOutCount, inningShouldChange } = processOut();
       addToTimeline(`アウト！ (${newOutCount}アウト)`, { outCount: newOutCount });
@@ -733,9 +743,9 @@ const handleStatChange = (statName, value) => {
 // 編集内容を保存する関数
 const handleSaveStats = async (playerName) => {
   if (window.confirm(`「${playerName}」の成績を保存しますか？`)) {
-    const success = await setPlayerStats(user.uid, playerName, tempStats);
+    // 第4引数に true を渡して「上書きモード」を有効にする
+    const success = await updatePlayerStats(user.uid, playerName, tempStats, true);
     if (success) {
-      // ローカルのStateも更新
       setPlayerStats(prev => ({
         ...prev,
         [playerName]: tempStats
@@ -744,7 +754,7 @@ const handleSaveStats = async (playerName) => {
     } else {
       alert('成績の保存に失敗しました。');
     }
-    setEditingPlayer(null); // 編集モードを終了
+    setEditingPlayer(null);
   }
 };
 

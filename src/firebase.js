@@ -77,17 +77,27 @@ export const deleteGameFromFirebase = async (teamId, gameId) => {
 };
 
 // ★★★ 選手成績更新のロジックを修正 ★★★
-export const updatePlayerStats = async (teamId, playerName, statsToAdd) => {
+// 特定の選手の成績を更新する（加算・上書き両対応）
+export const updatePlayerStats = async (teamId, playerName, statsData, isOverwrite = false) => {
   const teamRef = doc(db, 'teams', teamId);
   try {
     const updateData = {};
-    for (const key in statsToAdd) {
-      // Firestoreのincrement命令をここで使う
-      updateData[`playerStats.${playerName}.${key}`] = increment(statsToAdd[key]);
+    if (isOverwrite) {
+      // --- 上書きモード ---
+      // playerStatsオブジェクト全体の中の、特定の選手データを丸ごと置き換える
+      updateData[`playerStats.${playerName}`] = statsData;
+    } else {
+      // --- 加算モード ---
+      // 各成績にincrement命令を適用する
+      for (const key in statsData) {
+        updateData[`playerStats.${playerName}.${key}`] = increment(statsData[key]);
+      }
     }
     await setDoc(teamRef, updateData, { merge: true });
+    return true;
   } catch (error) {
     console.error("選手成績の更新に失敗しました:", error);
+    return false;
   }
 };
 
