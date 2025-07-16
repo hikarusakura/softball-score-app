@@ -80,6 +80,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [tournamentName, setTournamentName] = useState('');
   const [opponentTeam, setOpponentTeam] = useState('');
   const [isHomeTeam, setIsHomeTeam] = useState(true);
+  const [isStatsRecordingEnabled, setIsStatsRecordingEnabled] = useState(true); // デフォルトは記録する
   const [currentInning, setCurrentInning] = useState(1);
   const [currentTeamBatting, setCurrentTeamBatting] = useState('away');
   const [outCount, setOutCount] = useState(0);
@@ -148,6 +149,7 @@ const getPlayerList = () => {
   };
 
   const resetGameStates = () => {
+    setIsStatsRecordingEnabled(true);
     setTournamentName('');
     setOpponentTeam('');
     setIsHomeTeam(true);
@@ -186,6 +188,7 @@ const getPlayerList = () => {
   const saveCurrentGameState = useCallback(async () => {
     if (!gameId || !isGameCreator) return;
     const currentState = {
+      isStatsRecordingEnabled,
       tournamentName,
       opponentTeam,
       isHomeTeam,
@@ -212,6 +215,7 @@ const getPlayerList = () => {
       
     }
   }, [
+    isStatsRecordingEnabled,
     user.uid, gameId, isGameCreator, tournamentName, opponentTeam, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, homeHits, awayHits,
     timeline, currentBatter, customBatter, useCustomBatter, gameStartDate
@@ -229,6 +233,7 @@ const getPlayerList = () => {
     const newListener = watchGameState(user.uid, gameIdToLoad, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
+        setIsStatsRecordingEnabled(data.isStatsRecordingEnabled !== undefined ? data.isStatsRecordingEnabled : true);
         setTournamentName(data.tournamentName || '');
         setOpponentTeam(data.opponentTeam || '');
         setIsHomeTeam(data.isHomeTeam === true);
@@ -503,6 +508,7 @@ const handleSpecialRecord = (type) => {
   addToTimeline(message);
   
   if (Object.keys(statsUpdate).length > 0) {
+    if (isStatsRecordingEnabled) {
     updatePlayerStats(user.uid, batterName, statsUpdate);
     setPlayerStats(prev => {
       const newStats = { ...prev };
@@ -513,6 +519,7 @@ const handleSpecialRecord = (type) => {
       newStats[batterName] = player;
       return newStats;
     });
+  }
   }
   
   setCurrentBatter('');
@@ -606,6 +613,7 @@ const handleSpecialRecord = (type) => {
 
     // ★★★ 最後に成績を更新する ★★★
   if (Object.keys(statsUpdate).length > 0) {
+    if (isStatsRecordingEnabled) {
     // Firestoreのデータを更新
     updatePlayerStats(user.uid, batterName, statsUpdate);
     // ローカルのStateも更新
@@ -618,6 +626,7 @@ const handleSpecialRecord = (type) => {
       newStats[batterName] = player;
       return newStats;
     });
+  }
   }
 
     setCurrentBatter('');
@@ -1041,6 +1050,19 @@ if (gameState === 'statsScreen') {
               <label className="flex items-center space-x-3">
                 <input type="checkbox" checked={isHomeTeam} onChange={(e) => setIsHomeTeam(e.target.checked)} className="w-5 h-5 text-blue-600" />
                 <span className="text-sm font-medium text-gray-700">{teamName}が後攻</span>
+              </label>
+            </div>
+            <div>
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={isStatsRecordingEnabled}
+                  onChange={(e) => setIsStatsRecordingEnabled(e.target.checked)}
+                  className="w-5 h-5 text-green-600"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  個人成績を自動記録する
+                </span>
               </label>
             </div>
             <button onClick={startGame} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
