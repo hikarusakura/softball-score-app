@@ -593,7 +593,6 @@ const handleSpecialRecord = (type) => {
     if (runsScored > 0) {
       // 打点と、得点した選手の得点を記録
       statsUpdate.rbi = (statsUpdate.rbi || 0) + runsScored;
-      statsUpdate.runs = (statsUpdate.runs || 0) + runsScored; // 注：打者に得点が記録されます
 
       // 実際のスコアに反映させる
       const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
@@ -720,7 +719,7 @@ const handleAddPlayer = () => {
       ...prev,
       [newPlayer]: {
         atBats: 0, hits: 0, doubles: 0, triples: 0, homeRuns: 0,
-        rbi: 0, runs: 0, strikeouts: 0, walks: 0, hitByPitches: 0, stolenBases: 0
+        rbi: 0, strikeouts: 0, walks: 0, hitByPitches: 0, stolenBases: 0
       }
     }));
     // players配列に名前を追加
@@ -930,7 +929,7 @@ if (gameState === 'statsScreen') {
       <tr>
         <th className="text-left py-2 px-3">選手名</th>
         <th>打率</th><th>出塁率</th><th>打席</th><th>打数</th><th>安打</th><th>二塁打</th>
-        <th>三塁打</th><th>本塁打</th><th>打点</th><th>得点</th><th>三振</th>
+        <th>三塁打</th><th>本塁打</th><th>打点</th><th>三振</th>
         <th>四球</th><th>死球</th><th>盗塁</th>
         <th className="py-2 px-3">操作</th>
       </tr>
@@ -946,7 +945,6 @@ if (gameState === 'statsScreen') {
         const triples = stats.triples || 0;
         const homeRuns = stats.homeRuns || 0;
         const rbi = stats.rbi || 0;
-        const runs = stats.runs || 0;
         const strikeouts = stats.strikeouts || 0;
         const walks = stats.walks || 0;
         const hitByPitches = stats.hitByPitches || 0;
@@ -973,7 +971,6 @@ if (gameState === 'statsScreen') {
                 <td><input type="number" value={triples} onChange={(e) => handleStatChange('triples', e.target.value)} className="w-12 text-center border rounded"/></td>
                 <td><input type="number" value={homeRuns} onChange={(e) => handleStatChange('homeRuns', e.target.value)} className="w-12 text-center border rounded"/></td>
                 <td><input type="number" value={rbi} onChange={(e) => handleStatChange('rbi', e.target.value)} className="w-12 text-center border rounded"/></td>
-                <td><input type="number" value={runs} onChange={(e) => handleStatChange('runs', e.target.value)} className="w-12 text-center border rounded"/></td>
                 <td><input type="number" value={strikeouts} onChange={(e) => handleStatChange('strikeouts', e.target.value)} className="w-12 text-center border rounded"/></td>
                 <td><input type="number" value={walks} onChange={(e) => handleStatChange('walks', e.target.value)} className="w-12 text-center border rounded"/></td>
                 <td><input type="number" value={hitByPitches} onChange={(e) => handleStatChange('hitByPitches', e.target.value)} className="w-12 text-center border rounded"/></td>
@@ -983,7 +980,7 @@ if (gameState === 'statsScreen') {
               <>
                 <td className="text-center">{atBats}</td><td className="text-center">{hits}</td><td className="text-center">{doubles}</td>
                 <td className="text-center">{triples}</td><td className="text-center">{homeRuns}</td><td className="text-center">{rbi}</td>
-                <td className="text-center">{runs}</td><td className="text-center">{strikeouts}</td><td className="text-center">{walks}</td>
+                <td className="text-center">{strikeouts}</td><td className="text-center">{walks}</td>
                 <td className="text-center">{hitByPitches}</td><td className="text-center">{stolenBases}</td>
               </>
             )}
