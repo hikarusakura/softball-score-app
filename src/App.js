@@ -73,6 +73,7 @@ const LoginScreen = ({ onLogin }) => {
 const SoftballScoreApp = ({ user, initialTeamData }) => {
   // --- State管理セクション ---
   const [playerStats, setPlayerStats] = useState(initialTeamData.playerStats || {});
+  const [players, setPlayers] = useState(initialTeamData.players || Object.keys(initialTeamData.playerStats || {}));
   const [teamName, setTeamName] = useState(initialTeamData.teamName || 'あなたのチーム');
   const [newPlayerName, setNewPlayerName] = useState('');
   const [gameState, setGameState] = useState('setup');
@@ -138,10 +139,9 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     }
   }; 
 
-const getPlayerList = () => {
-    if (!playerStats) return [];
-    // playerStatsオブジェクトから選手名のリストを返すようにする
-    return Object.keys(playerStats);
+  const getPlayerList = () => {
+    // 常に順番が保証されているplayers配列を返すようにする
+    return players || [];
   };
 
   const resetGameStates = () => {
@@ -311,9 +311,12 @@ const getPlayerList = () => {
 
     const teamRef = doc(db, 'teams', user.uid);
     // playerStatsオブジェクト全体でFirestoreを更新する
-    setDoc(teamRef, { playerStats: playerStats }, { merge: true });
+    setDoc(teamRef, { 
+      playerStats: playerStats,
+      players: players 
+    }, { merge: true });
 
-  }, [playerStats, user, initialTeamData]);
+  }, [playerStats, players, user, initialTeamData]);
 
   const saveStateToHistory = () => {
     const currentState = {
@@ -709,51 +712,43 @@ const handleAddPlayer = () => {
       return;
     }
     // 新しい選手に、全ての成績が0の初期データを作成する
-    const newStats = {
-      atBats: 0, hits: 0, doubles: 0, triples: 0, homeRuns: 0,
-      rbi: 0, runs: 0, strikeouts: 0, walks: 0, hitByPitches: 0, stolenBases: 0
-    };
-    const updatedStats = { ...playerStats, [newPlayer]: newStats };
-    setPlayerStats(updatedStats);
+    setPlayerStats(prev => ({
+      ...prev,
+      [newPlayer]: {
+        atBats: 0, hits: 0, doubles: 0, triples: 0, homeRuns: 0,
+        rbi: 0, runs: 0, strikeouts: 0, walks: 0, hitByPitches: 0, stolenBases: 0
+      }
+    }));
+    // players配列に名前を追加
+    setPlayers(prev => [...prev, newPlayer]);
     setNewPlayerName('');
   };
 
-  const handleDeletePlayer = (playerToDelete) => {
+const handleDeletePlayer = (playerToDelete) => {
     if (window.confirm(`「${playerToDelete}」を名簿から削除しますか？成績データも全て削除されます。`)) {
+      // playerStatsからデータを削除
       const updatedStats = { ...playerStats };
       delete updatedStats[playerToDelete];
       setPlayerStats(updatedStats);
+      // players配列から名前を削除
+      setPlayers(prev => prev.filter(player => player !== playerToDelete));
     }
   };
 
 const movePlayerUp = (index) => {
     if (index === 0) return;
-    const playerList = getPlayerList();
-    const newPlayerList = [...playerList];
-    const playerToMove = newPlayerList.splice(index, 1)[0];
-    newPlayerList.splice(index - 1, 0, playerToMove);
-    
-    // 新しい順番でplayerStatsオブジェクトを再構築
-    const reorderedStats = {};
-    newPlayerList.forEach(name => {
-      reorderedStats[name] = playerStats[name];
-    });
-    setPlayerStats(reorderedStats);
+    // players配列の順番を直接入れ替える
+    const newPlayers = [...players];
+    [newPlayers[index - 1], newPlayers[index]] = [newPlayers[index], newPlayers[index - 1]];
+    setPlayers(newPlayers);
   };
 
 const movePlayerDown = (index) => {
-    const playerList = getPlayerList();
-    if (index === playerList.length - 1) return;
-    const newPlayerList = [...playerList];
-    const playerToMove = newPlayerList.splice(index, 1)[0];
-    newPlayerList.splice(index + 1, 0, playerToMove);
-
-    // 新しい順番でplayerStatsオブジェクトを再構築
-    const reorderedStats = {};
-    newPlayerList.forEach(name => {
-      reorderedStats[name] = playerStats[name];
-    });
-    setPlayerStats(reorderedStats);
+    if (index === players.length - 1) return;
+    // players配列の順番を直接入れ替える
+    const newPlayers = [...players];
+    [newPlayers[index + 1], newPlayers[index]] = [newPlayers[index], newPlayers[index + 1]];
+    setPlayers(newPlayers);
   };
 
 
