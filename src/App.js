@@ -590,18 +590,22 @@ const handleSpecialRecord = (type) => {
         else setHomeHits(h => h + 1);
       }
     }
-    //if (runsScored > 0) {
-    //  const currentScoringTeam = getCurrentTeamName();
-    //  const isMyTeamScoring = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
-    //  if (isMyTeamScoring) {
-    //    if (isHomeTeam) setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
-    //    else setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
-    //  } else {
-    //    if (isHomeTeam) setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
-    //    else setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
-    //  }
-    //  message += ` (${runsScored}点獲得！)`;
-    //}
+    if (runsScored > 0) {
+      // 打点と、得点した選手の得点を記録
+      statsUpdate.rbi = (statsUpdate.rbi || 0) + runsScored;
+      statsUpdate.runs = (statsUpdate.runs || 0) + runsScored; // 注：打者に得点が記録されます
+
+      // 実際のスコアに反映させる
+      const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
+      if (isMyTeamBatting) {
+        if (isHomeTeam) setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
+        else setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
+      } else {
+        if (isHomeTeam) setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
+        else setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
+      }
+      message += ` (${runsScored}点獲得！)`;
+    }
 
     if (runsScored > 0) {
     statsUpdate.rbi = (statsUpdate.rbi || 0) + runsScored;
