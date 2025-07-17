@@ -110,6 +110,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [history, setHistory] = useState([]);
   const [editingPlayer, setEditingPlayer] = useState(null); // 編集中の選手名
   const [tempStats, setTempStats] = useState({});       // 編集中の数値
+  const [showStolenBaseModal, setShowStolenBaseModal] = useState(false);
+  const [stealingPlayer, setStealingPlayer] = useState(null); // 盗塁する選手名を一時保存
 
   // --- ポジション対応表 ---
   const positionMap = {
@@ -483,8 +485,92 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setFreeComment('');
   };
 
+  // App.js に追加
+
+// 盗塁を記録する新しい関数
+const recordStolenBase = (playerName) => {
+  saveStateToHistory();
+  
+  const statsUpdate = { stolenBases: 1 };
+  
+  // FirestoreとローカルのStateを更新
+  if (isStatsRecordingEnabled) {
+    updatePlayerStats(user.uid, playerName, statsUpdate);
+    setPlayerStats(prev => {
+      const newStats = { ...prev };
+      const player = { ...(newStats[playerName] || {}) };
+      player.stolenBases = (player.stolenBases || 0) + 1;
+      newStats[playerName] = player;
+      return newStats;
+    });
+  }
+
+  addToTimeline(`${playerName}: ${stealType}成功！`);
+  setShowStolenBaseModal(false); // ポップアップを閉じる
+};
+
+// 盗塁選手を選択するためのポップアップコンポーネント
+const StolenBaseModal = () => {
+  if (!showStolenBaseModal) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        {stealingPlayer ? (
+          // --- ステージ2: どの塁へ盗塁したか選択 ---
+          <div>
+            <h3 className="text-lg font-bold mb-4 text-center">
+              <span className="font-normal">{stealingPlayer} が</span><br/>どの塁へ盗塁しましたか？
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={() => recordStolenBase(stealingPlayer, '二盗')} className="p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">2塁へ</button>
+              <button onClick={() => recordStolenBase(stealingPlayer, '三盗')} className="p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">3塁へ</button>
+              <button onClick={() => recordStolenBase(stealingPlayer, '本盗')} className="p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">本塁へ</button>
+            </div>
+            <button
+              onClick={() => setStealingPlayer(null)}
+              className="w-full mt-4 bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-lg text-sm"
+            >
+              選手を選び直す
+            </button>
+          </div>
+        ) : (
+          // --- ステージ1: 誰が盗塁したか選択 ---
+          <div>
+            <h3 className="text-lg font-bold mb-4 text-center">盗塁した選手を選択</h3>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {getPlayerList().map((player) => (
+                <button
+                  key={player}
+                  onClick={() => setStealingPlayer(player)}
+                  className="w-full text-left p-3 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                >
+                  {player}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => setShowStolenBaseModal(false)}
+          className="w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg"
+        >
+          キャンセル
+        </button>
+      </div>
+    </div>
+  );
+};
+
   // App.js内、handleBattingResultの近くに追加
 const handleSpecialRecord = (type) => {
+  if (type === 'stolenBase') {
+    setShowStolenBaseModal(true);
+    setStealingPlayer(null);
+    return;
+  }
+
   saveStateToHistory();
   const batterName = useCustomBatter ? customBatter : currentBatter;
   if (!batterName) {
@@ -1212,6 +1298,7 @@ if (gameState === 'statsScreen') {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <ShareDialog />
+      <StolenBaseModal />
             
       <div className={isInputView ? "h-1/2" : "h-full"}>
         <div className="h-full bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
