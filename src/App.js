@@ -606,11 +606,7 @@ const handleSpecialRecord = (type) => {
       message += ` (${runsScored}点獲得！)`;
     }
 
-    if (runsScored > 0) {
-    statsUpdate.rbi = (statsUpdate.rbi || 0) + runsScored;
-    statsUpdate.runs = (statsUpdate.runs || 0) + runsScored; // 得点も記録
-    message += ` (${runsScored}点獲得！)`;
-  }
+
 
     const nextOutCount = isAnOut ? outCount + 1 : outCount;
     addToTimeline(message, { outCount: nextOutCount });
