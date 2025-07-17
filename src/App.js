@@ -494,6 +494,8 @@ const handleSpecialRecord = (type) => {
 
   let statsUpdate = {};
   let message = '';
+  let isSacFly = false;
+  let runsToAdd = 0;
 
   switch (type) {
     case 'stolenBase':
@@ -504,31 +506,54 @@ const handleSpecialRecord = (type) => {
       statsUpdate.rbi = 1;
       // 犠牲フライは打数に含まない
       message = `${batterName}: 犠牲フライ（1打点）`;
-      addOut(); // 犠牲フライはアウトも増える
+      isSacFly = true;
+      runsToAdd = 1;
       break;
     case 'rbi_other':
       statsUpdate.rbi = 1;
       message = `${batterName}: 打点1`;
+      runsToAdd = 1;
       break;
     default:
       return;
   }
 
+  // 1. 先に打席結果（特殊記録）をタイムラインに追加
   addToTimeline(message);
+
+  // 2. 犠牲フライの場合、アウト処理を後から行う
+  if (isSacFly) {
+    const { newOutCount, inningShouldChange } = processOut();
+    addToTimeline(`アウト！ (${newOutCount}アウト)`, { outCount: newOutCount });
+    if (inningShouldChange) {
+      changeInning();
+    }
+  }
+
+  // 3. 打点があった場合、スコアに反映させる
+  if (runsToAdd > 0) {
+    const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
+    if (isMyTeamBatting) {
+      if (isHomeTeam) setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsToAdd; return ns; });
+      else setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsToAdd; return ns; });
+    } else {
+      if (isHomeTeam) setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsToAdd; return ns; });
+      else setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsToAdd; return ns; });
+    }
+  }
   
-  if (Object.keys(statsUpdate).length > 0) {
-    if (isStatsRecordingEnabled) {
+  // 4. 個人成績を更新
+  if (Object.keys(statsUpdate).length > 0 && isStatsRecordingEnabled) {
     updatePlayerStats(user.uid, batterName, statsUpdate);
     setPlayerStats(prev => {
       const newStats = { ...prev };
-      const player = newStats[batterName] || {};
-      for(const key in statsUpdate){
+      const player = { ...(newStats[batterName] || {}) };
+      for (const key in statsUpdate) {
         player[key] = (player[key] || 0) + 1;
       }
       newStats[batterName] = player;
       return newStats;
     });
-  }
   }
   
   setCurrentBatter('');
