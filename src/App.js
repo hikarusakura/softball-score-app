@@ -488,7 +488,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   // App.js に追加
 
 // 盗塁を記録する新しい関数
-const recordStolenBase = (playerName) => {
+const recordStolenBase = (playerName, stealType) => {
   saveStateToHistory();
   
   const statsUpdate = { stolenBases: 1 };
