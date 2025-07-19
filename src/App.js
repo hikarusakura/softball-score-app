@@ -485,6 +485,58 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setFreeComment('');
   };
 
+// App.js の SoftballScoreApp コンポーネント内にこれを追加
+//ハイライト表示用のコンポーネント
+const GameHighlights = ({ playerStats }) => {
+  // playerStatsオブジェクトから、指定された成績を持つ選手を抽出するヘルパー関数
+  const getPlayersWithStat = (statName) => {
+    return Object.entries(playerStats)
+      .filter(([playerName, stats]) => stats[statName] > 0)
+      .map(([playerName, stats]) => ({
+        name: playerName,
+        count: stats[statName]
+      }));
+  };
+
+  const homeRunHitter = getPlayersWithStat('homeRuns');
+  const hitLeaders = getPlayersWithStat('hits');
+  const stolenBaseLeaders = getPlayersWithStat('stolenBases');
+
+  // 表示すべきハイライトが何もない場合は、何も描画しない
+  if (homeRunHitter.length === 0 && hitLeaders.length === 0 && stolenBaseLeaders.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="bg-white bg-opacity-20 rounded-lg p-3 mt-3 text-xs">
+      {homeRunHitter.length > 0 && (
+        <div className="mb-2">
+          <h4 className="font-bold text-yellow-300">本塁打</h4>
+          <p className="text-white">
+            {homeRunHitter.map(p => `${p.name}(${p.count})`).join('、 ')}
+          </p>
+        </div>
+      )}
+      {hitLeaders.length > 0 && (
+        <div className="mb-2">
+          <h4 className="font-bold text-yellow-300">安打</h4>
+          <p className="text-white">
+            {hitLeaders.map(p => `${p.name}(${p.count})`).join('、 ')}
+          </p>
+        </div>
+      )}
+      {stolenBaseLeaders.length > 0 && (
+        <div>
+          <h4 className="font-bold text-yellow-300">盗塁</h4>
+          <p className="text-white">
+            {stolenBaseLeaders.map(p => `${p.name}(${p.count})`).join('、 ')}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
   // App.js に追加
 
 // 盗塁を記録する新しい関数
@@ -1391,6 +1443,7 @@ if (gameState === 'statsScreen') {
                 ))
               )}
             </div>
+            <GameHighlights playerStats={playerStats} />
           </div>
         </div>
       </div>
