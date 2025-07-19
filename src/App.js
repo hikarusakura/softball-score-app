@@ -108,6 +108,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [firebaseGames, setFirebaseGames] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState([]);
+  const [inGameStats, setInGameStats] = useState({}); // 現在の試合だけの成績を記録
   const [editingPlayer, setEditingPlayer] = useState(null); // 編集中の選手名
   const [tempStats, setTempStats] = useState({});       // 編集中の数値
   const [showStolenBaseModal, setShowStolenBaseModal] = useState(false);
@@ -172,6 +173,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setResumeGameId('');
     setSelectedGameTimeline(null);
     setHistory([]);
+    setInGameStats({});
   };
 
   const returnToSetup = () => {
@@ -329,6 +331,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       timeline: [...timeline],
       homeHits,
       awayHits,
+      inGameStats: { ...inGameStats },
 
     };
     setHistory(prev => [...prev, currentState].slice(-10));
@@ -347,6 +350,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setTimeline(lastState.timeline);
     setHomeHits(lastState.homeHits);
     setAwayHits(lastState.awayHits);
+    setInGameStats(lastState.inGameStats);
     setHistory(prev => prev.slice(0, -1));
     alert("直前の操作を取り消しました。");
   };
@@ -366,6 +370,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setBases({ first: false, second: false, third: false });
     setHomeHits(0);
     setAwayHits(0);
+    setInGameStats({});
     setCurrentBatter('');
     setCustomBatter('');
     setUseCustomBatter(false);
@@ -487,10 +492,10 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
 
 // App.js の SoftballScoreApp コンポーネント内にこれを追加
 //ハイライト表示用のコンポーネント
-const GameHighlights = ({ playerStats }) => {
+const GameHighlights = ({ inGameStats }) => {
   // playerStatsオブジェクトから、指定された成績を持つ選手を抽出するヘルパー関数
   const getPlayersWithStat = (statName) => {
-    return Object.entries(playerStats)
+    return Object.entries(inGameStats)
       .filter(([playerName, stats]) => stats[statName] > 0)
       .map(([playerName, stats]) => ({
         name: playerName,
@@ -683,15 +688,26 @@ const handleSpecialRecord = (type) => {
   // 4. 個人成績を更新
   if (Object.keys(statsUpdate).length > 0 && isStatsRecordingEnabled) {
     updatePlayerStats(user.uid, batterName, statsUpdate);
+    // 累計成績を更新
     setPlayerStats(prev => {
       const newStats = { ...prev };
       const player = { ...(newStats[batterName] || {}) };
       for (const key in statsUpdate) {
-        player[key] = (player[key] || 0) + 1;
+        player[key] = (player[key] || 0) + statsUpdate[key];
       }
       newStats[batterName] = player;
       return newStats;
     });
+    // ↓↓ 試合中成績も更新するロジックを追加 ↓↓
+    setInGameStats(prev => {
+      const newStats = { ...prev };
+      const player = { ...(newStats[batterName] || {}) };
+      for (const key in statsUpdate) {
+        player[key] = (player[key] || 0) + statsUpdate[key];
+        }
+        newStats[batterName] = player;
+        return newStats;
+        });
   }
   
   setCurrentBatter('');
@@ -1443,7 +1459,7 @@ if (gameState === 'statsScreen') {
                 ))
               )}
             </div>
-            <GameHighlights playerStats={playerStats} />
+            <GameHighlights inGameStats={inGameStats} />
           </div>
         </div>
       </div>
