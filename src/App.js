@@ -622,14 +622,17 @@ const StolenBaseModal = () => {
 
   // App.js内、handleBattingResultの近くに追加
 const handleSpecialRecord = (type) => {
+  saveStateToHistory();
+  const batterName = useCustomBatter ? customBatter : currentBatter;
+
+  // 盗塁の場合はポップアップを開く
   if (type === 'stolenBase') {
     setShowStolenBaseModal(true);
     setStealingPlayer(null);
     return;
   }
 
-  saveStateToHistory();
-  const batterName = useCustomBatter ? customBatter : currentBatter;
+  // 盗塁以外の場合、打者が選択されているかチェック
   if (!batterName) {
     alert('記録を残す打者を選択してください');
     return;
@@ -813,6 +816,15 @@ const handleSpecialRecord = (type) => {
       newStats[batterName] = player;
       return newStats;
     });
+    setInGameStats(prev => {
+      const newStats = { ...prev };
+      const player = { ...(newStats[batterName] || {}) };
+      for (const key in statsUpdate) {
+        player[key] = (player[key] || 0) + statsUpdate[key];
+        }
+        newStats[batterName] = player;
+        return newStats;
+        });
   }
   }
 
