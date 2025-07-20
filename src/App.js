@@ -188,6 +188,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const saveCurrentGameState = useCallback(async () => {
     if (!gameId || !isGameCreator) return;
     const currentState = {
+      inGameStats,
       isStatsRecordingEnabled,
       tournamentName,
       opponentTeam,
@@ -233,6 +234,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     const newListener = watchGameState(user.uid, gameIdToLoad, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
+        setInGameStats(data.inGameStats || {});
         setIsStatsRecordingEnabled(data.isStatsRecordingEnabled !== undefined ? data.isStatsRecordingEnabled : true);
         setTournamentName(data.tournamentName || '');
         setOpponentTeam(data.opponentTeam || '');
@@ -845,6 +847,7 @@ const handleSpecialRecord = (type) => {
     const myTeamName = teamName || '若葉';
     let winner = isHomeTeam ? (finalHomeScore > finalAwayScore ? myTeamName : opponentTeam) : (finalAwayScore > finalHomeScore ? myTeamName : opponentTeam);
     const gameData = {
+      inGameStats: inGameStats,
       tournamentName: tournamentName,
       gameId: gameId,
       date: new Date().toLocaleDateString(),
@@ -1040,6 +1043,7 @@ const handleCancelEdit = () => {
               </div>
             ))}
           </div>
+          <GameHighlights inGameStats={selectedGameTimeline.inGameStats || {}} />
         </div>
       </div>
     );
