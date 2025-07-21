@@ -75,6 +75,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [tournamentName, setTournamentName] = useState('');
   const [opponentTeam, setOpponentTeam] = useState('');
   const [isHomeTeam, setIsHomeTeam] = useState(true);
+  const [bsoCount, setBsoCount] = useState({ b: 0, s: 0 });
   const [isStatsRecordingEnabled, setIsStatsRecordingEnabled] = useState(true); // デフォルトは記録する
   const [currentInning, setCurrentInning] = useState(1);
   const [currentTeamBatting, setCurrentTeamBatting] = useState('away');
@@ -162,6 +163,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setSelectedGameTimeline(null);
     setHistory([]);
     setInGameStats({});
+    setBsoCount({ b: 0, s: 0 });
   };
 
   const returnToSetup = () => {
@@ -176,6 +178,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const saveCurrentGameState = useCallback(async () => {
     if (!gameId || !isGameCreator) return;
     const currentState = {
+      bsoCount,
       inGameStats,
       isStatsRecordingEnabled,
       tournamentName,
@@ -204,7 +207,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   }, [
     user.uid, gameId, isGameCreator, inGameStats, isStatsRecordingEnabled, tournamentName, opponentTeam, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, homeHits, awayHits,
-    timeline, currentBatter, customBatter, useCustomBatter, gameStartDate
+    timeline, currentBatter, customBatter, useCustomBatter, gameStartDate, bsoCount
   ]);
 
   const loadGame = (id, mode = 'watch') => {
@@ -219,6 +222,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     const newListener = watchGameState(user.uid, gameIdToLoad, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
+        setBsoCount(data.bsoCount || { b: 0, s: 0 });
         setInGameStats(data.inGameStats || {});
         setIsStatsRecordingEnabled(data.isStatsRecordingEnabled !== undefined ? data.isStatsRecordingEnabled : true);
         setTournamentName(data.tournamentName || '');
@@ -326,6 +330,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       homeHits,
       awayHits,
       inGameStats: { ...inGameStats },
+      bsoCount: { ...bsoCount },
     };
     setHistory(prev => [...prev, currentState].slice(-10));
   };
@@ -344,6 +349,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setHomeHits(lastState.homeHits);
     setAwayHits(lastState.awayHits);
     setInGameStats(lastState.inGameStats);
+    setBsoCount(lastState.bsoCount);
     setHistory(prev => prev.slice(0, -1));
     alert("直前の操作を取り消しました。");
   };
@@ -483,6 +489,24 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setFreeComment('');
   };
 
+  // BSOを操作・リセットする関数
+const toggleBso = (type) => {
+  saveStateToHistory(); // 元に戻せるように履歴保存
+  setBsoCount(prev => {
+    const newCount = { ...prev };
+    if (type === 'b') {
+      newCount.b = (newCount.b + 1) % 4; // 0, 1, 2, 3 と循環
+    } else if (type === 's') {
+      newCount.s = (newCount.s + 1) % 3; // 0, 1, 2 と循環
+    }
+    return newCount;
+  });
+};
+
+const resetBso = () => {
+  setBsoCount({ b: 0, s: 0 });
+};
+
     const handleBattingResult = (result) => {
     saveStateToHistory();
     const batterName = useCustomBatter ? customBatter : currentBatter;
@@ -590,6 +614,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setCustomBatter('');
     setUseCustomBatter(false);
     setSelectedPosition(null);
+    resetBso();
   };
   
 
@@ -598,6 +623,7 @@ const handleSpecialRecord = (type) => {
   if (type === 'stolenBase') {
     setShowStolenBaseModal(true);
     setStealingPlayer(null);
+    resetBso();
     return;
   }
 
@@ -1308,6 +1334,33 @@ const StolenBaseModal = () => {
     </div>
   );
 };
+
+// BSOカウンターの表示コンポーネント
+const BSOIndicator = () => {
+  return (
+    <div className="flex flex-col space-y-2 items-start">
+      <div className="flex items-center space-x-1">
+        <span className="text-sm font-bold text-white">B</span>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className={`w-4 h-4 rounded-full border border-gray-400 ${i < bsoCount.b ? 'bg-green-500' : 'bg-gray-600'}`}></div>
+        ))}
+      </div>
+      <div className="flex items-center space-x-1">
+        <span className="text-sm font-bold text-white">S</span>
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className={`w-4 h-4 rounded-full border border-gray-400 ${i < bsoCount.s ? 'bg-yellow-500' : 'bg-gray-600'}`}></div>
+        ))}
+      </div>
+      <div className="flex items-center space-x-1">
+        <span className="text-sm font-bold text-white">O</span>
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className={`w-4 h-4 rounded-full border border-gray-400 ${i < outCount ? 'bg-red-500' : 'bg-gray-600'}`}></div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 //ハイライト表示用のコンポーネント
 const GameHighlights = ({ inGameStats }) => {
   // playerStatsオブジェクトから、指定された成績を持つ選手を抽出するヘルパー関数
@@ -1426,7 +1479,10 @@ const GameHighlights = ({ inGameStats }) => {
                 <div className="font-bold text-xs truncate">{useCustomBatter ? customBatter : currentBatter || '未選択'}</div>
               </div>
             </div>
-            <div className="flex justify-center mb-3">
+            <div className="flex justify-center items-center gap-x-6 mb-3">
+              {/* BSOカウンターを左側に配置 */}
+              <BSOIndicator />
+              {/* ダイアモンド */}
               <div className="relative w-24 h-24">
                 <div className="absolute inset-0 border-2 border-white transform rotate-45"></div>
                 <div className={`absolute top-1/2 left-0 w-3 h-3 -ml-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.third ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
@@ -1526,6 +1582,13 @@ const GameHighlights = ({ inGameStats }) => {
                   <button onClick={() => toggleBase('first')} className={`px-2 py-1 rounded-lg text-xs transition-colors ${bases.first ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>1塁</button>
                   <button onClick={() => toggleBase('second')} className={`px-2 py-1 rounded-lg text-xs transition-colors ${bases.second ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>2塁</button>
                   <button onClick={() => toggleBase('third')} className={`px-2 py-1 rounded-lg text-xs transition-colors ${bases.third ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>3塁</button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">BSO操作</label>
+                <div className="flex space-x-1">
+                  <button onClick={() => toggleBso('b')} className="px-2 py-1 rounded-lg text-xs bg-green-500 hover:bg-green-600 text-white">ボール</button>
+                  <button onClick={() => toggleBso('s')} className="px-2 py-1 rounded-lg text-xs bg-yellow-500 hover:bg-yellow-600 text-white">ストライク</button>
                 </div>
               </div>
             </div>
