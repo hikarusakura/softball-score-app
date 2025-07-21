@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Trophy, Eye, ChevronLeft, Copy } from 'lucide-react';
-import { 
-  db, saveGameState, watchGameState, stopWatching, 
-  generateGameId, getAllGames, deleteGameFromFirebase, 
-  login, logout, onAuth, getTeamData, updatePlayerStats
-} from './firebase';
+import { db, saveGameState, watchGameState, stopWatching, generateGameId, getAllGames, deleteGameFromFirebase, login, logout, onAuth, getTeamData, updatePlayerStats } from './firebase';
 import { doc, setDoc } from "firebase/firestore";
 import { CSVLink } from 'react-csv';
 
@@ -24,7 +20,6 @@ const LoginScreen = ({ onLogin }) => {
     }
     setLoading(true);
     try {
-      // チームIDにドメインを付与してメール形式にする
       const fullEmail = `${teamId.toLowerCase()}@softball.app`;
       await onLogin(fullEmail, password);
     } catch (err) {
@@ -115,13 +110,11 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [stealingPlayer, setStealingPlayer] = useState(null); // 盗塁する選手名を一時保存
 
   // --- ポジション対応表 ---
-  const positionMap = {
-    '投': 'ピッチャー', '捕': 'キャッチャー', '一': 'ファースト',
-    '二': 'セカンド', '三': 'サード', '遊': 'ショート',
-    '左': 'レフト', '中': 'センター', '右': 'ライト'
-  };
-
+  const positionMap = { '投': 'ピッチャー', '捕': 'キャッチャー', '一': 'ファースト', '二': 'セカンド', '三': 'サード', '遊': 'ショート', '左': 'レフト', '中': 'センター', '右': 'ライト' };
+    
   // --- ヘルパー関数 & ロジック関数 ---
+  const getPlayerList = () => players || [];
+
   const formatDate = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
@@ -142,11 +135,6 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     }
   }; 
 
-  const getPlayerList = () => {
-    // 常に順番が保証されているplayers配列を返すようにする
-    return players || [];
-  };
-
   const resetGameStates = () => {
     setIsStatsRecordingEnabled(true);
     setTournamentName('');
@@ -158,7 +146,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setBases({ first: false, second: false, third: false });
     setHomeScore(Array(6).fill(null));
     setAwayScore(Array(6).fill(null));
-    setHomeHits(0); 
+    setHomeHits(0);
     setAwayHits(0);
     setTimeline([]);
     setCurrentBatter('');
@@ -207,17 +195,14 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       useCustomBatter,
       gameStartDate,
       createdAt: gameStartDate || Date.now(),
-      
     };
     try {
       await saveGameState(user.uid, gameId, currentState);
        } catch (error) {
       console.error('保存失敗:', error);
-      
     }
   }, [
-    isStatsRecordingEnabled,
-    user.uid, gameId, isGameCreator, tournamentName, opponentTeam, isHomeTeam, currentInning, 
+    user.uid, gameId, isGameCreator, inGameStats, isStatsRecordingEnabled, tournamentName, opponentTeam, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, homeHits, awayHits,
     timeline, currentBatter, customBatter, useCustomBatter, gameStartDate
   ]);
@@ -253,9 +238,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
         setUseCustomBatter(data.useCustomBatter === true);
         setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
                 
-        if (mode === 'watch' && user.uid !== gameIdToLoad) { 
-          
-        }
+        //if (mode === 'watch' && user.uid !== gameIdToLoad) { 
+        //}
 
         if (mode === 'watch') {
           setGameId(gameIdToLoad);
@@ -281,11 +265,19 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   useEffect(() => {
   if (initialTeamData) {
     setPlayerStats(initialTeamData.playerStats || {});
+    setPlayers(initialTeamData.players || Object.keys(initialTeamData.playerStats || {}));
     setTeamName(initialTeamData.teamName || 'あなたのチーム');
   }
 }, [initialTeamData]);
 
-
+  useEffect(() => {
+    if (!user || !user.uid) return;
+    const teamRef = doc(db, 'teams', user.uid);
+    setDoc(teamRef, { 
+      playerStats: playerStats,
+      players: players 
+    }, { merge: true });
+  }, [playerStats, players, user]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -308,9 +300,9 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     opponentTeam, tournamentName, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, 
     timeline, currentBatter, customBatter, useCustomBatter, 
-    gameStartDate, saveCurrentGameState, isGameCreator, gameState
+    gameStartDate, saveCurrentGameState, isGameCreator, gameState, homeHits, awayHits, inGameStats
   ]);
-
+/*
     useEffect(() => {
     // teamDataが読み込まれた後、かつplayerStatsが空でない場合にのみ実行
     if (!user || !initialTeamData) return;
@@ -323,7 +315,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     }, { merge: true });
 
   }, [playerStats, players, user, initialTeamData]);
-
+*/
   const saveStateToHistory = () => {
     const currentState = {
       outCount,
@@ -334,7 +326,6 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       homeHits,
       awayHits,
       inGameStats: { ...inGameStats },
-
     };
     setHistory(prev => [...prev, currentState].slice(-10));
   };
@@ -458,8 +449,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       else setHomeScore(prev => { const ns = [...prev]; if (ns[currentInning - 1] === null) ns[currentInning - 1] = 0; return ns; });
     }
     // 1. 「次の」状態をすべて計算します
-    let nextInning = currentTeamBatting === 'away' ? currentInning : currentInning + 1;
-    let nextTeamBatting = currentTeamBatting === 'away' ? 'home' : 'away';
+    const nextInning = currentTeamBatting === 'away' ? currentInning : currentInning + 1;
+    const nextTeamBatting = currentTeamBatting === 'away' ? 'home' : 'away';
     // 2. 「次の」攻撃チーム名を、より正確なロジックで取得します
     let nextTeamName;
   const myTeam = teamName || '若葉'; // ログインしているチーム名
@@ -473,7 +464,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   }
     const inningHalf = (nextTeamBatting === 'home') ? '裏' : '表';
     const message = `${nextInning}回${inningHalf}開始`;
-    addToTimeline(message, { inning: nextInning, team: nextTeamName, outCount: 0 });
+    addToTimeline(message, { inning: nextInning, team: truncateTeamName(nextTeamName), outCount: 0 });
     setCurrentTeamBatting(nextTeamBatting);
     setCurrentInning(nextInning);
     setOutCount(0);
@@ -492,148 +483,126 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setFreeComment('');
   };
 
-// App.js の SoftballScoreApp コンポーネント内にこれを追加
-//ハイライト表示用のコンポーネント
-const GameHighlights = ({ inGameStats }) => {
-  // playerStatsオブジェクトから、指定された成績を持つ選手を抽出するヘルパー関数
-  const getPlayersWithStat = (statName) => {
-    return Object.entries(inGameStats)
-      .filter(([playerName, stats]) => stats[statName] > 0)
-      .map(([playerName, stats]) => ({
-        name: playerName,
-        count: stats[statName]
-      }));
+    const handleBattingResult = (result) => {
+    saveStateToHistory();
+    const batterName = useCustomBatter ? customBatter : currentBatter;
+    if (!batterName) {
+      alert('打者名を選択または入力してください');
+      return;
+    }
+    let resultText = result;
+    if (selectedPosition && positionMap[selectedPosition]) {
+      if (['ゴロ', 'ライナー', 'フライ', 'バント'].includes(result)) {
+        resultText = positionMap[selectedPosition] + result;
+      }
+    }
+    let message = `${batterName}: ${resultText}`;
+    let runsScored = 0;
+    let isAnOut = false;
+
+    const statsUpdate = {};
+    const isHit = ['ヒット', '2ベース', '3ベース', 'ホームラン'].includes(result);
+    const isWalkOrHBP = ['四球', '死球'].includes(result);
+    const isStrikeout = result === '三振';
+    // 打数がカウントされる打席か
+    const isAtBat = !isWalkOrHBP && result !== 'バント'; // バントも打数から除外する
+
+    if (isAtBat) statsUpdate.atBats = 1;
+    if (isHit) {
+      statsUpdate.hits = 1;
+    const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
+    if (isMyTeamBatting) {
+      if (isHomeTeam) setHomeHits(h => h + 1);
+      else setAwayHits(h => h + 1);
+      } else {
+        if (isHomeTeam) setAwayHits(h => h + 1);
+        else setHomeHits(h => h + 1);
+              }
+    }
+
+    if (isWalkOrHBP) {
+      if(result === '四球') statsUpdate.walks = 1;
+      else statsUpdate.hitByPitches = 1;
+    }
+    if (isStrikeout) statsUpdate.strikeouts = 1;
+
+    switch (result) {
+    case '三振': case 'ゴロ': case 'ライナー': case 'フライ': isAnOut = true; break;
+    case 'ヒット': if (bases.third) runsScored++; setBases(prev => ({ first: true, second: prev.first, third: prev.second })); break;
+    case '2ベース': statsUpdate.doubles = 1; if (bases.third) runsScored++; if (bases.second) runsScored++; setBases(prev => ({ first: false, second: true, third: prev.first })); break;
+    case '3ベース': statsUpdate.triples = 1; if (bases.third) runsScored++; if (bases.second) runsScored++; if (bases.first) runsScored++; setBases({ first: false, second: false, third: true }); break;
+    case 'ホームラン': statsUpdate.homeRuns = 1; runsScored = 1 + (bases.first ? 1 : 0) + (bases.second ? 1 : 0) + (bases.third ? 1 : 0); setBases({ first: false, second: false, third: false }); break;
+    case '四球': case '死球': if (bases.first && bases.second && bases.third) runsScored++; setBases(prev => ({ first: true, second: prev.first ? true : prev.second, third: prev.first && prev.second ? true : prev.third })); break;
+    default: break;
+    }
+
+      if (runsScored > 0) {
+    // 打点と、得点した選手の得点を記録
+      statsUpdate.rbi = (statsUpdate.rbi || 0) + runsScored;
+
+    // 実際のスコアに反映させる
+      const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
+      if (isMyTeamBatting) {
+        if (isHomeTeam) setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
+        else setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
+      } else {
+        if (isHomeTeam) setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
+        else setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
+      }
+      message += ` (${runsScored}点獲得！)`;
+    }
+
+    const nextOutCount = isAnOut ? outCount + 1 : outCount;
+    addToTimeline(message, { outCount: nextOutCount });
+
+    if (isAnOut) {
+      const { newOutCount, inningShouldChange } = processOut();
+      addToTimeline(`アウト！ (${newOutCount}アウト)`, { outCount: newOutCount });
+      if (inningShouldChange) {
+        changeInning();
+      }
+    }
+
+    // ★★★ 最後に成績を更新する ★★★
+    if (Object.keys(statsUpdate).length > 0 && isStatsRecordingEnabled) {
+      updatePlayerStats(user.uid, batterName, statsUpdate);
+      setPlayerStats(prev => {
+        const newStats = { ...prev };
+        const player = { ...(newStats[batterName] || {}) };
+        for (const key in statsUpdate) {
+          player[key] = (player[key] || 0) + statsUpdate[key];
+        }
+        newStats[batterName] = player;
+        return newStats;
+      });
+      setInGameStats(prev => {
+        const newStats = { ...prev };
+        const player = { ...(newStats[batterName] || {}) };
+        for (const key in statsUpdate) {
+          player[key] = (player[key] || 0) + statsUpdate[key];
+        }
+        newStats[batterName] = player;
+        return newStats;
+      });
+    }
+
+    setCurrentBatter('');
+    setCustomBatter('');
+    setUseCustomBatter(false);
+    setSelectedPosition(null);
   };
-
-  const homeRunHitter = getPlayersWithStat('homeRuns');
-  const hitLeaders = getPlayersWithStat('hits');
-  const stolenBaseLeaders = getPlayersWithStat('stolenBases');
-
-  // 表示すべきハイライトが何もない場合は、何も描画しない
-  if (homeRunHitter.length === 0 && hitLeaders.length === 0 && stolenBaseLeaders.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="bg-white bg-opacity-20 rounded-lg p-3 mt-3 text-xs">
-      {homeRunHitter.length > 0 && (
-        <div className="mb-2">
-          <h4 className="font-bold text-yellow-300">本塁打</h4>
-          <p className="text-white">
-            {homeRunHitter.map(p => `${p.name}(${p.count})`).join('、 ')}
-          </p>
-        </div>
-      )}
-      {hitLeaders.length > 0 && (
-        <div className="mb-2">
-          <h4 className="font-bold text-yellow-300">安打</h4>
-          <p className="text-white">
-            {hitLeaders.map(p => `${p.name}(${p.count})`).join('、 ')}
-          </p>
-        </div>
-      )}
-      {stolenBaseLeaders.length > 0 && (
-        <div>
-          <h4 className="font-bold text-yellow-300">盗塁</h4>
-          <p className="text-white">
-            {stolenBaseLeaders.map(p => `${p.name}(${p.count})`).join('、 ')}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-};
-
-  // App.js に追加
-
-// 盗塁を記録する新しい関数
-const recordStolenBase = (playerName, stealType) => {
-  saveStateToHistory();
   
-  const statsUpdate = { stolenBases: 1 };
-  
-  // FirestoreとローカルのStateを更新
-  if (isStatsRecordingEnabled) {
-    updatePlayerStats(user.uid, playerName, statsUpdate);
-    setPlayerStats(prev => {
-      const newStats = { ...prev };
-      const player = { ...(newStats[playerName] || {}) };
-      player.stolenBases = (player.stolenBases || 0) + 1;
-      newStats[playerName] = player;
-      return newStats;
-    });
-  }
-
-  addToTimeline(`${playerName}: ${stealType}成功！`);
-  setShowStolenBaseModal(false); // ポップアップを閉じる
-};
-
-// 盗塁選手を選択するためのポップアップコンポーネント
-const StolenBaseModal = () => {
-  if (!showStolenBaseModal) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        {stealingPlayer ? (
-          // --- ステージ2: どの塁へ盗塁したか選択 ---
-          <div>
-            <h3 className="text-lg font-bold mb-4 text-center">
-              <span className="font-normal">{stealingPlayer} が</span><br/>どの塁へ盗塁しましたか？
-            </h3>
-            <div className="grid grid-cols-3 gap-2">
-              <button onClick={() => recordStolenBase(stealingPlayer, '二盗')} className="p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">2塁へ</button>
-              <button onClick={() => recordStolenBase(stealingPlayer, '三盗')} className="p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">3塁へ</button>
-              <button onClick={() => recordStolenBase(stealingPlayer, '本盗')} className="p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">本塁へ</button>
-            </div>
-            <button
-              onClick={() => setStealingPlayer(null)}
-              className="w-full mt-4 bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-lg text-sm"
-            >
-              選手を選び直す
-            </button>
-          </div>
-        ) : (
-          // --- ステージ1: 誰が盗塁したか選択 ---
-          <div>
-            <h3 className="text-lg font-bold mb-4 text-center">盗塁した選手を選択</h3>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {getPlayerList().map((player) => (
-                <button
-                  key={player}
-                  onClick={() => setStealingPlayer(player)}
-                  className="w-full text-left p-3 bg-gray-100 hover:bg-gray-200 rounded-lg"
-                >
-                  {player}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <button
-          onClick={() => setShowStolenBaseModal(false)}
-          className="w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg"
-        >
-          キャンセル
-        </button>
-      </div>
-    </div>
-  );
-};
-
-  // App.js内、handleBattingResultの近くに追加
-const handleSpecialRecord = (type) => {
-  saveStateToHistory();
-  const batterName = useCustomBatter ? customBatter : currentBatter;
 
   // 盗塁の場合はポップアップを開く
+const handleSpecialRecord = (type) => {
   if (type === 'stolenBase') {
     setShowStolenBaseModal(true);
     setStealingPlayer(null);
     return;
   }
 
+  saveStateToHistory();
+  const batterName = useCustomBatter ? customBatter : currentBatter;
   // 盗塁以外の場合、打者が選択されているかチェック
   if (!batterName) {
     alert('記録を残す打者を選択してください');
@@ -645,30 +614,23 @@ const handleSpecialRecord = (type) => {
   let isSacFly = false;
   let runsToAdd = 0;
 
-  switch (type) {
-    case 'stolenBase':
-      statsUpdate.stolenBases = 1;
-      message = `${batterName}: 盗塁成功！`;
-      break;
-    case 'rbi_sac_fly':
-      statsUpdate.rbi = 1;
-      // 犠牲フライは打数に含まない
-      message = `${batterName}: 犠牲フライ（1打点）`;
-      isSacFly = true;
-      runsToAdd = 1;
-      break;
-    case 'rbi_other':
-      statsUpdate.rbi = 1;
-      message = `${batterName}: 打点1`;
-      runsToAdd = 1;
-      break;
-    default:
-      return;
-  }
-
+    switch (type) {
+      case 'rbi_sac_fly':
+        statsUpdate.rbi = 1;
+        message = `${batterName}: 犠牲フライ（1打点）`;
+        isSacFly = true;
+        runsToAdd = 1;
+        break;
+      case 'rbi_other':
+        statsUpdate.rbi = 1;
+        message = `${batterName}: 打点1`;
+        runsToAdd = 1;
+        break;
+      default:
+        return;
+    }
   // 1. 先に打席結果（特殊記録）をタイムラインに追加
   addToTimeline(message);
-
   // 2. 犠牲フライの場合、アウト処理を後から行う
   if (isSacFly) {
     const { newOutCount, inningShouldChange } = processOut();
@@ -677,7 +639,6 @@ const handleSpecialRecord = (type) => {
       changeInning();
     }
   }
-
   // 3. 打点があった場合、スコアに反映させる
   if (runsToAdd > 0) {
     const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
@@ -689,7 +650,6 @@ const handleSpecialRecord = (type) => {
       else setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsToAdd; return ns; });
     }
   }
-  
   // 4. 個人成績を更新
   if (Object.keys(statsUpdate).length > 0 && isStatsRecordingEnabled) {
     updatePlayerStats(user.uid, batterName, statsUpdate);
@@ -719,122 +679,43 @@ const handleSpecialRecord = (type) => {
   setCustomBatter('');
   setUseCustomBatter(false);
 };
-
-  const handleBattingResult = (result) => {
-    saveStateToHistory();
-    const batterName = useCustomBatter ? customBatter : currentBatter;
-    if (!batterName) {
-      alert('打者名を選択または入力してください');
-      return;
-    }
-    let resultText = result;
-    if (selectedPosition && positionMap[selectedPosition]) {
-      if (['ゴロ', 'ライナー', 'フライ', 'バント'].includes(result)) {
-        resultText = positionMap[selectedPosition] + result;
-      }
-    }
-    let message = `${batterName}: ${resultText}`;
-    let runsScored = 0;
-    let isAnOut = false;
-
-    const statsUpdate = {};
-    const isHit = ['ヒット', '2ベース', '3ベース', 'ホームラン'].includes(result);
-    const isWalkOrHBP = ['四球', '死球'].includes(result);
-    const isStrikeout = result === '三振';
-    // 打数がカウントされる打席か
-    const isAtBat = !isWalkOrHBP && result !== 'バント'; // バントも打数から除外する
-    if (isAtBat) statsUpdate.atBats = 1;
-    if (isHit) statsUpdate.hits = 1;
-
-    if (isWalkOrHBP) {
-      if(result === '四球') statsUpdate.walks = 1;
-      else statsUpdate.hitByPitches = 1;
-    }
-    if (isStrikeout) statsUpdate.strikeouts = 1;
-
-    switch (result) {
-    case '三振': case 'ゴロ': case 'ライナー': case 'フライ': isAnOut = true; break;
-    case 'ヒット': if (bases.third) runsScored++; setBases(prev => ({ first: true, second: prev.first, third: prev.second })); break;
-    case '2ベース': statsUpdate.doubles = 1; if (bases.third) runsScored++; if (bases.second) runsScored++; setBases(prev => ({ first: false, second: true, third: prev.first })); break;
-    case '3ベース': statsUpdate.triples = 1; if (bases.third) runsScored++; if (bases.second) runsScored++; if (bases.first) runsScored++; setBases({ first: false, second: false, third: true }); break;
-    case 'ホームラン': statsUpdate.homeRuns = 1; runsScored = 1 + (bases.first ? 1 : 0) + (bases.second ? 1 : 0) + (bases.third ? 1 : 0); setBases({ first: false, second: false, third: false }); break;
-    case '四球': case '死球': if (bases.first && bases.second && bases.third) runsScored++; setBases(prev => ({ first: true, second: prev.first ? true : prev.second, third: prev.first && prev.second ? true : prev.third, })); break;
-    default: break;
-    }
-
-    if (isHit) {
-      const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
-      if (isMyTeamBatting) {
-        // 自分のチームの攻撃
-        if (isHomeTeam) setHomeHits(h => h + 1);
-        else setAwayHits(h => h + 1);
-      } else {
-        // 相手チームの攻撃
-        if (isHomeTeam) setAwayHits(h => h + 1);
-        else setHomeHits(h => h + 1);
-      }
-    }
-    if (runsScored > 0) {
-      // 打点と、得点した選手の得点を記録
-      statsUpdate.rbi = (statsUpdate.rbi || 0) + runsScored;
-
-      // 実際のスコアに反映させる
-      const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
-      if (isMyTeamBatting) {
-        if (isHomeTeam) setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
-        else setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
-      } else {
-        if (isHomeTeam) setAwayScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
-        else setHomeScore(prev => { const ns = [...prev]; ns[currentInning - 1] = (ns[currentInning - 1] || 0) + runsScored; return ns; });
-      }
-      message += ` (${runsScored}点獲得！)`;
-    }
-
-
-
-    const nextOutCount = isAnOut ? outCount + 1 : outCount;
-    addToTimeline(message, { outCount: nextOutCount });
-
-    if (isAnOut) {
-      const { newOutCount, inningShouldChange } = processOut();
-      addToTimeline(`アウト！ (${newOutCount}アウト)`, { outCount: newOutCount });
-      if (inningShouldChange) {
-        changeInning();
-      }
-    }
-
-    // ★★★ 最後に成績を更新する ★★★
-  if (Object.keys(statsUpdate).length > 0) {
-    if (isStatsRecordingEnabled) {
-    // Firestoreのデータを更新
-    updatePlayerStats(user.uid, batterName, statsUpdate);
-    // ローカルのStateも更新
-    setPlayerStats(prevStats => {
-      const newStats = { ...prevStats };
-      const player = newStats[batterName] || {};
-      for(const key in statsUpdate){
-        player[key] = (player[key] || 0) + 1;
-      }
-      newStats[batterName] = player;
+// 盗塁を記録する新しい関数
+const recordStolenBase = (playerName, stealType) => {
+  saveStateToHistory();
+  
+  const statsUpdate = { stolenBases: 1 };
+  
+  // FirestoreとローカルのStateを更新
+  if (isStatsRecordingEnabled) {
+    updatePlayerStats(user.uid, playerName, statsUpdate);
+    setPlayerStats(prev => {
+      const newStats = { ...prev };
+      const player = { ...(newStats[playerName] || {}) };
+      player.stolenBases = (player.stolenBases || 0) + 1;
+      newStats[playerName] = player;
       return newStats;
     });
-    setInGameStats(prev => {
-      const newStats = { ...prev };
-      const player = { ...(newStats[batterName] || {}) };
-      for (const key in statsUpdate) {
-        player[key] = (player[key] || 0) + statsUpdate[key];
-        }
-        newStats[batterName] = player;
-        return newStats;
-        });
-  }
-  }
+  
 
-    setCurrentBatter('');
-    setCustomBatter('');
-    setUseCustomBatter(false);
-    setSelectedPosition(null);
-  };
+      setInGameStats(prev => {
+        const newStats = { ...prev };
+        const player = { ...(newStats[playerName] || {}) };
+        player.stolenBases = (player.stolenBases || 0) + 1;
+        newStats[playerName] = player;
+        return newStats;
+      });
+    }
+
+
+
+
+
+
+
+
+  addToTimeline(`${playerName}: ${stealType}成功！`);
+  setShowStolenBaseModal(false); // ポップアップを閉じる
+};
 
   const toggleBase = (base) => {
     saveStateToHistory();
@@ -900,7 +781,7 @@ const handleAddPlayer = () => {
       return;
     }
     const newPlayer = newPlayerName.trim();
-    if (playerStats[newPlayer]) {
+    if (players.includes(newPlayer)) {
       alert('同じ名前の選手が既に存在します。');
       return;
     }
@@ -943,8 +824,6 @@ const movePlayerDown = (index) => {
     [newPlayers[index + 1], newPlayers[index]] = [newPlayers[index], newPlayers[index + 1]];
     setPlayers(newPlayers);
   };
-
-
 // 編集モードを開始する関数
 const handleEditPlayer = (playerName) => {
   setEditingPlayer(playerName);
@@ -976,11 +855,10 @@ const handleSaveStats = async (playerName) => {
     setEditingPlayer(null);
   }
 };
-
 // 編集をキャンセルする関数
 const handleCancelEdit = () => {
   setEditingPlayer(null);
-  setTempStats({});
+  //setTempStats({});
 };
 
   const prepareDataForExport = (gameData) => {
@@ -1356,7 +1234,8 @@ if (gameState === 'statsScreen') {
   // playing or watching view
   const totalHomeScore = homeScore.reduce((a, b) => a + (b || 0), 0);
   const totalAwayScore = awayScore.reduce((a, b) => a + (b || 0), 0);
-  
+  const isInputView = gameState === 'playing';
+
   const ShareDialog = () => {
     if (!showShareDialog) return null;
     return (
@@ -1376,30 +1255,125 @@ if (gameState === 'statsScreen') {
   };
 
 
+// 盗塁選手を選択するためのポップアップコンポーネント
+const StolenBaseModal = () => {
+  if (!showStolenBaseModal) return null;
 
-  const isInputView = gameState === 'playing';
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        {stealingPlayer ? (
+          // --- ステージ2: どの塁へ盗塁したか選択 ---
+          <div>
+            <h3 className="text-lg font-bold mb-4 text-center">
+              <span className="font-normal">{stealingPlayer} が</span><br/>どの塁へ盗塁しましたか？
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={() => recordStolenBase(stealingPlayer, '二盗')} className="p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">2塁へ</button>
+              <button onClick={() => recordStolenBase(stealingPlayer, '三盗')} className="p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">3塁へ</button>
+              <button onClick={() => recordStolenBase(stealingPlayer, '本盗')} className="p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold">本塁へ</button>
+            </div>
+            <button
+              onClick={() => setStealingPlayer(null)}
+              className="w-full mt-4 bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-lg text-sm"
+            >
+              選手を選び直す
+            </button>
+          </div>
+        ) : (
+          // --- ステージ1: 誰が盗塁したか選択 ---
+          <div>
+            <h3 className="text-lg font-bold mb-4 text-center">盗塁した選手を選択</h3>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {getPlayerList().map((player) => (
+                <button
+                  key={player}
+                  onClick={() => setStealingPlayer(player)}
+                  className="w-full text-left p-3 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                >
+                  {player}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => setShowStolenBaseModal(false)}
+          className="w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg"
+        >
+          キャンセル
+        </button>
+      </div>
+    </div>
+  );
+};
+//ハイライト表示用のコンポーネント
+const GameHighlights = ({ inGameStats }) => {
+  // playerStatsオブジェクトから、指定された成績を持つ選手を抽出するヘルパー関数
+  const getPlayersWithStat = (statName) => {
+    return Object.entries(inGameStats)
+      .filter(([playerName, stats]) => stats[statName] > 0)
+      .map(([playerName, stats]) => ({
+        name: playerName,
+        count: stats[statName]
+      }));
+  };
+
+  const homeRunHitter = getPlayersWithStat('homeRuns');
+  const hitLeaders = getPlayersWithStat('hits');
+  const stolenBaseLeaders = getPlayersWithStat('stolenBases');
+
+  // 表示すべきハイライトが何もない場合は、何も描画しない
+  if (homeRunHitter.length === 0 && hitLeaders.length === 0 && stolenBaseLeaders.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="bg-white bg-opacity-20 rounded-lg p-3 mt-3 text-xs">
+      {homeRunHitter.length > 0 && (
+        <div className="mb-2">
+          <h4 className="font-bold text-yellow-300">本塁打</h4>
+          <p className="text-white">
+            {homeRunHitter.map(p => `${p.name}(${p.count})`).join('、 ')}
+          </p>
+        </div>
+      )}
+      {hitLeaders.length > 0 && (
+        <div className="mb-2">
+          <h4 className="font-bold text-yellow-300">安打</h4>
+          <p className="text-white">
+            {hitLeaders.map(p => `${p.name}(${p.count})`).join('、 ')}
+          </p>
+        </div>
+      )}
+      {stolenBaseLeaders.length > 0 && (
+        <div>
+          <h4 className="font-bold text-yellow-300">盗塁</h4>
+          <p className="text-white">
+            {stolenBaseLeaders.map(p => `${p.name}(${p.count})`).join('、 ')}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <ShareDialog />
       <StolenBaseModal />
-            
       <div className={isInputView ? "h-1/2" : "h-full"}>
         <div className="h-full bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
           <div className="max-w-4xl mx-auto relative">
-            { gameState === 'watching' && (
-              <button onClick={returnToSetup} className="absolute top-0 left-0 z-40 p-2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white rounded-full transition-colors" aria-label="セットアップに戻る">
-                <ChevronLeft className="h-6 w-6" />
-              </button>
-            )}
+            { gameState === 'watching' && (<button onClick={returnToSetup} className="absolute top-0 left-0 z-40 p-2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white rounded-full transition-colors" aria-label="セットアップに戻る"><ChevronLeft className="h-6 w-6" /></button>)}
             <div className="text-center mb-3 pt-8">
               <h1 className="text-lg font-bold">⚾ {teamName} 試合速報 ⚾</h1>
-              <p className="text-xs text-gray-300">
-                試合日時: {formatDate(gameStartDate)}
-                {tournamentName && ` (${tournamentName})`}
-              </p>
+              <p className="text-xs text-gray-300">試合日時: {formatDate(gameStartDate)}{tournamentName && ` (${tournamentName})`}</p>
               <p className="text-xs truncate">{teamName} vs {opponentTeam}</p>
             </div>
+            {/* ... スコアボードJSX ... */}
             <div className="bg-black bg-opacity-50 rounded-lg p-4 mb-4">
               <div className="text-center text-sm">
                 <div className="grid grid-cols-10 gap-1 mb-2 border-b border-gray-500 pb-2">
@@ -1479,7 +1453,6 @@ if (gameState === 'statsScreen') {
           </div>
         </div>
       </div>
-      
       { isInputView && (
         <div className="h-1/2 bg-white p-3 overflow-auto">
           <div className="max-w-4xl mx-auto">
@@ -1570,7 +1543,6 @@ if (gameState === 'statsScreen') {
   );
 };
 
-
 // --- アプリケーションの親コンポーネント ---
 const App = () => {
   const [user, setUser] = useState(null);
@@ -1603,12 +1575,8 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">読み込み中...</div>;
-  }
-  if (error) {
-    return <div className="min-h-screen flex items-center justify-center">エラー: {error} <button onClick={logout} className="ml-4 bg-blue-500 text-white px-3 py-1 rounded">再ログイン</button></div>;
-  }
+  if (loading) return <div className="min-h-screen flex items-center justify-center">読み込み中...</div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center">エラー: {error} <button onClick={logout} className="ml-4 bg-blue-500 text-white px-3 py-1 rounded">再ログイン</button></div>;
 
   return user && teamData ? <SoftballScoreApp user={user} initialTeamData={teamData} /> : <LoginScreen onLogin={login} />;
 };
