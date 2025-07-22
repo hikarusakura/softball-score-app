@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Trophy, Eye, ChevronLeft, Copy } from 'lucide-react';
-import { db, saveGameState, watchGameState, stopWatching, generateGameId, getAllGames, deleteGameFromFirebase, login, logout, onAuth, getTeamData, updatePlayerStats } from './firebase';
+import { db, saveGameState, watchGameState, stopWatching, generateGameId, getAllGames, deleteGameFromFirebase, login, logout, onAuth, getTeamData, updatePlayerStats, updateTeamData } from './firebase';
 import { doc, setDoc } from "firebase/firestore";
 import { CSVLink } from 'react-csv';
 
@@ -109,6 +109,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [tempStats, setTempStats] = useState({});       // 編集中の数値
   const [showStolenBaseModal, setShowStolenBaseModal] = useState(false);
   const [stealingPlayer, setStealingPlayer] = useState(null); // 盗塁する選手名を一時保存
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   // --- ポジション対応表 ---
   const positionMap = { '投': 'ピッチャー', '捕': 'キャッチャー', '一': 'ファースト', '二': 'セカンド', '三': 'サード', '遊': 'ショート', '左': 'レフト', '中': 'センター', '右': 'ライト' };
@@ -141,6 +143,27 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       return currentTeamBatting === 'away' ? myTeam : truncateTeamName(opponentTeam);
     }
   }; 
+
+  // 保存処理を行う関数
+const handleUpdatePassword = async () => {
+  if (!newPassword) {
+    alert('新しいパスワードを入力してください。');
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    alert('パスワードが一致しません。');
+    return;
+  }
+
+  const success = await updateTeamData(user.uid, { deletePassword: newPassword });
+  if (success) {
+    alert('パスワードを更新しました。');
+    setNewPassword('');
+    setConfirmPassword('');
+  } else {
+    alert('パスワードの更新に失敗しました。');
+  }
+};
 
   const resetGameStates = () => {
     setIsStatsRecordingEnabled(true);
@@ -791,9 +814,17 @@ const recordStolenBase = (playerName, stealType) => {
   };
 
   const handleDeleteFirebaseGame = async (gameIdToDelete) => {
+    // チームデータから削除用パスワードを取得
+    const correctPassword = initialTeamData.deletePassword;
+
+    if (!correctPassword) {
+      alert('削除用パスワードが設定されていません。選手管理画面で設定してください。');
+      return;
+      }
+
     const password = prompt("削除するにはパスワードを入力してください：");
     if (password === null) return;
-    if (password !== 'wakaba') {
+    if (password !== correctPassword) {
       alert('パスワードが違います。');
       return;
     }
@@ -1139,6 +1170,31 @@ if (gameState === 'statsScreen') {
             </div>
           </div>
         </div>
+        <div className="mb-6 border-t pt-6">
+  <h2 className="text-lg font-semibold text-gray-800 mb-2">削除用パスワードの変更</h2>
+  <div className="space-y-2">
+    <input
+      type="password"
+      value={newPassword}
+      onChange={(e) => setNewPassword(e.target.value)}
+      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+      placeholder="新しいパスワード"
+    />
+    <input
+      type="password"
+      value={confirmPassword}
+      onChange={(e) => setConfirmPassword(e.target.value)}
+      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+      placeholder="新しいパスワード（確認用）"
+    />
+    <button
+      onClick={handleUpdatePassword}
+      className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
+    >
+      パスワードを更新
+    </button>
+  </div>
+</div>
       </div>
     );
   }

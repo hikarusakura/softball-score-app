@@ -117,3 +117,15 @@ export const setPlayerStats = async (teamId, playerName, newStats) => {
     return false;
   }
 };
+
+// パスワードを設定・変更する画面と機能
+export const updateTeamData = async (teamId, dataToUpdate) => {
+  const teamRef = doc(db, 'teams', teamId);
+  try {
+    await setDoc(teamRef, dataToUpdate, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("チームデータの更新に失敗しました:", error);
+    return false;
+  }
+};
