@@ -107,6 +107,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [inGameStats, setInGameStats] = useState({}); // 現在の試合だけの成績を記録
   const [editingPlayer, setEditingPlayer] = useState(null); // 編集中の選手名
   const [tempStats, setTempStats] = useState({});       // 編集中の数値
+  const [currentPassword, setCurrentPassword] = useState('');
   const [showStolenBaseModal, setShowStolenBaseModal] = useState(false);
   const [stealingPlayer, setStealingPlayer] = useState(null); // 盗塁する選手名を一時保存
   const [newPassword, setNewPassword] = useState('');
@@ -146,18 +147,28 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
 
   // 保存処理を行う関数
 const handleUpdatePassword = async () => {
+  // 1. 現在のパスワードが正しいかチェック
+  if (currentPassword !== initialTeamData.deletePassword) {
+    alert('現在のパスワードが違います。');
+    return;
+    }
+    // 2. 新しいパスワードが入力されているかチェック
   if (!newPassword) {
     alert('新しいパスワードを入力してください。');
     return;
   }
+  // 3. 新しいパスワードが一致するかチェック
   if (newPassword !== confirmPassword) {
-    alert('パスワードが一致しません。');
+    alert('新しいパスワードが一致しません。');
     return;
   }
-
+// 4. 更新処理
   const success = await updateTeamData(user.uid, { deletePassword: newPassword });
   if (success) {
     alert('パスワードを更新しました。');
+    // initialTeamDataも更新して、次回のチェックに備える
+    initialTeamData.deletePassword = newPassword;
+    setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
   } else {
@@ -1173,6 +1184,13 @@ if (gameState === 'statsScreen') {
         <div className="mb-6 border-t pt-6">
   <h2 className="text-lg font-semibold text-gray-800 mb-2">削除用パスワードの変更</h2>
   <div className="space-y-2">
+    <input
+      type="password"
+      value={currentPassword}
+      onChange={(e) => setCurrentPassword(e.target.value)}
+      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+      placeholder="現在のパスワード"
+    />
     <input
       type="password"
       value={newPassword}
