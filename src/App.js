@@ -521,15 +521,12 @@ const resetBso = () => {
       return;
     }
     let resultText = result;
-    const isHit = ['ヒット', '2ベース', '3ベース', 'ホームラン'].includes(result);
-    if (selectedPosition) {
-      if (isHit && hitTypeAbbreviationMap[result]) {
-        resultText = selectedPosition + hitTypeAbbreviationMap[result];
-        } else if (['ゴロ', 'ライナー', 'フライ', 'バント', '三振'].includes(result)) {
-          resultText = positionMap[selectedPosition] + result;
+    if (selectedPosition && positionMap[selectedPosition]) {
+    resultText = `${result} (${positionMap[selectedPosition]})`;
       }
-    }
+    
     let message = `${batterName}: ${resultText}`;
+    const isHit = ['ヒット', '2ベース', '3ベース', 'ホームラン'].includes(result);
     let runsScored = 0;
     let isAnOut = false;
 
