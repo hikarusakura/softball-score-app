@@ -899,8 +899,32 @@ const movePlayerDown = (index) => {
   };
 // 編集モードを開始する関数
 const handleEditPlayer = (playerName) => {
-  setEditingPlayer(playerName);
-  setTempStats(playerStats[playerName] || {});
+  // チームデータから正しいパスワードを取得
+  const correctPassword = initialTeamData.deletePassword;
+
+  // パスワードが設定されていない場合は、編集させずにメッセージを表示
+  if (!correctPassword) {
+    alert('編集・削除用のパスワードが設定されていません。\n選手管理画面で設定してください。');
+    return;
+    }
+
+    // パスワードの入力を求める
+    const password = prompt("編集するにはパスワードを入力してください：");
+
+    // ユーザーがキャンセルボタンを押した場合は、何もしない
+    if (password === null) {
+      return;
+    }
+
+    // パスワードが正しいかチェック
+    if (password === correctPassword) {
+      // 正しい場合は、編集モードを開始
+      setEditingPlayer(playerName);
+      setTempStats(playerStats[playerName] || {});
+      } else {
+        // 間違っている場合は、アラートを表示
+        alert('パスワードが違います。');
+      }
 };
 
 // 編集中の数値を一時Stateに反映させる関数
