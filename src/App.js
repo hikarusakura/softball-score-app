@@ -112,7 +112,13 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
 
   // --- ポジション対応表 ---
   const positionMap = { '投': 'ピッチャー', '捕': 'キャッチャー', '一': 'ファースト', '二': 'セカンド', '三': 'サード', '遊': 'ショート', '左': 'レフト', '中': 'センター', '右': 'ライト' };
-    
+  const hitTypeAbbreviationMap = {
+    'ヒット': '安',
+    '2ベース': '二',
+    '3ベース': '三',
+    'ホームラン': '本'
+  };
+
   // --- ヘルパー関数 & ロジック関数 ---
   const getPlayerList = () => players || [];
 
@@ -515,9 +521,12 @@ const resetBso = () => {
       return;
     }
     let resultText = result;
-    if (selectedPosition && positionMap[selectedPosition]) {
-      if (['ゴロ', 'ライナー', 'フライ', 'バント'].includes(result)) {
-        resultText = positionMap[selectedPosition] + result;
+    const isHit = ['ヒット', '2ベース', '3ベース', 'ホームラン'].includes(result);
+    if (selectedPosition) {
+      if (isHit && hitTypeAbbreviationMap[result]) {
+        resultText = selectedPosition + hitTypeAbbreviationMap[result];
+        } else if (['ゴロ', 'ライナー', 'フライ', 'バント', '三振'].includes(result)) {
+          resultText = positionMap[selectedPosition] + result;
       }
     }
     let message = `${batterName}: ${resultText}`;
@@ -525,7 +534,6 @@ const resetBso = () => {
     let isAnOut = false;
 
     const statsUpdate = {};
-    const isHit = ['ヒット', '2ベース', '3ベース', 'ホームラン'].includes(result);
     const isWalkOrHBP = ['四球', '死球'].includes(result);
     const isStrikeout = result === '三振';
     // 打数がカウントされる打席か
