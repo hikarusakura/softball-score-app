@@ -952,7 +952,7 @@ const handleCancelEdit = () => {
               </div>
             ))}
           </div>
-          <GameHighlights inGameStats={selectedGameTimeline.inGameStats || {}} />
+          <GameHighlights inGameStats={selectedGameTimeline.inGameStats || {}} players={getPlayerList()} />
         </div>
       </div>
     );
@@ -1367,14 +1367,14 @@ const BSOIndicator = () => {
 };
 
 //ハイライト表示用のコンポーネント
-const GameHighlights = ({ inGameStats }) => {
+const GameHighlights = ({ inGameStats, players }) => {
   // playerStatsオブジェクトから、指定された成績を持つ選手を抽出するヘルパー関数
   const getPlayersWithStat = (statName) => {
-    return Object.entries(inGameStats)
-      .filter(([playerName, stats]) => stats[statName] > 0)
-      .map(([playerName, stats]) => ({
+    return players
+      .filter(playerName => inGameStats[playerName] && inGameStats[playerName][statName] > 0)
+      .map(playerName => ({
         name: playerName,
-        count: stats[statName]
+        count: inGameStats[playerName][statName]
       }));
   };
 
@@ -1510,7 +1510,7 @@ const GameHighlights = ({ inGameStats }) => {
                 ))
               )}
             </div>
-            <GameHighlights inGameStats={inGameStats} />
+            <GameHighlights inGameStats={inGameStats} players={players} />
           </div>
         </div>
       </div>
