@@ -627,17 +627,8 @@ const resetBso = () => {
     }
 
     // ★★★ 最後に成績を更新する ★★★
-    if (Object.keys(statsUpdate).length > 0 && isStatsRecordingEnabled) {
-      updatePlayerStats(user.uid, batterName, statsUpdate);
-      setPlayerStats(prev => {
-        const newStats = { ...prev };
-        const player = { ...(newStats[batterName] || {}) };
-        for (const key in statsUpdate) {
-          player[key] = (player[key] || 0) + statsUpdate[key];
-        }
-        newStats[batterName] = player;
-        return newStats;
-      });
+    if (Object.keys(statsUpdate).length > 0) {
+      // 試合中のハイライト用データは、チェックボックスの状態に関わらず常に更新
       setInGameStats(prev => {
         const newStats = { ...prev };
         const player = { ...(newStats[batterName] || {}) };
@@ -647,6 +638,20 @@ const resetBso = () => {
         newStats[batterName] = player;
         return newStats;
       });
+
+      // チーム全体の累計成績は、チェックボックスがONの場合のみ更新
+      if (isStatsRecordingEnabled) {
+        updatePlayerStats(user.uid, batterName, statsUpdate);
+        setPlayerStats(prev => {
+          const newStats = { ...prev };
+          const player = { ...(newStats[batterName] || {}) };
+          for (const key in statsUpdate) {
+            player[key] = (player[key] || 0) + statsUpdate[key];
+          }
+          newStats[batterName] = player;
+          return newStats;
+        });
+      }
     }
 
     setCurrentBatter('');
@@ -716,29 +721,32 @@ const handleSpecialRecord = (type) => {
     }
   }
   // 4. 個人成績を更新
-  if (Object.keys(statsUpdate).length > 0 && isStatsRecordingEnabled) {
-    updatePlayerStats(user.uid, batterName, statsUpdate);
-    // 累計成績を更新
-    setPlayerStats(prev => {
-      const newStats = { ...prev };
-      const player = { ...(newStats[batterName] || {}) };
-      for (const key in statsUpdate) {
-        player[key] = (player[key] || 0) + statsUpdate[key];
-      }
-      newStats[batterName] = player;
-      return newStats;
-    });
-    // ↓↓ 試合中成績も更新するロジックを追加 ↓↓
-    setInGameStats(prev => {
-      const newStats = { ...prev };
-      const player = { ...(newStats[batterName] || {}) };
-      for (const key in statsUpdate) {
-        player[key] = (player[key] || 0) + statsUpdate[key];
+  if (Object.keys(statsUpdate).length > 0) {
+      // 試合中のハイライト用データは、チェックボックスの状態に関わらず常に更新
+      setInGameStats(prev => {
+        const newStats = { ...prev };
+        const player = { ...(newStats[batterName] || {}) };
+        for (const key in statsUpdate) {
+          player[key] = (player[key] || 0) + statsUpdate[key];
         }
         newStats[batterName] = player;
         return newStats;
+      });
+
+      // チーム全体の累計成績は、チェックボックスがONの場合のみ更新
+      if (isStatsRecordingEnabled) {
+        updatePlayerStats(user.uid, batterName, statsUpdate);
+        setPlayerStats(prev => {
+          const newStats = { ...prev };
+          const player = { ...(newStats[batterName] || {}) };
+          for (const key in statsUpdate) {
+            player[key] = (player[key] || 0) + statsUpdate[key];
+          }
+          newStats[batterName] = player;
+          return newStats;
         });
-  }
+      }
+    }
   
   setCurrentBatter('');
   setCustomBatter('');
