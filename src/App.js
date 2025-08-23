@@ -371,6 +371,8 @@ const handleUpdatePassword = async () => {
       awayHits,
       inGameStats: { ...inGameStats },
       bsoCount: { ...bsoCount },
+      currentInning,
+      currentTeamBatting,
     };
     setHistory(prev => [...prev, currentState].slice(-10));
   };
@@ -390,6 +392,9 @@ const handleUpdatePassword = async () => {
     setAwayHits(lastState.awayHits);
     setInGameStats(lastState.inGameStats);
     setBsoCount(lastState.bsoCount);
+    setCurrentInning(lastState.currentInning);
+    setCurrentTeamBatting(lastState.currentTeamBatting);
+
     setHistory(prev => prev.slice(0, -1));
     alert("直前の操作を取り消しました。");
   };
