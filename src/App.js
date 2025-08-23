@@ -667,7 +667,6 @@ const handleSpecialRecord = (type) => {
   if (type === 'stolenBase') {
     setShowStolenBaseModal(true);
     setStealingPlayer(null);
-    resetBso();
     return;
   }
 
