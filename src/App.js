@@ -113,6 +113,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isResuming, setIsResuming] = useState(false);
+  const [currentPitcher, setCurrentPitcher] = useState('');
 
 
   // --- ポジション対応表 ---
@@ -205,6 +206,7 @@ const handleUpdatePassword = async () => {
     setSelectedGameTimeline(null);
     setHistory([]);
     setInGameStats({});
+    setCurrentPitcher('');
     setBsoCount({ b: 0, s: 0 });
   };
 
@@ -220,6 +222,7 @@ const handleUpdatePassword = async () => {
   const saveCurrentGameState = useCallback(async () => {
     if (!gameId || !isGameCreator) return;
     const currentState = {
+      currentPitcher,
       bsoCount,
       inGameStats,
       isStatsRecordingEnabled,
@@ -247,6 +250,7 @@ const handleUpdatePassword = async () => {
       console.error('保存失敗:', error);
     }
   }, [
+    currentPitcher,
     user.uid, gameId, isGameCreator, inGameStats, isStatsRecordingEnabled, tournamentName, opponentTeam, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, homeHits, awayHits,
     timeline, currentBatter, customBatter, useCustomBatter, gameStartDate, bsoCount
@@ -264,6 +268,7 @@ const handleUpdatePassword = async () => {
     const newListener = watchGameState(user.uid, gameIdToLoad, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
+        setCurrentPitcher(data.currentPitcher || '');
         setBsoCount(data.bsoCount || { b: 0, s: 0 });
         setInGameStats(data.inGameStats || {});
         setIsStatsRecordingEnabled(data.isStatsRecordingEnabled !== undefined ? data.isStatsRecordingEnabled : true);
@@ -389,6 +394,7 @@ const handleUpdatePassword = async () => {
       bsoCount: { ...bsoCount },
       currentInning,
       currentTeamBatting,
+      currentPitcher,
     };
     setHistory(prev => [...prev, currentState].slice(-10));
   };
@@ -410,6 +416,7 @@ const handleUpdatePassword = async () => {
     setBsoCount(lastState.bsoCount);
     setCurrentInning(lastState.currentInning);
     setCurrentTeamBatting(lastState.currentTeamBatting);
+    setCurrentPitcher(lastState.currentPitcher);
 
     setHistory(prev => prev.slice(0, -1));
     alert("直前の操作を取り消しました。");
@@ -536,6 +543,7 @@ const handleUpdatePassword = async () => {
     setCurrentInning(nextInning);
     setOutCount(0);
     setBases({ first: false, second: false, third: false });
+    setCurrentPitcher('');
   };
 
   const forceChange = () => {
@@ -1602,8 +1610,8 @@ const GameHighlights = ({ inGameStats, players }) => {
                 <div className="text-xs truncate">{getCurrentTeamName()}</div>
               </div>
               <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
-                <div className="text-xs text-gray-300">アウト</div>
-                <div className="font-bold text-xl">{outCount}</div>
+                <div className="text-xs text-gray-300">投手</div>
+                <div className="font-bold text-sm truncate">{currentPitcher || '未設定'}</div>
               </div>
               <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
                 <div className="text-xs text-gray-300">打者</div>
@@ -1732,6 +1740,18 @@ const GameHighlights = ({ inGameStats, players }) => {
               <div className="flex space-x-2">
                 <input type="text" value={freeComment} onChange={(e) => setFreeComment(e.target.value)} className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="盗塁、ワイルドピッチなど" />
                 <button onClick={postFreeComment} className="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-xs font-bold transition-colors">投稿</button>
+              </div>
+            </div>
+            <div className="border-t pt-3 mt-3">
+              <label className="block text-xs font-medium text-gray-700 mb-1">ピッチャー選択</label>
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={currentPitcher}
+                  onChange={(e) => setCurrentPitcher(e.target.value)}
+                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="ピッチャー名を入力"
+                />
               </div>
             </div>
           </div>
