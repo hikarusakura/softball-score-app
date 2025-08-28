@@ -112,6 +112,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [stealingPlayer, setStealingPlayer] = useState(null); // 盗塁する選手名を一時保存
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isResuming, setIsResuming] = useState(false);
+
 
   // --- ポジション対応表 ---
   const positionMap = { '投': 'ピッチャー', '捕': 'キャッチャー', '一': 'ファースト', '二': 'セカンド', '三': 'サード', '遊': 'ショート', '左': 'レフト', '中': 'センター', '右': 'ライト' };
@@ -290,6 +292,7 @@ const handleUpdatePassword = async () => {
           setIsGameCreator(false);
           setGameState('watching');
         } else if (mode === 'resume') {
+          setIsResuming(true);
           setGameId(gameIdToLoad);
           setIsGameCreator(true);
           setGameState('playing');
@@ -336,7 +339,7 @@ const handleUpdatePassword = async () => {
   }, [user]);
 
   useEffect(() => {
-    if (!isGameCreator || gameState !== 'playing') {
+    if (!isGameCreator || gameState !== 'playing' || isResuming) {
       return;
     }
     saveCurrentGameState();
@@ -346,6 +349,19 @@ const handleUpdatePassword = async () => {
     timeline, currentBatter, customBatter, useCustomBatter, 
     gameStartDate, saveCurrentGameState, isGameCreator, gameState, homeHits, awayHits, inGameStats
   ]);
+
+  useEffect(() => {
+    if (isResuming) {
+      // データの読み込みと画面表示が完了するのを少し待ってから、再開中フラグをOFFに戻す
+      const timer = setTimeout(() => {
+        setIsResuming(false);
+      }, 500); // 0.5秒後に実行
+
+      // コンポーネントが不要になった場合にタイマーをクリアする
+      return () => clearTimeout(timer);
+    }
+  }, [isResuming]);
+
 /*
     useEffect(() => {
     // teamDataが読み込まれた後、かつplayerStatsが空でない場合にのみ実行
