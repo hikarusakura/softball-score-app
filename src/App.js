@@ -1696,9 +1696,9 @@ const GameHighlights = ({ inGameStats, players }) => {
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">ベース操作</label>
                 <div className="flex space-x-1">
-                  <button onClick={() => toggleBase('first')} className={`flex-1 py-1 rounded-lg text-xs transition-colors ${bases.first ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>1B</button>
-                  <button onClick={() => toggleBase('second')} className={`flex-1 py-1 rounded-lg text-xs transition-colors ${bases.second ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>2B</button>
-                  <button onClick={() => toggleBase('third')} className={`flex-1 py-1 rounded-lg text-xs transition-colors ${bases.third ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>3B</button>
+                  <button onClick={() => toggleBase('first')} className={`flex-1 py-1 rounded-lg text-xs transition-colors ${bases.first ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>1塁</button>
+                  <button onClick={() => toggleBase('second')} className={`flex-1 py-1 rounded-lg text-xs transition-colors ${bases.second ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>2塁</button>
+                  <button onClick={() => toggleBase('third')} className={`flex-1 py-1 rounded-lg text-xs transition-colors ${bases.third ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>3塁</button>
                 </div>
               </div>
               <div>
@@ -1740,7 +1740,7 @@ const GameHighlights = ({ inGameStats, players }) => {
               <label className="block text-xs font-medium text-gray-700 mb-1">打席結果</label>
               <div className="grid grid-cols-4 gap-1">
                 {['ヒット', '2ベース', '3ベース', 'ホームラン', '三振', '振り逃げ', 'ゴロ', 'ライナー', 'フライ', 'バント', '死球', '四球'].map((result) => (
-                  <button key={result} onClick={() => handleBattingResult(result)} className="px-2 py-1 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-xs transition-colors">
+                  <button key={result} onClick={() => handleBattingResult(result)} className="px-2 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-xs transition-colors">
                     {result}
                   </button>
                 ))}
@@ -1749,9 +1749,9 @@ const GameHighlights = ({ inGameStats, players }) => {
             <div className="mb-3">
             <label className="block text-xs font-medium text-gray-700 mb-1">特殊記録（打者を選択してから押してください）</label>
             <div className="grid grid-cols-4 gap-1">
-              <button onClick={() => handleSpecialRecord('stolenBase')} className="px-2 py-1 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs">盗塁</button>
-              <button onClick={() => handleSpecialRecord('rbi_sac_fly')} className="px-2 py-1 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs">犠飛打点</button>
-              <button onClick={() => handleSpecialRecord('rbi_other')} className="px-2 py-1 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs">その他打点</button>
+              <button onClick={() => handleSpecialRecord('stolenBase')} className="px-2 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs">盗塁</button>
+              <button onClick={() => handleSpecialRecord('rbi_sac_fly')} className="px-2 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs">犠飛打点</button>
+              <button onClick={() => handleSpecialRecord('rbi_other')} className="px-2 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs">その他打点</button>
             </div>
           </div>
 
