@@ -1685,7 +1685,7 @@ const GameHighlights = ({ inGameStats, players }) => {
                 <button onClick={endGame} className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs transition-colors">試合終了</button>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+            <div className="grid grid-cols-3 gap-2 mb-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">BSO操作</label>
                 <div className="flex space-x-1">
