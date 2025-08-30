@@ -113,7 +113,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isResuming, setIsResuming] = useState(false);
-  const [currentPitcher, setCurrentPitcher] = useState('');
+  const [myTeamPitcher, setMyTeamPitcher] = useState('');
+  const [opponentPitcher, setOpponentPitcher] = useState('');
 
 
   // --- ポジション対応表 ---
@@ -206,7 +207,6 @@ const handleUpdatePassword = async () => {
     setSelectedGameTimeline(null);
     setHistory([]);
     setInGameStats({});
-    setCurrentPitcher('');
     setBsoCount({ b: 0, s: 0 });
   };
 
@@ -222,7 +222,8 @@ const handleUpdatePassword = async () => {
   const saveCurrentGameState = useCallback(async () => {
     if (!gameId || !isGameCreator) return;
     const currentState = {
-      currentPitcher,
+      myTeamPitcher,
+      opponentPitcher,
       bsoCount,
       inGameStats,
       isStatsRecordingEnabled,
@@ -250,7 +251,7 @@ const handleUpdatePassword = async () => {
       console.error('保存失敗:', error);
     }
   }, [
-    currentPitcher,
+    myTeamPitcher,opponentPitcher,
     user.uid, gameId, isGameCreator, inGameStats, isStatsRecordingEnabled, tournamentName, opponentTeam, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, homeHits, awayHits,
     timeline, currentBatter, customBatter, useCustomBatter, gameStartDate, bsoCount
@@ -268,7 +269,8 @@ const handleUpdatePassword = async () => {
     const newListener = watchGameState(user.uid, gameIdToLoad, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
-        setCurrentPitcher(data.currentPitcher || '');
+        setMyTeamPitcher(data.myTeamPitcher || '');
+        setOpponentPitcher(data.opponentPitcher || '');
         setBsoCount(data.bsoCount || { b: 0, s: 0 });
         setInGameStats(data.inGameStats || {});
         setIsStatsRecordingEnabled(data.isStatsRecordingEnabled !== undefined ? data.isStatsRecordingEnabled : true);
@@ -394,7 +396,8 @@ const handleUpdatePassword = async () => {
       bsoCount: { ...bsoCount },
       currentInning,
       currentTeamBatting,
-      currentPitcher,
+      myTeamPitcher,
+      opponentPitcher,
     };
     setHistory(prev => [...prev, currentState].slice(-10));
   };
@@ -416,7 +419,8 @@ const handleUpdatePassword = async () => {
     setBsoCount(lastState.bsoCount);
     setCurrentInning(lastState.currentInning);
     setCurrentTeamBatting(lastState.currentTeamBatting);
-    setCurrentPitcher(lastState.currentPitcher);
+    setMyTeamPitcher(lastState.myTeamPitcher);
+    setOpponentPitcher(lastState.opponentPitcher);
 
     setHistory(prev => prev.slice(0, -1));
     alert("直前の操作を取り消しました。");
@@ -543,7 +547,8 @@ const handleUpdatePassword = async () => {
     setCurrentInning(nextInning);
     setOutCount(0);
     setBases({ first: false, second: false, third: false });
-    setCurrentPitcher('');
+    setMyTeamPitcher('');
+    setOpponentPitcher('');
   };
 
   const forceChange = () => {
@@ -1425,6 +1430,17 @@ if (gameState === 'statsScreen') {
   // playing or watching view
   const totalHomeScore = homeScore.reduce((a, b) => a + (b || 0), 0);
   const totalAwayScore = awayScore.reduce((a, b) => a + (b || 0), 0);
+  // 表示するピッチャー名を決定するロジック
+  const pitcherToDisplay = (() => {
+    const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
+    if (isMyTeamBatting) {
+      // 自チームの攻撃中は、相手ピッチャーを表示
+      return opponentPitcher || '未設定';
+    } else {
+      // 相手チームの攻撃中は、自チームのピッチャーを表示
+      return myTeamPitcher || '未設定';
+    }
+  })();
   const isInputView = gameState === 'playing';
 
   const ShareDialog = () => {
@@ -1637,7 +1653,7 @@ const GameHighlights = ({ inGameStats, players }) => {
               </div>
               <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
                 <div className="text-xs text-gray-300">投手</div>
-                <div className="font-bold text-sm truncate">{currentPitcher || '未設定'}</div>
+                <div className="font-bold text-sm truncate">{pitcherToDisplay}</div>
               </div>
               <div className="bg-white bg-opacity-20 rounded-lg p-2 text-center">
                 <div className="text-xs text-gray-300">打者</div>
@@ -1755,7 +1771,7 @@ const GameHighlights = ({ inGameStats, players }) => {
             </div>
           </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+            <div className="grid grid-cols-2 gap-2 mb-3">
               <div>
                 <button onClick={addOut} className="w-full px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm transition-colors">アウト ({outCount}/3)</button>
               </div>
@@ -1774,13 +1790,20 @@ const GameHighlights = ({ inGameStats, players }) => {
             </div>
             <div className="border-t pt-3 mt-3">
               <label className="block text-xs font-medium text-gray-700 mb-1">ピッチャー選択</label>
-              <div className="flex space-x-2">
+              <div className="grid grid-cols-2 gap-2">
                 <input
                   type="text"
-                  value={currentPitcher}
-                  onChange={(e) => setCurrentPitcher(e.target.value)}
-                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="ピッチャー名を入力"
+                  value={myTeamPitcher}
+                  onChange={(e) => setMyTeamPitcher(e.target.value)}
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="自チームのピッチャー名"
+                />
+                <input
+                  type="text"
+                  value={opponentPitcher}
+                  onChange={(e) => setOpponentPitcher(e.target.value)}
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="相手チームのピッチャー名"
                 />
               </div>
             </div>
