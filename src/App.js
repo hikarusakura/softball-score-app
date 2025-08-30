@@ -1601,9 +1601,9 @@ const InGameStatsScreen = () => {
         <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
           <div className="flex items-center mb-6">
             <button
-  onClick={() => setGameState(isGameCreator ? 'playing' : 'watching')} // 記録者か観戦者かで戻る画面を切り替え
-  className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"
->
+              onClick={() => setGameState('playing')} // 記録画面に戻る
+              className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"
+            >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <h1 className="text-2xl font-bold text-gray-800">この試合の個人成績</h1>
