@@ -1306,6 +1306,10 @@ if (gameState === 'statsScreen') {
     );
   }
 
+  if (gameState === 'inGameStatsScreen') {
+    return <InGameStatsScreen />;
+  }
+
   if (gameState === 'setup') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 p-4">
@@ -1591,6 +1595,56 @@ const GameHighlights = ({ inGameStats, players }) => {
   );
 };
 
+const InGameStatsScreen = () => {
+    return (
+      <div className="min-h-screen bg-gray-100 p-4">
+        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center mb-6">
+            <button
+  onClick={() => setGameState(isGameCreator ? 'playing' : 'watching')} // 記録者か観戦者かで戻る画面を切り替え
+  className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"
+>
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <h1 className="text-2xl font-bold text-gray-800">この試合の個人成績</h1>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white">
+              <thead className="bg-gray-800 text-white">
+                <tr>
+                  <th className="text-left py-3 px-4 uppercase font-semibold text-sm">選手名</th>
+                  <th className="py-3 px-4 uppercase font-semibold text-sm">打数</th>
+                  <th className="py-3 px-4 uppercase font-semibold text-sm">安打</th>
+                  <th className="py-3 px-4 uppercase font-semibold text-sm">本塁打</th>
+                  <th className="py-3 px-4 uppercase font-semibold text-sm">打点</th>
+                  <th className="py-3 px-4 uppercase font-semibold text-sm">盗塁</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-700">
+                {players
+                  .filter(player => inGameStats[player] && Object.values(inGameStats[player]).some(stat => stat > 0))
+                  .map((playerName) => {
+                    const stats = inGameStats[playerName] || {};
+                    return (
+                      <tr key={playerName} className="border-b border-gray-200 hover:bg-gray-100">
+                        <td className="text-left py-3 px-4">{playerName}</td>
+                        <td className="text-center py-3 px-4">{stats.atBats || 0}</td>
+                        <td className="text-center py-3 px-4">{stats.hits || 0}</td>
+                        <td className="text-center py-3 px-4">{stats.homeRuns || 0}</td>
+                        <td className="text-center py-3 px-4">{stats.rbi || 0}</td>
+                        <td className="text-center py-3 px-4">{stats.stolenBases || 0}</td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -1600,6 +1654,12 @@ const GameHighlights = ({ inGameStats, players }) => {
         <div className="h-full bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
           <div className="max-w-4xl mx-auto relative">
             { gameState === 'watching' && (<button onClick={returnToSetup} className="absolute top-0 left-0 z-40 p-2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white rounded-full transition-colors" aria-label="セットアップに戻る"><ChevronLeft className="h-6 w-6" /></button>)}
+            <button
+              onClick={() => setGameState('inGameStatsScreen')}
+              className="absolute top-0 right-0 z-40 px-3 py-1 bg-black bg-opacity-50 hover:bg-opacity-75 text-white rounded-lg text-xs font-semibold"
+            >
+              個人成績
+            </button>
             <div className="text-center mb-3 pt-8">
               <h1 className="text-lg font-bold">⚾ {teamName} 試合速報 ⚾</h1>
               <p className="text-xs text-gray-300">試合日時: {formatDate(gameStartDate)}{tournamentName && ` (${tournamentName})`}</p>
