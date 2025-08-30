@@ -64,6 +64,65 @@ const LoginScreen = ({ onLogin }) => {
   );
 };
 
+// ↓↓ このコンポーネントを丸ごと追加 ↓↓試合別個人成績画面
+const InGameStatsScreen = ({ players, inGameStats, isGameCreator, onBack }) => {
+  const playersWithStats = (players || [])
+    .filter(player => inGameStats[player] && Object.values(inGameStats[player]).some(stat => stat > 0));
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={onBack} // 親から渡された関数を呼び出す
+            className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-2xl font-bold text-gray-800">この試合の個人成績</h1>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white">
+            <thead className="bg-gray-800 text-white">
+              <tr>
+                <th className="text-left py-3 px-4 uppercase font-semibold text-sm">選手名</th>
+                <th className="py-3 px-4 uppercase font-semibold text-sm">打数</th>
+                <th className="py-3 px-4 uppercase font-semibold text-sm">安打</th>
+                <th className="py-3 px-4 uppercase font-semibold text-sm">本塁打</th>
+                <th className="py-3 px-4 uppercase font-semibold text-sm">打点</th>
+                <th className="py-3 px-4 uppercase font-semibold text-sm">盗塁</th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-700">
+              {playersWithStats.length > 0 ? (
+                playersWithStats.map((playerName) => {
+                  const stats = inGameStats[playerName] || {};
+                  return (
+                    <tr key={playerName} className="border-b border-gray-200 hover:bg-gray-100">
+                      <td className="text-left py-3 px-4">{playerName}</td>
+                      <td className="text-center py-3 px-4">{stats.atBats || 0}</td>
+                      <td className="text-center py-3 px-4">{stats.hits || 0}</td>
+                      <td className="text-center py-3 px-4">{stats.homeRuns || 0}</td>
+                      <td className="text-center py-3 px-4">{stats.rbi || 0}</td>
+                      <td className="text-center py-3 px-4">{stats.stolenBases || 0}</td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="6" className="text-center py-4 text-gray-500">この試合で記録された成績はありません。</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 // --- ログイン後のメインアプリ本体 ---
 const SoftballScoreApp = ({ user, initialTeamData }) => {
   // --- State管理セクション ---
@@ -1307,7 +1366,17 @@ if (gameState === 'statsScreen') {
   }
 
   if (gameState === 'inGameStatsScreen') {
-    return <InGameStatsScreen />;
+    const handleBack = () => {
+      setGameState(isGameCreator ? 'playing' : 'watching');
+    };
+    return (
+      <InGameStatsScreen
+        players={players}
+        inGameStats={inGameStats}
+        isGameCreator={isGameCreator}
+        onBack={handleBack}
+      />
+    );
   }
 
   if (gameState === 'setup') {
@@ -1595,63 +1664,7 @@ const GameHighlights = ({ inGameStats, players }) => {
   );
 };
 
-const InGameStatsScreen = () => {
-    // データが存在しない、または空の場合に表示する選手リスト
-    const playersWithStats = (players || [])
-      .filter(player => inGameStats[player] && Object.values(inGameStats[player]).some(stat => stat > 0));
 
-    return (
-      <div className="min-h-screen bg-gray-100 p-4">
-        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center mb-6">
-            <button
-              onClick={() => setGameState(isGameCreator ? 'playing' : 'watching')} // 記録者か観戦者かで戻る画面を切り替え
-              className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <h1 className="text-2xl font-bold text-gray-800">この試合の個人成績</h1>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
-              <thead className="bg-gray-800 text-white">
-                <tr>
-                  <th className="text-left py-3 px-4 uppercase font-semibold text-sm">選手名</th>
-                  <th className="py-3 px-4 uppercase font-semibold text-sm">打数</th>
-                  <th className="py-3 px-4 uppercase font-semibold text-sm">安打</th>
-                  <th className="py-3 px-4 uppercase font-semibold text-sm">本塁打</th>
-                  <th className="py-3 px-4 uppercase font-semibold text-sm">打点</th>
-                  <th className="py-3 px-4 uppercase font-semibold text-sm">盗塁</th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-700">
-                {playersWithStats.length > 0 ? (
-                  playersWithStats.map((playerName) => {
-                    const stats = inGameStats[playerName] || {};
-                    return (
-                      <tr key={playerName} className="border-b border-gray-200 hover:bg-gray-100">
-                        <td className="text-left py-3 px-4">{playerName}</td>
-                        <td className="text-center py-3 px-4">{stats.atBats || 0}</td>
-                        <td className="text-center py-3 px-4">{stats.hits || 0}</td>
-                        <td className="text-center py-3 px-4">{stats.homeRuns || 0}</td>
-                        <td className="text-center py-3 px-4">{stats.rbi || 0}</td>
-                        <td className="text-center py-3 px-4">{stats.stolenBases || 0}</td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="text-center py-4 text-gray-500">この試合で記録された成績はありません。</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
 
   return (
