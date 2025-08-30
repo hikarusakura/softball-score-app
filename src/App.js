@@ -823,6 +823,32 @@ const recordStolenBase = (playerName, stealType) => {
     setBases(prev => ({ ...prev, [base]: !prev[base] }));
   };
 
+  const postOutRunnerComment = () => {
+    saveStateToHistory(); // 元に戻せるように履歴保存
+
+    // 1. アウトカウントの文字列を生成
+    const outText = ['無死', '一死', '二死'][outCount] || '三死';
+
+    // 2. 走者の状況の文字列を生成
+    const runnerParts = [];
+    if (bases.third) runnerParts.push('三塁'); // 3塁から書くと自然な日本語に
+    if (bases.second) runnerParts.push('二塁');
+    if (bases.first) runnerParts.push('一塁');
+
+    let runnerText = '';
+    if (runnerParts.length === 0) {
+      runnerText = '走者なし';
+    } else if (runnerParts.length === 3) {
+      runnerText = '満塁';
+    } else {
+      runnerText = runnerParts.join('、');
+    }
+
+    // 3. タイムラインに投稿
+    const message = `【状況】${outText} ${runnerText}`;
+    addToTimeline(message);
+  };
+
   const endGame = () => {
     const finalHomeScore = homeScore.reduce((a, b) => (a || 0) + (b || 0), 0);
     const finalAwayScore = awayScore.reduce((a, b) => (a || 0) + (b || 0), 0);
@@ -1663,17 +1689,21 @@ const GameHighlights = ({ inGameStats, players }) => {
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">BSO操作</label>
                 <div className="flex space-x-1">
-                  <button onClick={() => toggleBso('b')} className="px-2 py-1 rounded-lg text-xs bg-green-500 hover:bg-green-600 text-white">ボール</button>
-                  <button onClick={() => toggleBso('s')} className="px-2 py-1 rounded-lg text-xs bg-yellow-500 hover:bg-yellow-600 text-white">ストライク</button>
+                  <button onClick={() => toggleBso('b')} className="flex-1 py-1 rounded-lg text-xs bg-green-500 hover:bg-green-600 text-white">B</button>
+                  <button onClick={() => toggleBso('s')} className="flex-1 py-1 rounded-lg text-xs bg-yellow-500 hover:bg-yellow-600 text-white">S</button>
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">ベース操作</label>
                 <div className="flex space-x-1">
-                  <button onClick={() => toggleBase('first')} className={`px-2 py-1 rounded-lg text-xs transition-colors ${bases.first ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>1塁</button>
-                  <button onClick={() => toggleBase('second')} className={`px-2 py-1 rounded-lg text-xs transition-colors ${bases.second ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>2塁</button>
-                  <button onClick={() => toggleBase('third')} className={`px-2 py-1 rounded-lg text-xs transition-colors ${bases.third ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>3塁</button>
+                  <button onClick={() => toggleBase('first')} className={`flex-1 py-1 rounded-lg text-xs transition-colors ${bases.first ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>1B</button>
+                  <button onClick={() => toggleBase('second')} className={`flex-1 py-1 rounded-lg text-xs transition-colors ${bases.second ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>2B</button>
+                  <button onClick={() => toggleBase('third')} className={`flex-1 py-1 rounded-lg text-xs transition-colors ${bases.third ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>3B</button>
                 </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">状況コメント</label>
+                <button onClick={postOutRunnerComment} className="w-full py-1 rounded-lg text-xs bg-purple-500 hover:bg-purple-600 text-white">アウト走者</button>
               </div>
             </div>
             <div className="mb-3">
