@@ -547,8 +547,6 @@ const handleUpdatePassword = async () => {
     setCurrentInning(nextInning);
     setOutCount(0);
     setBases({ first: false, second: false, third: false });
-    setMyTeamPitcher('');
-    setOpponentPitcher('');
   };
 
   const forceChange = () => {
