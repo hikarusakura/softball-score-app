@@ -64,6 +64,71 @@ const LoginScreen = ({ onLogin }) => {
   );
 };
 
+// --- チーム管理画面コンポーネント ---
+const TeamManagementScreen = ({ initialProfiles, onSave, onBack }) => {
+  const [profiles, setProfiles] = useState(initialProfiles);
+  const [newTeamName, setNewTeamName] = useState('');
+
+  const handleAddTeam = () => {
+    if (!newTeamName.trim()) {
+      alert('チーム名を入力してください。');
+      return;
+    }
+    if (profiles.includes(newTeamName.trim())) {
+      alert('同じ名前のチームが既に存在します。');
+      return;
+    }
+    setProfiles(prev => [...prev, newTeamName.trim()]);
+    setNewTeamName('');
+  };
+
+  const handleDeleteTeam = (teamNameToDelete) => {
+    if (profiles.length <= 1) {
+      alert('チームは最低1つ必要です。');
+      return;
+    }
+    if (window.confirm(`「${teamNameToDelete}」を削除しますか？`)) {
+      setProfiles(prev => prev.filter(name => name !== teamNameToDelete));
+    }
+  };
+
+  const handleSave = () => {
+    onSave(profiles);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6">
+        <div className="flex items-center mb-6">
+          <button onClick={onBack} className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"><ChevronLeft className="h-5 w-5" /></button>
+          <h1 className="text-2xl font-bold text-gray-800">チーム管理</h1>
+        </div>
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">新しいチームを追加</label>
+          <div className="flex space-x-2">
+            <input type="text" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} className="flex-1 px-3 py-2 border border-gray-300 rounded-lg" placeholder="チーム名を入力" />
+            <button onClick={handleAddTeam} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">追加</button>
+          </div>
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800 mb-2">現在のチームリスト</h2>
+          <div className="space-y-2 max-h-96 overflow-y-auto bg-gray-50 p-3 rounded-lg">
+            {profiles.map((name, index) => (
+              <div key={index} className="flex justify-between items-center bg-white p-2 rounded-md shadow-sm">
+                <span>{name}</span>
+                <button onClick={() => handleDeleteTeam(name)} className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1 px-2 rounded-lg">削除</button>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="mt-8 border-t pt-6">
+          <button onClick={handleSave} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg">変更を保存</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ↓↓ このコンポーネントを丸ごと追加 ↓↓試合別個人成績画面
 const InGameStatsScreen = ({ players, inGameStats, isGameCreator, onBack }) => {
   const playersWithStats = (players || [])
@@ -128,7 +193,9 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   // --- State管理セクション ---
   const [playerStats, setPlayerStats] = useState(initialTeamData.playerStats || {});
   const [players, setPlayers] = useState(initialTeamData.players || Object.keys(initialTeamData.playerStats || {}));
-  const [teamName, setTeamName] = useState(initialTeamData.teamName || 'あなたのチーム');
+  const [teamProfiles, setTeamProfiles] = useState(initialTeamData.teamProfiles || [initialTeamData.myTeamNameForGame || 'あなたのチーム']);
+  const [selectedGameTeam, setSelectedGameTeam] = useState((initialTeamData.teamProfiles || [initialTeamData.myTeamNameForGame || 'あなたのチーム'])[0]);
+  const [myTeamNameForGame, setMyTeamNameForGame] = useState('');
   const [newPlayerName, setNewPlayerName] = useState('');
   const [gameState, setGameState] = useState('setup');
   const [tournamentName, setTournamentName] = useState('');
@@ -200,7 +267,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   };
 
   const getCurrentTeamName = () => {
-    const myTeam = teamName || 'あなたのチーム';
+    const myTeam = myTeamNameForGame || 'あなたのチーム';
     if (isHomeTeam) {
       return currentTeamBatting === 'away' ? truncateTeamName(opponentTeam) : myTeam;
     } else {
@@ -281,6 +348,7 @@ const handleUpdatePassword = async () => {
   const saveCurrentGameState = useCallback(async () => {
     if (!gameId || !isGameCreator) return;
     const currentState = {
+      myTeamNameForGame,
       myTeamPitcher,
       opponentPitcher,
       bsoCount,
@@ -310,7 +378,7 @@ const handleUpdatePassword = async () => {
       console.error('保存失敗:', error);
     }
   }, [
-    myTeamPitcher,opponentPitcher,
+    myTeamPitcher,opponentPitcher,myTeamNameForGame,
     user.uid, gameId, isGameCreator, inGameStats, isStatsRecordingEnabled, tournamentName, opponentTeam, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, homeHits, awayHits,
     timeline, currentBatter, customBatter, useCustomBatter, gameStartDate, bsoCount
@@ -375,11 +443,13 @@ const handleUpdatePassword = async () => {
     firebaseListener.current = newListener;
   };
   
-  useEffect(() => {
+useEffect(() => {
   if (initialTeamData) {
     setPlayerStats(initialTeamData.playerStats || {});
     setPlayers(initialTeamData.players || Object.keys(initialTeamData.playerStats || {}));
-    setTeamName(initialTeamData.teamName || 'あなたのチーム');
+    const profiles = initialTeamData.teamProfiles || [initialTeamData.myTeamNameForGame || 'あなたのチーム'];
+    setTeamProfiles(profiles);
+    setSelectedGameTeam(profiles[0]);
   }
 }, [initialTeamData]);
 
@@ -510,12 +580,18 @@ const handleUpdatePassword = async () => {
     const url = `${window.location.origin}${window.location.pathname}?gameId=${newGameId}&teamId=${user.uid}`;
     
     setGameStartDate(Date.now());
+    setMyTeamNameForGame(data.myTeamNameForGame || profiles[0]);
     setGameId(newGameId);
     setShareUrl(url);
     setIsGameCreator(true);
     setGameState('playing');
     setCurrentTeamBatting('away');
-    addToTimeline(`試合開始！ (${teamName} vs ${opponentTeam})`);
+    if (!selectedGameTeam) {
+  alert('試合を行うチームを選択してください');
+  return;
+}
+setMyTeamNameForGame(selectedGameTeam); // 試合で使うチーム名を確定
+addToTimeline(`試合開始！ (${selectedGameTeam} vs ${opponentTeam})`);
     setShowShareDialog(true);
   };
 
@@ -590,7 +666,7 @@ const handleUpdatePassword = async () => {
     const nextTeamBatting = currentTeamBatting === 'away' ? 'home' : 'away';
     // 2. 「次の」攻撃チーム名を、より正確なロジックで取得します
     let nextTeamName;
-  const myTeam = teamName || '若葉'; // ログインしているチーム名
+  const myTeam = myTeamNameForGame || selectedGameTeam; // ログインしているチーム名
 
   if (nextTeamBatting === 'home') {
     // 次に攻撃するのがホームチームの場合
@@ -914,7 +990,7 @@ const recordStolenBase = (playerName, stealType) => {
   const endGame = () => {
     const finalHomeScore = homeScore.reduce((a, b) => (a || 0) + (b || 0), 0);
     const finalAwayScore = awayScore.reduce((a, b) => (a || 0) + (b || 0), 0);
-    const myTeamName = teamName || '若葉';
+    const myTeamName = myTeamNameForGame || '若葉';
     let winner = isHomeTeam ? (finalHomeScore > finalAwayScore ? myTeamName : opponentTeam) : (finalAwayScore > finalHomeScore ? myTeamName : opponentTeam);
     const gameData = {
       inGameStats: inGameStats,
@@ -1083,7 +1159,7 @@ const handleCancelEdit = () => {
 };
 
   const prepareDataForExport = (gameData) => {
-    const myTeamName = teamName || '若葉';
+    const myTeamName = myTeamNameForGame || '若葉';
     const scoreA = gameData.isHomeTeam ? gameData.awayScore : gameData.homeScore;
     const scoreB = gameData.isHomeTeam ? gameData.homeScore : gameData.awayScore;
     const scoreboardHeader = ['チーム', '1', '2', '3', '4', '5', '6', '合計'];
@@ -1125,8 +1201,8 @@ const handleCancelEdit = () => {
               <h1 className="text-2xl font-bold text-gray-800">試合振り返り</h1>
               <p className="text-gray-600">{selectedGameTimeline.date} vs {selectedGameTimeline.opponentTeam}</p>
               <p className="text-lg font-bold">
-                {selectedGameTimeline.isHomeTeam ? teamName : selectedGameTimeline.opponentTeam} {selectedGameTimeline.homeScore} - {selectedGameTimeline.awayScore} {selectedGameTimeline.isHomeTeam ? selectedGameTimeline.opponentTeam : teamName}
-                <span className={`ml-2 ${selectedGameTimeline.winner === teamName ? 'text-blue-600' : 'text-red-600'}`}>({selectedGameTimeline.winner}勝利)</span>
+                {selectedGameTimeline.isHomeTeam ? myTeamNameForGame : selectedGameTimeline.opponentTeam} {selectedGameTimeline.homeScore} - {selectedGameTimeline.awayScore} {selectedGameTimeline.isHomeTeam ? selectedGameTimeline.opponentTeam : teamName}
+                <span className={`ml-2 ${selectedGameTimeline.winner === myTeamNameForGame ? 'text-blue-600' : 'text-red-600'}`}>({selectedGameTimeline.winner}勝利)</span>
               </p>
             </div>
           </div>
@@ -1180,7 +1256,7 @@ const handleCancelEdit = () => {
                         <span className="font-bold mx-2">{totalAwayScore}</span>
                         <span>-</span>
                         <span className="font-bold mx-2">{totalHomeScore}</span>
-                        <span>{game.isHomeTeam ? teamName : game.opponentTeam}</span>
+                        <span>{game.isHomeTeam ? myTeamNameForGame : game.opponentTeam}</span>
                       </div>
                     </div>
                     <div className="text-right mt-2 border-t pt-2">
@@ -1296,6 +1372,20 @@ if (gameState === 'statsScreen') {
   );
 }
 
+if (gameState === 'teamManagement') {
+    const handleSaveTeams = async (newProfiles) => {
+      const success = await updateTeamData(user.uid, { teamProfiles: newProfiles });
+      if (success) {
+        setTeamProfiles(newProfiles);
+        alert('チームリストを保存しました。');
+        setGameState('setup');
+      } else {
+        alert('保存に失敗しました。');
+      }
+    };
+    return <TeamManagementScreen initialProfiles={teamProfiles} onSave={handleSaveTeams} onBack={() => setGameState('setup')} />;
+  }
+
   if (gameState === 'playerManagement') {
     return (
       <div className="min-h-screen bg-gray-100 p-4">
@@ -1388,10 +1478,16 @@ if (gameState === 'statsScreen') {
           </div>
           <div className="text-center mb-8">
             <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">{teamName} 試合速報</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">試合速報</h1>
             <p className="text-gray-600">試合情報を入力してください</p>
           </div>
           <div className="space-y-6">
+            <div className="mb-2">
+  <label className="block text-sm font-medium text-gray-700 mb-2">あなたのチーム</label>
+  <select value={selectedGameTeam} onChange={(e) => setSelectedGameTeam(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+    {teamProfiles.map(name => <option key={name} value={name}>{name}</option>)}
+  </select>
+</div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">大会名（任意）</label>
               <input type="text" value={tournamentName} onChange={(e) => setTournamentName(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="大会名を入力" />
@@ -1403,7 +1499,7 @@ if (gameState === 'statsScreen') {
             <div>
               <label className="flex items-center space-x-3">
                 <input type="checkbox" checked={isHomeTeam} onChange={(e) => setIsHomeTeam(e.target.checked)} className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-medium text-gray-700">{teamName}が後攻</span>
+                <span className="text-sm font-medium text-gray-700">{selectedGameTeam}が後攻</span>
               </label>
             </div>
             <div>
@@ -1424,6 +1520,7 @@ if (gameState === 'statsScreen') {
               <span>試合開始（新規記録）</span>
             </button>
             <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
               <button onClick={handleFetchFirebaseGames} disabled={isLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300">
                 <span>{isLoading ? '読込中...' : '過去の試合を閲覧'}</span>
               </button>
@@ -1447,20 +1544,11 @@ if (gameState === 'statsScreen') {
                 </button>
               </div>
             </div>
-　　　　　　　<div className="grid grid-cols-2 gap-4 border-t border-gray-200 pt-6">
-              <button
-                onClick={() => setGameState('playerManagement')}
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm"
-              >
-                <span>選手名簿の管理</span>
-              </button>
-              <button
-                onClick={() => setGameState('statsScreen')}
-                className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm"
-              >
-                <span>個人成績の確認</span>
-              </button>
-            </div>
+　　　　　　　<div className="grid grid-cols-3 gap-2 border-t border-gray-200 pt-6">
+  <button onClick={() => setGameState('playerManagement')} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-3 rounded-lg text-xs">選手管理</button>
+  <button onClick={() => setGameState('teamManagement')} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-3 rounded-lg text-xs">チーム管理</button>
+  <button onClick={() => setGameState('statsScreen')} className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-3 rounded-lg text-xs">個人成績</button>
+</div>
           </div>
           {pastGames.length > 0 && (
             <div className="mt-8">
@@ -1478,8 +1566,8 @@ if (gameState === 'statsScreen') {
                       <span className="font-medium">vs {game.opponentTeam}</span>
                     </div>
                     <button onClick={() => showTimeline(game)} className="w-full text-center mt-1 hover:bg-gray-100 p-1 rounded transition-colors">
-                      <span className={`font-bold ${game.winner === teamName ? 'text-blue-600' : 'text-red-600'}`}>
-                        {game.isHomeTeam ? teamName : game.opponentTeam} {game.isHomeTeam ? game.homeScore : game.awayScore} - {game.isHomeTeam ? game.awayScore : game.homeScore} {game.isHomeTeam ? game.opponentTeam : teamName} ({game.winner}勝利)
+                      <span className={`font-bold ${game.winner === myTeamNameForGame ? 'text-blue-600' : 'text-red-600'}`}>
+                        {game.isHomeTeam ? myTeamNameForGame : game.opponentTeam} {game.isHomeTeam ? game.homeScore : game.awayScore} - {game.isHomeTeam ? game.awayScore : game.homeScore} {game.isHomeTeam ? game.opponentTeam : teamName} ({game.winner}勝利)
                       </span>
                       <div className="text-xs text-gray-500 mt-1">クリックで詳細表示</div>
                     </button>
