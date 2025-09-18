@@ -1361,11 +1361,6 @@ const startGame = () => {
             <span>試合開始（新規記録）</span>
           </button>
           <div className="border-t border-gray-200 pt-6">
-            <button onClick={handleFetchFirebaseGames} disabled={isLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300">
-              <span>{isLoading ? '読込中...' : '過去の試合を閲覧'}</span>
-            </button>
-          </div>
-          <div className="border-t border-gray-200 pt-6">
             <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
             <button onClick={handleFetchFirebaseGames} disabled={isLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300">
               <span>{isLoading ? '読込中...' : '過去の試合を閲覧'}</span>
