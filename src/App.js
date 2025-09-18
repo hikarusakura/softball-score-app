@@ -1367,6 +1367,11 @@ const startGame = () => {
           </div>
           <div className="border-t border-gray-200 pt-6">
             <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
+            <button onClick={handleFetchFirebaseGames} disabled={isLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300">
+              <span>{isLoading ? '読込中...' : '過去の試合を閲覧'}</span>
+            </button>
+          </div>
+          <div className="border-t border-gray-200 pt-6">
             <div className="space-y-3">
               <input type="text" value={watchingGameId} onChange={(e) => setWatchingGameId(e.target.value.toUpperCase())} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="観戦したい試合のIDを入力" maxLength={6} />
               <button onClick={() => loadGame(watchingGameId, 'watch')} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
@@ -1634,7 +1639,7 @@ const startGame = () => {
               {/* ... */}
               <label className="block text-xs font-medium text-gray-700 mb-1">打席結果</label>
               <div className="grid grid-cols-4 gap-1">
-                {['ヒット', '2ベース', '3ベース', 'ホームラン', '三振', '振り逃げ', 'ゴロ', 'ライナー', 'フライ', 'バント', '死球', '四球'].map((result) => {
+                {['ヒット', '2ベース', '3ベース', 'ホームラン', '三振', 'ゴロ', 'ライナー', 'フライ', 'バント', '振り逃げ', '死球', '四球'].map((result) => {
                   {/* ★ここから修正★ */}
                   const isHitType = ['ヒット', '2ベース', '3ベース', 'ホームラン'].includes(result);
                   const buttonClass = isHitType
