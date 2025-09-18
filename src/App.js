@@ -250,6 +250,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [showStolenBaseModal, setShowStolenBaseModal] = useState(false);
   const [stealingPlayer, setStealingPlayer] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
+  const [sortConfig, setSortConfig] = useState({ key: 'battingAverage', direction: 'descending' });
 
 
   // --- ポジション対応表 ---
@@ -257,6 +258,47 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   
   // --- ヘルパー関数 & ロジック関数 ---
   const getPlayerList = () => players || [];
+
+  const sortedPlayers = React.useMemo(() => {
+    let sortablePlayers = [...(players || [])];
+    if (sortConfig !== null) {
+      sortablePlayers.sort((a, b) => {
+        const statsA = playerStats[a] || {};
+        const statsB = playerStats[b] || {};
+
+        const getValue = (stats, key) => {
+          const atBats = stats.atBats || 0;
+          const hits = stats.hits || 0;
+          const walks = stats.walks || 0;
+          const hitByPitches = stats.hitByPitches || 0;
+          const plateAppearances = atBats + walks + hitByPitches;
+
+          switch (key) {
+            case 'battingAverage':
+              return atBats > 0 ? hits / atBats : 0;
+            case 'onBasePercentage':
+              return plateAppearances > 0 ? (hits + walks + hitByPitches) / plateAppearances : 0;
+            case 'plateAppearances':
+              return plateAppearances;
+            default:
+              return stats[key] || 0;
+          }
+        };
+
+        const valueA = getValue(statsA, sortConfig.key);
+        const valueB = getValue(statsB, sortConfig.key);
+
+        if (valueA < valueB) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (valueA > valueB) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortablePlayers;
+  }, [players, playerStats, sortConfig]);
 
   const formatDate = (timestamp) => {
     if (!timestamp) return '';
@@ -1237,89 +1279,130 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     </div>
   ); }
 
-  if (gameState === 'statsScreen') { return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center">
-            <button onClick={() => setGameState('setup')} className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"><ChevronLeft className="h-5 w-5" /></button>
-            <h1 className="text-2xl font-bold text-gray-800">個人成績一覧</h1>
+  if (gameState === 'statsScreen') {
+    const requestSort = (key) => {
+      let direction = 'descending';
+      if (sortConfig.key === key && sortConfig.direction === 'descending') {
+        direction = 'ascending';
+      }
+      setSortConfig({ key, direction });
+    };
+
+    const getSortIndicator = (key) => {
+      if (sortConfig.key === key) {
+        return sortConfig.direction === 'descending' ? ' ▼' : ' ▲';
+      }
+      return null;
+    };
+    
+    // ヘッダー情報を配列で管理
+    const headers = [
+      { key: 'playerName', label: '選手名' },
+      { key: 'battingAverage', label: '打率' },
+      { key: 'onBasePercentage', label: '出塁率' },
+      { key: 'plateAppearances', label: '打席' },
+      { key: 'atBats', label: '打数' },
+      { key: 'hits', label: '安打' },
+      { key: 'doubles', label: '二塁打' },
+      { key: 'triples', label: '三塁打' },
+      { key: 'homeRuns', label: '本塁打' },
+      { key: 'rbi', label: '打点' },
+      { key: 'strikeouts', label: '三振' },
+      { key: 'walks', label: '四球' },
+      { key: 'hitByPitches', label: '死球' },
+      { key: 'stolenBases', label: '盗塁' },
+    ];
+
+    return (
+      <div className="min-h-screen bg-gray-100 p-4">
+        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center">
+              <button onClick={() => setGameState('setup')} className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"><ChevronLeft className="h-5 w-5" /></button>
+              <h1 className="text-2xl font-bold text-gray-800">個人成績一覧</h1>
+            </div>
           </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white text-xs md:text-sm">
-            <thead className="bg-gray-800 text-white">
-              <tr>
-                <th className="text-left py-2 px-3">選手名</th>
-                <th>打率</th><th>出塁率</th><th>打席</th><th>打数</th><th>安打</th><th>二塁打</th>
-                <th>三塁打</th><th>本塁打</th><th>打点</th><th>三振</th>
-                <th>四球</th><th>死球</th><th>盗塁</th>
-                <th className="py-2 px-3">操作</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-700">
-              {getPlayerList().map((playerName) => {
-                const isEditing = editingPlayer === playerName;
-                const stats = isEditing ? tempStats : (playerStats[playerName] || {});
-                const atBats = stats.atBats || 0;
-                const hits = stats.hits || 0;
-                const doubles = stats.doubles || 0;
-                const triples = stats.triples || 0;
-                const homeRuns = stats.homeRuns || 0;
-                const rbi = stats.rbi || 0;
-                const strikeouts = stats.strikeouts || 0;
-                const walks = stats.walks || 0;
-                const hitByPitches = stats.hitByPitches || 0;
-                const stolenBases = stats.stolenBases || 0;
-                const plateAppearances = atBats + walks + hitByPitches;
-                const battingAverage = atBats > 0 ? (hits / atBats).toFixed(3) : '.000';
-                const onBasePercentage = plateAppearances > 0 ? ((hits + walks + hitByPitches) / plateAppearances).toFixed(3) : '.000';
-                return (
-                  <tr key={playerName} className="border-b border-gray-200 hover:bg-gray-100">
-                    <td className="text-left py-2 px-3 font-medium">{playerName}</td>
-                    <td className="text-center font-semibold">{battingAverage}</td>
-                    <td className="text-center font-semibold">{onBasePercentage}</td>
-                    <td className="text-center">{plateAppearances}</td>
-                    {isEditing ? (
-                      <>
-                        <td><input type="number" value={atBats} onChange={(e) => handleStatChange('atBats', e.target.value)} className="w-12 text-center border rounded"/></td>
-                        <td><input type="number" value={hits} onChange={(e) => handleStatChange('hits', e.target.value)} className="w-12 text-center border rounded"/></td>
-                        <td><input type="number" value={doubles} onChange={(e) => handleStatChange('doubles', e.target.value)} className="w-12 text-center border rounded"/></td>
-                        <td><input type="number" value={triples} onChange={(e) => handleStatChange('triples', e.target.value)} className="w-12 text-center border rounded"/></td>
-                        <td><input type="number" value={homeRuns} onChange={(e) => handleStatChange('homeRuns', e.target.value)} className="w-12 text-center border rounded"/></td>
-                        <td><input type="number" value={rbi} onChange={(e) => handleStatChange('rbi', e.target.value)} className="w-12 text-center border rounded"/></td>
-                        <td><input type="number" value={strikeouts} onChange={(e) => handleStatChange('strikeouts', e.target.value)} className="w-12 text-center border rounded"/></td>
-                        <td><input type="number" value={walks} onChange={(e) => handleStatChange('walks', e.target.value)} className="w-12 text-center border rounded"/></td>
-                        <td><input type="number" value={hitByPitches} onChange={(e) => handleStatChange('hitByPitches', e.target.value)} className="w-12 text-center border rounded"/></td>
-                        <td><input type="number" value={stolenBases} onChange={(e) => handleStatChange('stolenBases', e.target.value)} className="w-12 text-center border rounded"/></td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="text-center">{atBats}</td><td className="text-center">{hits}</td><td className="text-center">{doubles}</td>
-                        <td className="text-center">{triples}</td><td className="text-center">{homeRuns}</td><td className="text-center">{rbi}</td>
-                        <td className="text-center">{strikeouts}</td><td className="text-center">{walks}</td>
-                        <td className="text-center">{hitByPitches}</td><td className="text-center">{stolenBases}</td>
-                      </>
-                    )}
-                    <td className="text-center py-2 px-3">
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white text-xs md:text-sm">
+              <thead className="bg-gray-800 text-white">
+                <tr>
+                  {headers.map(header => (
+                    <th 
+                      key={header.key} 
+                      className="text-left py-2 px-3 cursor-pointer hover:bg-gray-700"
+                      onClick={() => header.key !== 'playerName' && requestSort(header.key)}
+                    >
+                      {header.label}{getSortIndicator(header.key)}
+                    </th>
+                  ))}
+                  <th className="py-2 px-3">操作</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-700">
+                {sortedPlayers.map((playerName) => { // ★ getPlayerList() から sortedPlayers に変更
+                  const isEditing = editingPlayer === playerName;
+                  const stats = isEditing ? tempStats : (playerStats[playerName] || {});
+                  const atBats = stats.atBats || 0;
+                  const hits = stats.hits || 0;
+                  const doubles = stats.doubles || 0;
+                  const triples = stats.triples || 0;
+                  const homeRuns = stats.homeRuns || 0;
+                  const rbi = stats.rbi || 0;
+                  const strikeouts = stats.strikeouts || 0;
+                  const walks = stats.walks || 0;
+                  const hitByPitches = stats.hitByPitches || 0;
+                  const stolenBases = stats.stolenBases || 0;
+                  const plateAppearances = atBats + walks + hitByPitches;
+                  const battingAverage = atBats > 0 ? (hits / atBats).toFixed(3) : '.000';
+                  const onBasePercentage = plateAppearances > 0 ? ((hits + walks + hitByPitches) / plateAppearances).toFixed(3) : '.000';
+                  
+                  return (
+                    <tr key={playerName} className="border-b border-gray-200 hover:bg-gray-100">
+                      <td className="text-left py-2 px-3 font-medium">{playerName}</td>
+                      <td className="text-center font-semibold">{battingAverage}</td>
+                      <td className="text-center font-semibold">{onBasePercentage}</td>
+                      <td className="text-center">{plateAppearances}</td>
                       {isEditing ? (
                         <>
-                          <button onClick={() => handleSaveStats(playerName)} className="bg-blue-500 text-white font-bold py-1 px-2 rounded-md text-xs mr-1">保存</button>
-                          <button onClick={handleCancelEdit} className="bg-gray-500 text-white font-bold py-1 px-2 rounded-md text-xs">中止</button>
+                          <td><input type="number" value={atBats} onChange={(e) => handleStatChange('atBats', e.target.value)} className="w-12 text-center border rounded"/></td>
+                          <td><input type="number" value={hits} onChange={(e) => handleStatChange('hits', e.target.value)} className="w-12 text-center border rounded"/></td>
+                          <td><input type="number" value={doubles} onChange={(e) => handleStatChange('doubles', e.target.value)} className="w-12 text-center border rounded"/></td>
+                          <td><input type="number" value={triples} onChange={(e) => handleStatChange('triples', e.target.value)} className="w-12 text-center border rounded"/></td>
+                          <td><input type="number" value={homeRuns} onChange={(e) => handleStatChange('homeRuns', e.target.value)} className="w-12 text-center border rounded"/></td>
+                          <td><input type="number" value={rbi} onChange={(e) => handleStatChange('rbi', e.target.value)} className="w-12 text-center border rounded"/></td>
+                          <td><input type="number" value={strikeouts} onChange={(e) => handleStatChange('strikeouts', e.target.value)} className="w-12 text-center border rounded"/></td>
+                          <td><input type="number" value={walks} onChange={(e) => handleStatChange('walks', e.target.value)} className="w-12 text-center border rounded"/></td>
+                          <td><input type="number" value={hitByPitches} onChange={(e) => handleStatChange('hitByPitches', e.target.value)} className="w-12 text-center border rounded"/></td>
+                          <td><input type="number" value={stolenBases} onChange={(e) => handleStatChange('stolenBases', e.target.value)} className="w-12 text-center border rounded"/></td>
                         </>
                       ) : (
-                        <button onClick={() => handleEditPlayer(playerName)} className="bg-green-500 text-white font-bold py-1 px-2 rounded-md text-xs">編集</button>
+                        <>
+                          <td className="text-center">{atBats}</td><td className="text-center">{hits}</td><td className="text-center">{doubles}</td>
+                          <td className="text-center">{triples}</td><td className="text-center">{homeRuns}</td><td className="text-center">{rbi}</td>
+                          <td className="text-center">{strikeouts}</td><td className="text-center">{walks}</td>
+                          <td className="text-center">{hitByPitches}</td><td className="text-center">{stolenBases}</td>
+                        </>
                       )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <td className="text-center py-2 px-3">
+                        {isEditing ? (
+                          <>
+                            <button onClick={() => handleSaveStats(playerName)} className="bg-blue-500 text-white font-bold py-1 px-2 rounded-md text-xs mr-1">保存</button>
+                            <button onClick={handleCancelEdit} className="bg-gray-500 text-white font-bold py-1 px-2 rounded-md text-xs">中止</button>
+                          </>
+                        ) : (
+                          <button onClick={() => handleEditPlayer(playerName)} className="bg-green-500 text-white font-bold py-1 px-2 rounded-md text-xs">編集</button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  ); }
+    );
+  }
 
   if (gameState === 'playerManagement') { return (
     <div className="min-h-screen bg-gray-100 p-4">
