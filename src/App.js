@@ -287,8 +287,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setCurrentTeamBatting('away');
     setOutCount(0);
     setBases({ first: false, second: false, third: false });
-    setHomeScore(Array(6).fill(null));
-    setAwayScore(Array(6).fill(null));
+    setHomeScore(Array(7).fill(null));
+    setAwayScore(Array(7).fill(null));
     setHomeHits(0);
     setAwayHits(0);
     setTimeline([]);
@@ -396,8 +396,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
         setCurrentTeamBatting(data.currentTeamBatting || 'away');
         setOutCount(typeof data.outCount === 'number' ? data.outCount : 0);
         setBases(data.bases && typeof data.bases === 'object' ? data.bases : { first: false, second: false, third: false });
-        setHomeScore(Array.isArray(data.homeScore) ? data.homeScore : Array(6).fill(null));
-        setAwayScore(Array.isArray(data.awayScore) ? data.awayScore : Array(6).fill(null));
+        setHomeScore(Array.isArray(data.homeScore) ? data.homeScore : Array(7).fill(null));
+        setAwayScore(Array.isArray(data.awayScore) ? data.awayScore : Array(7).fill(null));
         setHomeHits(data.homeHits || 0);
         setAwayHits(data.awayHits || 0);
         setTimeline(Array.isArray(data.timeline) ? data.timeline : []);
@@ -476,8 +476,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
             setCurrentTeamBatting(data.currentTeamBatting || 'away');
             setOutCount(typeof data.outCount === 'number' ? data.outCount : 0);
             setBases(data.bases && typeof data.bases === 'object' ? data.bases : { first: false, second: false, third: false });
-            setHomeScore(Array.isArray(data.homeScore) ? data.homeScore : Array(6).fill(null));
-            setAwayScore(Array.isArray(data.awayScore) ? data.awayScore : Array(6).fill(null));
+            setHomeScore(Array.isArray(data.homeScore) ? data.homeScore : Array(7).fill(null));
+            setAwayScore(Array.isArray(data.awayScore) ? data.awayScore : Array(7).fill(null));
             setHomeHits(data.homeHits || 0);
             setAwayHits(data.awayHits || 0);
             setTimeline(Array.isArray(data.timeline) ? data.timeline : []);
