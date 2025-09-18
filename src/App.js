@@ -7,8 +7,7 @@ import {
   updateTeamData
 } from './firebase';
 import { doc, setDoc } from "firebase/firestore";
-import { CSVLink } from 'react-csv';
-import Papa from 'paparse';
+
 
 
 // --- ログイン画面コンポーネント ---
@@ -1052,29 +1051,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     }
   };
 
-  const prepareDataForExport = (gameData) => {
-    const myTeam = gameData.myTeamNameForGame || teamProfiles[0];
-    const scoreA = gameData.isHomeTeam ? gameData.awayScore : gameData.homeScore;
-    const scoreB = gameData.isHomeTeam ? gameData.homeScore : gameData.awayScore;
-    const scoreboardHeader = ['チーム', '1', '2', '3', '4', '5', '6', '合計'];
-    const homeScores = gameData.homeScoreInnings || Array(6).fill('-');
-    const awayScores = gameData.awayScoreInnings || Array(6).fill('-');
-    const teamRow1 = [gameData.isHomeTeam ? gameData.opponentTeam : myTeam, ...(gameData.isHomeTeam ? awayScores : homeScores), scoreA];
-    const teamRow2 = [gameData.isHomeTeam ? myTeam : gameData.opponentTeam, ...(gameData.isHomeTeam ? homeScores : awayScores), scoreB];
-    const timelineHeader = ['時刻', '回', 'アウト', 'チーム', '内容'];
-    const timelineRows = gameData.timeline.slice().reverse().map(entry => [
-      entry.time, entry.inning, entry.outCount, entry.team, entry.message.replace(/,/g, '、')
-    ]);
-    const exportData = [
-      ['大会名', gameData.tournamentName],
-      ['対戦相手', gameData.opponentTeam],
-      ['試合日', gameData.date],
-      ['スコア', `${teamRow2[0]} ${scoreB} - ${scoreA} ${teamRow1[0]}`],
-      [], ['イニング別スコア'], scoreboardHeader, teamRow2, teamRow1, [],
-      ['タイムライン'], timelineHeader, ...timelineRows
-    ];
-    return exportData;
-  };
+
 
 
   // --- JSX ---
@@ -1390,8 +1367,6 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
           <div className="mt-8">
             <h2 className="text-lg font-bold text-gray-800 mb-4">過去の試合（ローカル保存）</h2>
             {pastGames.slice(0, 3).map((game, index) => {
-              const exportData = prepareDataForExport(game);
-              const filename = `softball-score-${game.date.replace(/\//g, '-')}-${game.opponentTeam}.csv`;
               const myTeam = game.myTeamNameForGame || teamProfiles[0];
               return (
                 <div key={index} className="bg-gray-50 p-3 rounded-lg mb-2">

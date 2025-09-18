@@ -9,6 +9,7 @@
     "@testing-library/user-event": "^13.5.0",
     "firebase": "^11.9.1",
     "lucide-react": "^0.511.0",
+    "papaparse": "^5.5.3",
     "react": "^19.1.0",
     "react-csv": "^2.2.2",
     "react-dom": "^19.1.0",
