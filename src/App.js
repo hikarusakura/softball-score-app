@@ -587,6 +587,7 @@ const startGame = () => {
     return { newOutCount, inningShouldChange };
   };
 
+  
   const addOut = () => {
     saveStateToHistory();
     const { newOutCount, inningShouldChange } = processOut();
@@ -1640,8 +1641,6 @@ const startGame = () => {
               <label className="block text-xs font-medium text-gray-700 mb-1">ポジション（任意）</label>
               <div className="grid grid-cols-9 gap-1">{Object.keys(positionMap).map((pos) => (<button key={pos} onClick={() => setSelectedPosition(prevSelected => prevSelected === pos ? null : pos)} className={`px-2 py-2 text-white rounded-lg text-xs transition-colors ${selectedPosition === pos ? 'bg-orange-500 font-bold ring-2 ring-white' : 'bg-blue-500 hover:bg-blue-600'}`}>{pos}</button>))}</div>
               <hr className="my-2 border-gray-300" />
-              <div className="mb-3">
-              {/* ... */}
               <label className="block text-xs font-medium text-gray-700 mb-1">打席結果</label>
               <div className="grid grid-cols-4 gap-1">
                 {['ヒット', '2ベース', '3ベース', 'ホームラン', '三振', 'ゴロ', 'ライナー', 'フライ', 'バント', '振り逃げ', '死球', '四球'].map((result) => {
@@ -1662,7 +1661,6 @@ const startGame = () => {
                   );
                 })}
               </div>
-            </div>
             </div>
             <div className="mb-3">
               <label className="block text-xs font-medium text-gray-700 mb-1">特殊記録（打者を選択してから押してください）</label>
