@@ -1196,7 +1196,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
         <div className="flex items-center mb-6">
           <button onClick={returnToSetup} className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg"><ChevronLeft className="h-5 w-5" /></button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">過去の試合一覧</h1>
+            <h1 className="text-2xl font-bold text-gray-800">試合一覧</h1>
             <p className="text-gray-600">試合をタップすると観戦モードで開きます</p>
           </div>
         </div>
@@ -1377,6 +1377,13 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
           <p className="text-gray-600">試合情報を入力してください</p>
         </div>
         <div className="space-y-6">
+          <div className="border-t border-gray-200 pt-6">
+            <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
+            <button onClick={handleFetchFirebaseGames} disabled={isLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300">
+              <Eye className="h-5 w-5" />
+              <span>{isLoading ? '読込中...' : '試合速報を閲覧'}</span>
+            </button>
+          </div>
           <div className="mb-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">あなたのチーム</label>
             <select value={selectedGameTeam} onChange={(e) => setSelectedGameTeam(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
@@ -1407,22 +1414,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
             <Play className="h-5 w-5" />
             <span>試合開始（新規記録）</span>
           </button>
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
-            <button onClick={handleFetchFirebaseGames} disabled={isLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300">
-              <Eye className="h-5 w-5" />
-              <span>{isLoading ? '読込中...' : '過去の試合を閲覧'}</span>
-            </button>
-          </div>
-          <div className="border-t border-gray-200 pt-6">
-            <div className="space-y-3">
-              <input type="text" value={watchingGameId} onChange={(e) => setWatchingGameId(e.target.value.toUpperCase())} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="観戦したい試合のIDを入力" maxLength={6} />
-              <button onClick={() => loadGame(watchingGameId, 'watch')} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
-                <Eye className="h-5 w-5" />
-                <span>観戦開始</span>
-              </button>
-            </div>
-          </div>
+          
           <div className="border-t border-gray-200 pt-6">
             <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">記録の再開</h3>
             <div className="space-y-3">
