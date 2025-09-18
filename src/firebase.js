@@ -129,3 +129,17 @@ export const updateTeamData = async (teamId, dataToUpdate) => {
     return false;
   }
 };
+
+export const incrementLikeCount = async (userId, gameId) => {
+  if (!userId || !gameId) return false;
+  const gameRef = doc(db, 'teams', userId, 'games', gameId);
+  try {
+    await updateDoc(gameRef, {
+      likeCount: increment(1)
+    });
+    return true;
+  } catch (error) {
+    console.error("いいねの更新に失敗しました:", error);
+    return false;
+  }
+};

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Play, Trophy, Eye, ChevronLeft, Copy } from 'lucide-react';
+import { Play, Trophy, Eye, ChevronLeft, Copy, Heart } from 'lucide-react';
 import {
   db, saveGameState, watchGameState, stopWatching,
   generateGameId, getAllGames, deleteGameFromFirebase,
@@ -248,6 +248,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showStolenBaseModal, setShowStolenBaseModal] = useState(false);
   const [stealingPlayer, setStealingPlayer] = useState(null);
+  const [likeCount, setLikeCount] = useState(0);
 
 
   // --- ポジション対応表 ---
@@ -309,6 +310,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setMyTeamNameForGame('');
     setMyTeamPitcher('');
     setOpponentPitcher('');
+    setLikeCount(0);
   };
 
   const returnToSetup = () => {
@@ -326,6 +328,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     console.log("これから保存する相手チーム名:", opponentTeam);
 
     const currentState = {
+      likeCount,
       myTeamNameForGame,
       bsoCount,
       inGameStats,
@@ -356,7 +359,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       console.error('保存失敗:', error);
     }
   }, [
-    user.uid, gameId, isGameCreator, myTeamNameForGame, bsoCount, inGameStats, myTeamPitcher, opponentPitcher, isStatsRecordingEnabled, tournamentName, opponentTeam, isHomeTeam, currentInning, 
+    user.uid, gameId, isGameCreator, likeCount, myTeamNameForGame, bsoCount, inGameStats, myTeamPitcher, opponentPitcher, isStatsRecordingEnabled, tournamentName, opponentTeam, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, homeHits, awayHits,
     timeline, currentBatter, customBatter, useCustomBatter, gameStartDate
   ]);
@@ -398,6 +401,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
         setCustomBatter(data.customBatter || '');
         setUseCustomBatter(data.useCustomBatter === true);
         setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
+        setLikeCount(data.likeCount || 0);
         
         if (mode === 'watch') {
           setGameId(gameIdToLoad);
@@ -1510,6 +1514,17 @@ const startGame = () => {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <ShareDialog />
       <StolenBaseModal />
+      {gameState === 'watching' && (
+        <button
+          onClick={() => incrementLikeCount(user.uid, gameId)}
+          className="fixed bottom-4 right-4 z-50 flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg transition-transform transform hover:scale-110"
+        >
+          <Heart className="w-8 h-8 text-pink-500" fill="currentColor" />
+          <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
+            {likeCount}
+          </span>
+        </button>
+      )}
       <div className={isInputView ? "h-1/2" : "h-full"}>
         <div className="h-full bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
           <div className="max-w-4xl mx-auto relative">
