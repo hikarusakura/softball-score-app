@@ -299,7 +299,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setGameStartDate(null);
     setGameId(null);
     setIsGameCreator(false);
-    setShareUrl('');
+    
     setWatchingGameId('');
     setResumeGameId('');
     setSelectedGameTimeline(null);
