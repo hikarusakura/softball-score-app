@@ -322,6 +322,9 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
 
   const saveCurrentGameState = useCallback(async () => {
     if (!gameId || !isGameCreator) return;
+
+    console.log("これから保存する相手チーム名:", opponentTeam);
+    
     const currentState = {
       myTeamNameForGame,
       bsoCount,
