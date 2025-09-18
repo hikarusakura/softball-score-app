@@ -509,7 +509,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     alert("直前の操作を取り消しました。");
   };
 
-  const startGame = () => {
+const startGame = () => {
+    // 1. 入力を検証
     if (!opponentTeam) {
       alert('対戦相手のチーム名を入力してください');
       return;
@@ -518,17 +519,34 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       alert('試合を行うチームを選択してください');
       return;
     }
+
+    // 2. リセットされる前に入力値を一時的に保存
+    const gameOpponent = opponentTeam;
+    const gameTournament = tournamentName;
+    const gameIsHome = isHomeTeam;
+    const gameRecordStats = isStatsRecordingEnabled;
+    const gameMyTeam = selectedGameTeam;
+
+    // 3. 全てのゲーム状態を一旦リセット
     resetGameStates();
-    setMyTeamNameForGame(selectedGameTeam);
+
+    // 4. 保存した入力値を使って新しい試合の状態を設定
+    setOpponentTeam(gameOpponent);
+    setTournamentName(gameTournament);
+    setIsHomeTeam(gameIsHome);
+    setIsStatsRecordingEnabled(gameRecordStats);
+    setMyTeamNameForGame(gameMyTeam);
+    
+    // 5. 新しい試合を開始
     const newGameId = generateGameId();
     const url = `${window.location.origin}${window.location.pathname}?gameId=${newGameId}&teamId=${user.uid}`;
     setGameStartDate(Date.now());
     setGameId(newGameId);
     setShareUrl(url);
     setIsGameCreator(true);
-    setGameState('playing');
+    setGameState('playing'); // これにより、正しいデータで初回保存が実行される
     setCurrentTeamBatting('away');
-    addToTimeline(`試合開始！ (${selectedGameTeam} vs ${opponentTeam})`);
+    addToTimeline(`試合開始！ (${gameMyTeam} vs ${gameOpponent})`);
     setShowShareDialog(true);
   };
 
