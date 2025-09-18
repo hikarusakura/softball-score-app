@@ -198,7 +198,6 @@ const TeamManagementScreen = ({ initialProfiles, onSave, onBack }) => {
 
 // --- ログイン後のメインアプリ本体 ---
 const SoftballScoreApp = ({ user, initialTeamData }) => {
-  console.log("【gameState 監視中】現在のgameState:", gameState, " | 記録者ですか？:", isGameCreator);
   // --- State管理セクション ---
   const [players, setPlayers] = useState(initialTeamData.players || Object.keys(initialTeamData.playerStats || {}));
   const [playerStats, setPlayerStats] = useState(initialTeamData.playerStats || {});
@@ -255,9 +254,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
 
   // --- ポジション対応表 ---
   const positionMap = { '投': 'ピッチャー', '捕': 'キャッチャー', '一': 'ファースト', '二': 'セカンド', '三': 'サード', '遊': 'ショート', '左': 'レフト', '中': 'センター', '右': 'ライト' };
-  const hitTypeAbbreviationMap = { 'ヒット': '安', '2ベース': '二', '3ベース': '三', 'ホームラン': '本' };
-
-
+  
   // --- ヘルパー関数 & ロジック関数 ---
   const getPlayerList = () => players || [];
 
@@ -326,9 +323,6 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
 
   const saveCurrentGameState = useCallback(async () => {
     if (!gameId || !isGameCreator) return;
-
-    console.log("これから保存する相手チーム名:", opponentTeam);
-
     const currentState = {
       likeCount,
       myTeamNameForGame,
@@ -366,6 +360,14 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     timeline, currentBatter, customBatter, useCustomBatter, gameStartDate
   ]);
 
+  // ★useEffectの依存配列を修正
+  useEffect(() => {
+    if (!isGameCreator || gameState !== 'playing' || isResuming) {
+      return;
+    }
+    saveCurrentGameState();
+  }, [gameState, isGameCreator, isResuming, saveCurrentGameState]);
+  
   const loadGame = (id, mode = 'watch') => {
     const gameIdToLoad = id;
     if (!gameIdToLoad || gameIdToLoad.trim() === '') {
@@ -447,26 +449,60 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   }, [playerStats, players, user]);
 
   useEffect(() => {
+    // URLパラメータをチェックして観戦モードを開始する
     const urlParams = new URLSearchParams(window.location.search);
     const gameIdFromUrl = urlParams.get('gameId');
     const teamIdFromUrl = urlParams.get('teamId');
+
     if (gameIdFromUrl && teamIdFromUrl) {
-      if(user && user.uid === teamIdFromUrl) {
-        loadGame(gameIdFromUrl, 'watch');
-      }
+      const loadGameForSpectator = (id, teamId) => {
+        if (firebaseListener.current) {
+          stopWatching(firebaseListener.current);
+        }
+        const newListener = watchGameState(teamId, id, (doc) => {
+          if (doc.exists()) {
+            const data = doc.data();
+            const profiles = teamProfiles || ['あなたのチーム'];
+            setMyTeamNameForGame(data.myTeamNameForGame || profiles[0]);
+            setBsoCount(data.bsoCount || { b: 0, s: 0 });
+            setInGameStats(data.inGameStats || {});
+            setMyTeamPitcher(data.myTeamPitcher || '');
+            setOpponentPitcher(data.opponentPitcher || '');
+            setIsStatsRecordingEnabled(data.isStatsRecordingEnabled !== undefined ? data.isStatsRecordingEnabled : true);
+            setTournamentName(data.tournamentName || '');
+            setOpponentTeam(data.opponentTeam || '');
+            setIsHomeTeam(data.isHomeTeam === true);
+            setCurrentInning(typeof data.currentInning === 'number' ? data.currentInning : 1);
+            setCurrentTeamBatting(data.currentTeamBatting || 'away');
+            setOutCount(typeof data.outCount === 'number' ? data.outCount : 0);
+            setBases(data.bases && typeof data.bases === 'object' ? data.bases : { first: false, second: false, third: false });
+            setHomeScore(Array.isArray(data.homeScore) ? data.homeScore : Array(6).fill(null));
+            setAwayScore(Array.isArray(data.awayScore) ? data.awayScore : Array(6).fill(null));
+            setHomeHits(data.homeHits || 0);
+            setAwayHits(data.awayHits || 0);
+            setTimeline(Array.isArray(data.timeline) ? data.timeline : []);
+            setCurrentBatter(data.currentBatter || '');
+            setCustomBatter(data.customBatter || '');
+            setUseCustomBatter(data.useCustomBatter === true);
+            setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
+            setLikeCount(data.likeCount || 0);
+            setGameId(id);
+            setIsGameCreator(false);
+            setGameState('watching');
+          } else {
+            alert('指定された試合IDが見つかりませんでした。');
+          }
+        }, (error) => {
+          console.error('観戦モードでのデータ取得エラー:', error);
+          alert('データの読み込みに失敗しました。');
+        });
+        firebaseListener.current = newListener;
+      };
+      loadGameForSpectator(gameIdFromUrl, teamIdFromUrl);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, []); 
 
-  useEffect(() => {
-    if (!isGameCreator || gameState !== 'playing' || isResuming) {
-      return;
-    }
-    saveCurrentGameState();
-  }, [
-    saveCurrentGameState
-  ]);
-  
   useEffect(() => {
     if (isResuming) {
       const timer = setTimeout(() => {
@@ -518,8 +554,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     alert("直前の操作を取り消しました。");
   };
 
-const startGame = () => {
-    // 1. 入力を検証
+  const startGame = () => {
     if (!opponentTeam) {
       alert('対戦相手のチーム名を入力してください');
       return;
@@ -528,32 +563,24 @@ const startGame = () => {
       alert('試合を行うチームを選択してください');
       return;
     }
-
-    // 2. リセットされる前に入力値を一時的に保存
     const gameOpponent = opponentTeam;
     const gameTournament = tournamentName;
     const gameIsHome = isHomeTeam;
     const gameRecordStats = isStatsRecordingEnabled;
     const gameMyTeam = selectedGameTeam;
-
-    // 3. 全てのゲーム状態を一旦リセット
     resetGameStates();
-
-    // 4. 保存した入力値を使って新しい試合の状態を設定
     setOpponentTeam(gameOpponent);
     setTournamentName(gameTournament);
     setIsHomeTeam(gameIsHome);
     setIsStatsRecordingEnabled(gameRecordStats);
     setMyTeamNameForGame(gameMyTeam);
-    
-    // 5. 新しい試合を開始
     const newGameId = generateGameId();
     const url = `${window.location.origin}${window.location.pathname}?gameId=${newGameId}&teamId=${user.uid}`;
     setGameStartDate(Date.now());
     setGameId(newGameId);
     setShareUrl(url);
     setIsGameCreator(true);
-    setGameState('playing'); // これにより、正しいデータで初回保存が実行される
+    setGameState('playing');
     setCurrentTeamBatting('away');
     addToTimeline(`試合開始！ (${gameMyTeam} vs ${gameOpponent})`);
     setShowShareDialog(true);
@@ -587,7 +614,6 @@ const startGame = () => {
     return { newOutCount, inningShouldChange };
   };
 
-  
   const addOut = () => {
     saveStateToHistory();
     const { newOutCount, inningShouldChange } = processOut();
@@ -656,12 +682,8 @@ const startGame = () => {
   };
 
   const postOutRunnerComment = () => {
-    saveStateToHistory(); // 元に戻せるように履歴保存
-
-    // 1. アウトカウントの文字列を生成
+    saveStateToHistory();
     const outText = ['無死', '一死', '二死'][outCount] || '三死';
-
-    // 2. 走者の状況の文字列を生成 (順番を修正)
     const runnerParts = [];
     if (bases.first) runnerParts.push('一塁');
     if (bases.second) runnerParts.push('二塁');
@@ -675,8 +697,6 @@ const startGame = () => {
     } else {
       runnerText = runnerParts.join('、');
     }
-
-    // 3. タイムラインに投稿
     const message = `【状況】${outText} ${runnerText}`;
     addToTimeline(message);
   };
@@ -1085,8 +1105,28 @@ const startGame = () => {
     }
   };
 
-
-
+  // ★この関数と、その下の`return`文内の`GameHighlights`コンポーネントの定義を、
+  // State宣言の後に移動させます
+  const GameHighlights = ({ inGameStats, players }) => {
+    const getPlayersWithStat = (statName) => {
+      return (players || [])
+        .filter(playerName => inGameStats[playerName] && inGameStats[playerName][statName] > 0)
+        .map(playerName => ({ name: playerName, count: inGameStats[playerName][statName] }));
+    };
+    const homeRunHitters = getPlayersWithStat('homeRuns');
+    const hitLeaders = getPlayersWithStat('hits');
+    const stolenBaseLeaders = getPlayersWithStat('stolenBases');
+    if (homeRunHitters.length === 0 && hitLeaders.length === 0 && stolenBaseLeaders.length === 0) {
+      return null;
+    }
+    return (
+      <div className="bg-white bg-opacity-20 rounded-lg p-3 mt-3 text-xs">
+        {homeRunHitters.length > 0 && <div className="mb-2"><h4 className="font-bold text-yellow-300">本塁打</h4><p className="text-white">{homeRunHitters.map(p => `${p.name}(${p.count})`).join('、 ')}</p></div>}
+        {hitLeaders.length > 0 && <div className="mb-2"><h4 className="font-bold text-yellow-300">安打</h4><p className="text-white">{hitLeaders.map(p => `${p.name}(${p.count})`).join('、 ')}</p></div>}
+        {stolenBaseLeaders.length > 0 && <div><h4 className="font-bold text-yellow-300">盗塁</h4><p className="text-white">{stolenBaseLeaders.map(p => `${p.name}(${p.count})`).join('、 ')}</p></div>}
+      </div>
+    );
+  };
 
   // --- JSX ---
   if (gameState === 'teamManagement') {
@@ -1375,6 +1415,15 @@ const startGame = () => {
             </button>
           </div>
           <div className="border-t border-gray-200 pt-6">
+            <div className="space-y-3">
+              <input type="text" value={watchingGameId} onChange={(e) => setWatchingGameId(e.target.value.toUpperCase())} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="観戦したい試合のIDを入力" maxLength={6} />
+              <button onClick={() => loadGame(watchingGameId, 'watch')} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
+                <Eye className="h-5 w-5" />
+                <span>観戦開始</span>
+              </button>
+            </div>
+          </div>
+          <div className="border-t border-gray-200 pt-6">
             <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">記録の再開</h3>
             <div className="space-y-3">
               <input type="text" value={resumeGameId} onChange={(e) => setResumeGameId(e.target.value.toUpperCase())} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="記録を再開する試合のIDを入力" maxLength={6} />
@@ -1418,7 +1467,7 @@ const startGame = () => {
     </div>
   ); }
 
-  // playing or watching view
+    // playing or watching view
   const totalHomeScore = homeScore.reduce((a, b) => a + (b || 0), 0);
   const totalAwayScore = awayScore.reduce((a, b) => a + (b || 0), 0);
   const isInputView = gameState === 'playing';
@@ -1482,26 +1531,8 @@ const startGame = () => {
     );
   };
 
-  const GameHighlights = ({ inGameStats, players }) => {
-    const getPlayersWithStat = (statName) => {
-      return (players || [])
-        .filter(playerName => inGameStats[playerName] && inGameStats[playerName][statName] > 0)
-        .map(playerName => ({ name: playerName, count: inGameStats[playerName][statName] }));
-    };
-    const homeRunHitters = getPlayersWithStat('homeRuns');
-    const hitLeaders = getPlayersWithStat('hits');
-    const stolenBaseLeaders = getPlayersWithStat('stolenBases');
-    if (homeRunHitters.length === 0 && hitLeaders.length === 0 && stolenBaseLeaders.length === 0) {
-      return null;
-    }
-    return (
-      <div className="bg-white bg-opacity-20 rounded-lg p-3 mt-3 text-xs">
-        {homeRunHitters.length > 0 && (<div className="mb-2"><h4 className="font-bold text-yellow-300">本塁打</h4><p className="text-white">{homeRunHitters.map(p => `${p.name}(${p.count})`).join('、 ')}</p></div>)}
-        {hitLeaders.length > 0 && (<div className="mb-2"><h4 className="font-bold text-yellow-300">安打</h4><p className="text-white">{hitLeaders.map(p => `${p.name}(${p.count})`).join('、 ')}</p></div>)}
-        {stolenBaseLeaders.length > 0 && (<div><h4 className="font-bold text-yellow-300">盗塁</h4><p className="text-white">{stolenBaseLeaders.map(p => `${p.name}(${p.count})`).join('、 ')}</p></div>)}
-      </div>
-    );
-  };
+
+
 
   const BSOIndicator = () => {
     return (
@@ -1512,7 +1543,6 @@ const startGame = () => {
       </div>
     );
   };
-
   
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -1544,21 +1574,25 @@ const startGame = () => {
                 <div className="grid grid-cols-10 gap-1 mb-2 border-b border-gray-500 pb-2">
                   <div className="text-left text-xs col-span-2">チーム</div>{[1,2,3,4,5,6].map(i => (<div key={i} className="text-xs">{i}</div>))}<div className="font-bold text-xs">R</div><div className="font-bold text-xs">H</div>
                 </div>
-                {isHomeTeam ? (<>
+                {isHomeTeam ? (
+                  <>
                   <div className="grid grid-cols-10 gap-1 mb-1">
                     <div className="text-left text-xs truncate col-span-2">{opponentTeam}</div>{[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>))}<div className="font-bold text-xs">{totalAwayScore}</div><div className="font-bold text-xs">{awayHits}</div>
                   </div>
                   <div className="grid grid-cols-10 gap-1">
                     <div className="text-left text-xs truncate col-span-2">{myTeam}</div>{[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>))}<div className="font-bold text-xs">{totalHomeScore}</div><div className="font-bold text-xs">{homeHits}</div>
                   </div>
-                </>) : (<>
+                  </>
+                ) : (
+                  <>
                   <div className="grid grid-cols-10 gap-1 mb-1">
                     <div className="text-left text-xs truncate col-span-2">{myTeam}</div>{[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>))}<div className="font-bold text-xs">{totalAwayScore}</div><div className="font-bold text-xs">{awayHits}</div>
                   </div>
                   <div className="grid grid-cols-10 gap-1">
                     <div className="text-left text-xs truncate col-span-2">{opponentTeam}</div>{[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>))}<div className="font-bold text-xs">{totalHomeScore}</div><div className="font-bold text-xs">{homeHits}</div>
                   </div>
-                </>)}
+                  </>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-3 gap-2 mb-3">
@@ -1642,25 +1676,11 @@ const startGame = () => {
               <div className="grid grid-cols-9 gap-1">{Object.keys(positionMap).map((pos) => (<button key={pos} onClick={() => setSelectedPosition(prevSelected => prevSelected === pos ? null : pos)} className={`px-2 py-2 text-white rounded-lg text-xs transition-colors ${selectedPosition === pos ? 'bg-orange-500 font-bold ring-2 ring-white' : 'bg-blue-500 hover:bg-blue-600'}`}>{pos}</button>))}</div>
               <hr className="my-2 border-gray-300" />
               <label className="block text-xs font-medium text-gray-700 mb-1">打席結果</label>
-              <div className="grid grid-cols-4 gap-1">
-                {['ヒット', '2ベース', '3ベース', 'ホームラン', '三振', 'ゴロ', 'ライナー', 'フライ', 'バント', '振り逃げ', '死球', '四球'].map((result) => {
-                  {/* ★ここから修正★ */}
+              <div className="grid grid-cols-4 gap-1">{['ヒット', '2ベース', '3ベース', 'ホームラン', '三振', 'ゴロ', 'ライナー', 'フライ', 'バント', '振り逃げ', '死球', '四球'].map((result) => {
                   const isHitType = ['ヒット', '2ベース', '3ベース', 'ホームラン'].includes(result);
-                  const buttonClass = isHitType
-                    ? "bg-pink-500 hover:bg-pink-600"   // ヒット系ならピンク色
-                    : "bg-gray-700 hover:bg-gray-800"; // それ以外は灰色
-                  {/* ★ここまで修正★ */}
-                  return (
-                    <button
-                      key={result}
-                      onClick={() => handleBattingResult(result)}
-                      className={`px-2 py-2 text-white rounded-lg text-xs transition-colors ${buttonClass}`}
-                    >
-                      {result}
-                    </button>
-                  );
-                })}
-              </div>
+                  const buttonClass = isHitType ? "bg-pink-500 hover:bg-pink-600" : "bg-gray-700 hover:bg-gray-800";
+                  return (<button key={result} onClick={() => handleBattingResult(result)} className={`px-2 py-2 text-white rounded-lg text-xs transition-colors ${buttonClass}`}>{result}</button>);
+                })}</div>
             </div>
             <div className="mb-3">
               <label className="block text-xs font-medium text-gray-700 mb-1">特殊記録（打者を選択してから押してください）</label>
