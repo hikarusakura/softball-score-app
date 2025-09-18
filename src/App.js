@@ -215,8 +215,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [currentTeamBatting, setCurrentTeamBatting] = useState('away');
   const [outCount, setOutCount] = useState(0);
   const [bases, setBases] = useState({ first: false, second: false, third: false });
-  const [homeScore, setHomeScore] = useState(Array(6).fill(null));
-  const [awayScore, setAwayScore] = useState(Array(6).fill(null));
+  const [homeScore, setHomeScore] = useState(Array(7).fill(null));
+  const [awayScore, setAwayScore] = useState(Array(7).fill(null));
   const [homeHits, setHomeHits] = useState(0);
   const [awayHits, setAwayHits] = useState(0);
   const [timeline, setTimeline] = useState([]);
@@ -1576,25 +1576,25 @@ const GameStartDialog = () => {
             </div>
             <div className="bg-black bg-opacity-50 rounded-lg p-4 mb-4">
               <div className="text-center text-sm">
-                <div className="grid grid-cols-10 gap-1 mb-2 border-b border-gray-500 pb-2">
-                  <div className="text-left text-xs col-span-2">チーム</div>{[1,2,3,4,5,6].map(i => (<div key={i} className="text-xs">{i}</div>))}<div className="font-bold text-xs">R</div><div className="font-bold text-xs">H</div>
+                <div className="grid grid-cols-11 gap-1 mb-2 border-b border-gray-500 pb-2">
+                  <div className="text-left text-xs col-span-2">チーム</div>{[1,2,3,4,5,6,7].map(i => (<div key={i} className="text-xs">{i}</div>))}<div className="font-bold text-xs">計</div><div className="font-bold text-xs">安</div>
                 </div>
                 {isHomeTeam ? (
                   <>
-                  <div className="grid grid-cols-10 gap-1 mb-1">
-                    <div className="text-left text-xs truncate col-span-2">{opponentTeam}</div>{[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>))}<div className="font-bold text-xs">{totalAwayScore}</div><div className="font-bold text-xs">{awayHits}</div>
+                  <div className="grid grid-cols-11 gap-1 mb-1">
+                    <div className="text-left text-xs truncate col-span-2">{opponentTeam}</div>{[...Array(7)].map((_, i) => (<div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>))}<div className="font-bold text-xs">{totalAwayScore}</div><div className="font-bold text-xs">{awayHits}</div>
                   </div>
-                  <div className="grid grid-cols-10 gap-1">
-                    <div className="text-left text-xs truncate col-span-2">{myTeam}</div>{[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>))}<div className="font-bold text-xs">{totalHomeScore}</div><div className="font-bold text-xs">{homeHits}</div>
+                  <div className="grid grid-cols-11 gap-1">
+                    <div className="text-left text-xs truncate col-span-2">{myTeam}</div>{[...Array(7)].map((_, i) => (<div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>))}<div className="font-bold text-xs">{totalHomeScore}</div><div className="font-bold text-xs">{homeHits}</div>
                   </div>
                   </>
                 ) : (
                   <>
-                  <div className="grid grid-cols-10 gap-1 mb-1">
-                    <div className="text-left text-xs truncate col-span-2">{myTeam}</div>{[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>))}<div className="font-bold text-xs">{totalAwayScore}</div><div className="font-bold text-xs">{awayHits}</div>
+                  <div className="grid grid-cols-11 gap-1 mb-1">
+                    <div className="text-left text-xs truncate col-span-2">{myTeam}</div>{[...Array(7)].map((_, i) => (<div key={i} className="text-xs">{awayScore[i] !== null ? awayScore[i] : '-'}</div>))}<div className="font-bold text-xs">{totalAwayScore}</div><div className="font-bold text-xs">{awayHits}</div>
                   </div>
-                  <div className="grid grid-cols-10 gap-1">
-                    <div className="text-left text-xs truncate col-span-2">{opponentTeam}</div>{[...Array(6)].map((_, i) => (<div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>))}<div className="font-bold text-xs">{totalHomeScore}</div><div className="font-bold text-xs">{homeHits}</div>
+                  <div className="grid grid-cols-11 gap-1">
+                    <div className="text-left text-xs truncate col-span-2">{opponentTeam}</div>{[...Array(7)].map((_, i) => (<div key={i} className="text-xs">{homeScore[i] !== null ? homeScore[i] : '-'}</div>))}<div className="font-bold text-xs">{totalHomeScore}</div><div className="font-bold text-xs">{homeHits}</div>
                   </div>
                   </>
                 )}
