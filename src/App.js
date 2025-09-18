@@ -230,7 +230,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [selectedGameTimeline, setSelectedGameTimeline] = useState(null);
   const [gameId, setGameId] = useState(null);
   const [isGameCreator, setIsGameCreator] = useState(false);
-  const [shareUrl, setShareUrl] = useState('');
+  const [shareMessage, setShareMessage] = useState('');
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [watchingGameId, setWatchingGameId] = useState('');
   const [resumeGameId, setResumeGameId] = useState('');
@@ -575,10 +575,10 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setIsStatsRecordingEnabled(gameRecordStats);
     setMyTeamNameForGame(gameMyTeam);
     const newGameId = generateGameId();
-    const url = `${window.location.origin}${window.location.pathname}?gameId=${newGameId}&teamId=${user.uid}`;
     setGameStartDate(Date.now());
     setGameId(newGameId);
-    setShareUrl(url);
+    const message = `◆試合速報開始◆\n${gameTournament}\n対 ${gameOpponent}`;
+    setShareMessage(message);
     setIsGameCreator(true);
     setGameState('playing');
     setCurrentTeamBatting('away');
@@ -600,8 +600,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      alert('観戦用URLをコピーしました！');
+      await navigator.clipboard.writeText(shareMessage);
+      alert('テキストをコピーしました！');
     } catch (err) {
       console.error('コピー失敗:', err);
     }
@@ -1482,19 +1482,24 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     }
   })();
   
-  const ShareDialog = () => {
+const GameStartDialog = () => {
     if (!showShareDialog) return null;
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-          <h3 className="text-lg font-bold mb-4 text-center">観戦用URL</h3>
-          <p className="text-sm text-gray-600 mb-4">このURLを共有すると、他の人がリアルタイムで試合を観戦できます</p>
-          <div className="bg-gray-100 p-3 rounded-lg mb-4 break-all text-sm">{shareUrl}</div>
-          <div className="flex space-x-3">
-            <button onClick={copyToClipboard} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2"><Copy className="h-4 w-4" /><span>コピー</span></button>
-            <button onClick={() => setShowShareDialog(false)} className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg">閉じる</button>
+          <h3 className="text-lg font-bold mb-4 text-center">共有メッセージ</h3>
+          <div className="bg-gray-100 p-3 rounded-lg mb-4 whitespace-pre-wrap text-sm">
+            {shareMessage}
           </div>
-          <div className="mt-3 text-center"><p className="text-xs text-gray-500">ゲームID: {gameId}</p></div>
+          <div className="flex space-x-3">
+            <button onClick={copyToClipboard} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2">
+              <Copy className="h-4 w-4" />
+              <span>コピー</span>
+            </button>
+            <button onClick={() => setShowShareDialog(false)} className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg">
+              閉じる
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -1546,7 +1551,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      <ShareDialog />
+      <GameStartDialog  />
       <StolenBaseModal />
       {gameState === 'watching' && (
         <button
