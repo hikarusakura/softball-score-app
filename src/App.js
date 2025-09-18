@@ -324,7 +324,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     if (!gameId || !isGameCreator) return;
 
     console.log("これから保存する相手チーム名:", opponentTeam);
-    
+
     const currentState = {
       myTeamNameForGame,
       bsoCount,
@@ -649,12 +649,16 @@ const startGame = () => {
   };
 
   const postOutRunnerComment = () => {
-    saveStateToHistory();
+    saveStateToHistory(); // 元に戻せるように履歴保存
+
+    // 1. アウトカウントの文字列を生成
     const outText = ['無死', '一死', '二死'][outCount] || '三死';
+
+    // 2. 走者の状況の文字列を生成 (順番を修正)
     const runnerParts = [];
-    if (bases.third) runnerParts.push('三塁');
-    if (bases.second) runnerParts.push('二塁');
     if (bases.first) runnerParts.push('一塁');
+    if (bases.second) runnerParts.push('二塁');
+    if (bases.third) runnerParts.push('三塁');
 
     let runnerText = '';
     if (runnerParts.length === 0) {
@@ -664,6 +668,8 @@ const startGame = () => {
     } else {
       runnerText = runnerParts.join('、');
     }
+
+    // 3. タイムラインに投稿
     const message = `【状況】${outText} ${runnerText}`;
     addToTimeline(message);
   };
@@ -1595,21 +1601,21 @@ const startGame = () => {
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">BSO操作</label>
                 <div className="flex space-x-1">
-                  <button onClick={() => toggleBso('b')} className="flex-1 py-2 rounded-lg text-xs bg-green-500 hover:bg-green-600 text-white">B</button>
-                  <button onClick={() => toggleBso('s')} className="flex-1 py-2 rounded-lg text-xs bg-yellow-500 hover:bg-yellow-600 text-white">S</button>
+                  <button onClick={() => toggleBso('b')} className="flex-1 py-2 rounded-lg text-xs bg-green-500 hover:bg-green-600 text-white">ﾎﾞｰﾙ</button>
+                  <button onClick={() => toggleBso('s')} className="flex-1 py-2 rounded-lg text-xs bg-yellow-500 hover:bg-yellow-600 text-white">ｽﾄﾗｲｸ</button>
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">ベース操作</label>
                 <div className="flex space-x-1">
-                  <button onClick={() => toggleBase('first')} className={`flex-1 py-2 rounded-lg text-xs transition-colors ${bases.first ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>1B</button>
-                  <button onClick={() => toggleBase('second')} className={`flex-1 py-2 rounded-lg text-xs transition-colors ${bases.second ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>2B</button>
-                  <button onClick={() => toggleBase('third')} className={`flex-1 py-2 rounded-lg text-xs transition-colors ${bases.third ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>3B</button>
+                  <button onClick={() => toggleBase('first')} className={`flex-1 py-2 rounded-lg text-xs transition-colors ${bases.first ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>1塁</button>
+                  <button onClick={() => toggleBase('second')} className={`flex-1 py-2 rounded-lg text-xs transition-colors ${bases.second ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>2塁</button>
+                  <button onClick={() => toggleBase('third')} className={`flex-1 py-2 rounded-lg text-xs transition-colors ${bases.third ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}`}>3塁</button>
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">状況コメント</label>
-                <button onClick={postOutRunnerComment} className="w-full py-2 rounded-lg text-xs bg-purple-500 hover:bg-purple-600 text-white">アウト走者</button>
+                <button onClick={postOutRunnerComment} className="w-full py-2 rounded-lg text-xs bg-purple-500 hover:bg-purple-600 text-white">状況投稿</button>
               </div>
             </div>
             <div className="mb-3">
@@ -1620,16 +1626,33 @@ const startGame = () => {
               </div>
               {useCustomBatter ? (<input type="text" value={customBatter} onChange={(e) => setCustomBatter(e.target.value)} className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="打者名を入力" />) : (<select value={currentBatter} onChange={(e) => setCurrentBatter(e.target.value)} className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"><option value="">打者を選択</option>{getPlayerList().map((player, index) => (<option key={index} value={player}>{player}</option>))}</select>)}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
-              <button onClick={addOut} className="w-full px-3 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm transition-colors">アウト ({outCount}/3)</button>
-              <button onClick={addRun} className="w-full px-3 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">得点</button>
-            </div>
             <div className="mb-3">
               <label className="block text-xs font-medium text-gray-700 mb-1">ポジション（任意）</label>
               <div className="grid grid-cols-9 gap-1">{Object.keys(positionMap).map((pos) => (<button key={pos} onClick={() => setSelectedPosition(prevSelected => prevSelected === pos ? null : pos)} className={`px-2 py-2 text-white rounded-lg text-xs transition-colors ${selectedPosition === pos ? 'bg-orange-500 font-bold ring-2 ring-white' : 'bg-blue-500 hover:bg-blue-600'}`}>{pos}</button>))}</div>
               <hr className="my-2 border-gray-300" />
+              <div className="mb-3">
+              {/* ... */}
               <label className="block text-xs font-medium text-gray-700 mb-1">打席結果</label>
-              <div className="grid grid-cols-4 gap-1">{['ヒット', '2ベース', '3ベース', 'ホームラン', '三振', '振り逃げ', 'ゴロ', 'ライナー', 'フライ', 'バント', '死球', '四球'].map((result) => (<button key={result} onClick={() => handleBattingResult(result)} className="px-2 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-xs transition-colors">{result}</button>))}</div>
+              <div className="grid grid-cols-4 gap-1">
+                {['ヒット', '2ベース', '3ベース', 'ホームラン', '三振', '振り逃げ', 'ゴロ', 'ライナー', 'フライ', 'バント', '死球', '四球'].map((result) => {
+                  {/* ★ここから修正★ */}
+                  const isHitType = ['ヒット', '2ベース', '3ベース', 'ホームラン'].includes(result);
+                  const buttonClass = isHitType
+                    ? "bg-pink-500 hover:bg-pink-600"   // ヒット系ならピンク色
+                    : "bg-gray-700 hover:bg-gray-800"; // それ以外は灰色
+                  {/* ★ここまで修正★ */}
+                  return (
+                    <button
+                      key={result}
+                      onClick={() => handleBattingResult(result)}
+                      className={`px-2 py-2 text-white rounded-lg text-xs transition-colors ${buttonClass}`}
+                    >
+                      {result}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             </div>
             <div className="mb-3">
               <label className="block text-xs font-medium text-gray-700 mb-1">特殊記録（打者を選択してから押してください）</label>
@@ -1638,6 +1661,10 @@ const startGame = () => {
                 <button onClick={() => handleSpecialRecord('rbi_sac_fly')} className="px-2 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs">犠飛打点</button>
                 <button onClick={() => handleSpecialRecord('rbi_other')} className="px-2 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs">その他打点</button>
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <button onClick={addOut} className="w-full px-3 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm transition-colors">アウト ({outCount}/3)</button>
+              <button onClick={addRun} className="w-full px-3 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">得点</button>
             </div>
             <div className="mb-3">
               <label className="block text-xs font-medium text-gray-700 mb-1">自由コメント投稿</label>
