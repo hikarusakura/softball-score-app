@@ -1374,7 +1374,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
         <div className="text-center mb-8">
           <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
           <h1 className="text-3xl font-bold text-gray-800 mb-2">試合速報</h1>
-          <p className="text-gray-600">試合情報を入力してください</p>
+          
         </div>
         <div className="space-y-6">
           <div className="border-t border-gray-200 pt-6">
@@ -1384,11 +1384,14 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
               <span>{isLoading ? '読込中...' : '試合速報を閲覧'}</span>
             </button>
           </div>
+          <div className="border-t border-gray-200 pt-6">
+            <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">記録者モード</h3>
           <div className="mb-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">あなたのチーム</label>
             <select value={selectedGameTeam} onChange={(e) => setSelectedGameTeam(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
               {teamProfiles.map(name => <option key={name} value={name}>{name}</option>)}
             </select>
+          </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">大会名（任意）</label>
