@@ -1690,7 +1690,6 @@ const startGame = () => {
                 <input type="text" value={opponentPitcher} onChange={(e) => setOpponentPitcher(e.target.value)} className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="相手チームのピッチャー名" />
               </div>
             </div>
-            <div className="border-t border-gray-200 pt-10"></div>
           </div>
         </div>
       )}
