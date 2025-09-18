@@ -90,35 +90,65 @@ const InGameStatsScreen = ({ players, inGameStats, isGameCreator, onBack }) => {
           <h1 className="text-2xl font-bold text-gray-800">この試合の個人成績</h1>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
+          <table className="min-w-full bg-white text-xs md:text-sm">
             <thead className="bg-gray-800 text-white">
               <tr>
-                <th className="text-left py-3 px-4 uppercase font-semibold text-sm">選手名</th>
-                <th className="py-3 px-4 uppercase font-semibold text-sm">打数</th>
-                <th className="py-3 px-4 uppercase font-semibold text-sm">安打</th>
-                <th className="py-3 px-4 uppercase font-semibold text-sm">本塁打</th>
-                <th className="py-3 px-4 uppercase font-semibold text-sm">打点</th>
-                <th className="py-3 px-4 uppercase font-semibold text-sm">盗塁</th>
+                <th className="text-left py-2 px-3">選手名</th>
+                <th>打率</th>
+                <th>出塁率</th>
+                <th>打席</th>
+                <th>打数</th>
+                <th>安打</th>
+                <th>二塁打</th>
+                <th>三塁打</th>
+                <th>本塁打</th>
+                <th>打点</th>
+                <th>三振</th>
+                <th>四球</th>
+                <th>死球</th>
+                <th>盗塁</th>
               </tr>
             </thead>
             <tbody className="text-gray-700">
               {playersWithStats.length > 0 ? (
                 playersWithStats.map((playerName) => {
                   const stats = inGameStats[playerName] || {};
+                  const atBats = stats.atBats || 0;
+                  const hits = stats.hits || 0;
+                  const doubles = stats.doubles || 0;
+                  const triples = stats.triples || 0;
+                  const homeRuns = stats.homeRuns || 0;
+                  const rbi = stats.rbi || 0;
+                  const strikeouts = stats.strikeouts || 0;
+                  const walks = stats.walks || 0;
+                  const hitByPitches = stats.hitByPitches || 0;
+                  const stolenBases = stats.stolenBases || 0;
+                  const plateAppearances = atBats + walks + hitByPitches;
+                  const battingAverage = atBats > 0 ? (hits / atBats).toFixed(3) : '.000';
+                  const onBasePercentage = plateAppearances > 0 ? ((hits + walks + hitByPitches) / plateAppearances).toFixed(3) : '.000';
+
                   return (
                     <tr key={playerName} className="border-b border-gray-200 hover:bg-gray-100">
-                      <td className="text-left py-3 px-4">{playerName}</td>
-                      <td className="text-center py-3 px-4">{stats.atBats || 0}</td>
-                      <td className="text-center py-3 px-4">{stats.hits || 0}</td>
-                      <td className="text-center py-3 px-4">{stats.homeRuns || 0}</td>
-                      <td className="text-center py-3 px-4">{stats.rbi || 0}</td>
-                      <td className="text-center py-3 px-4">{stats.stolenBases || 0}</td>
+                      <td className="text-left py-2 px-3 font-medium">{playerName}</td>
+                      <td className="text-center font-semibold">{battingAverage}</td>
+                      <td className="text-center font-semibold">{onBasePercentage}</td>
+                      <td className="text-center">{plateAppearances}</td>
+                      <td className="text-center">{atBats}</td>
+                      <td className="text-center">{hits}</td>
+                      <td className="text-center">{doubles}</td>
+                      <td className="text-center">{triples}</td>
+                      <td className="text-center">{homeRuns}</td>
+                      <td className="text-center">{rbi}</td>
+                      <td className="text-center">{strikeouts}</td>
+                      <td className="text-center">{walks}</td>
+                      <td className="text-center">{hitByPitches}</td>
+                      <td className="text-center">{stolenBases}</td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center py-4 text-gray-500">この試合で記録された成績はありません。</td>
+                  <td colSpan="14" className="text-center py-4 text-gray-500">この試合で記録された成績はありません。</td>
                 </tr>
               )}
             </tbody>
