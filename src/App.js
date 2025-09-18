@@ -1509,6 +1509,8 @@ const startGame = () => {
       </div>
     );
   };
+
+  console.log("現在の gameState:", gameState, "記録者ですか？:", isGameCreator);
   
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
