@@ -197,6 +197,7 @@ const TeamManagementScreen = ({ initialProfiles, onSave, onBack }) => {
 
 // --- ログイン後のメインアプリ本体 ---
 const SoftballScoreApp = ({ user, initialTeamData }) => {
+  console.log("【gameState 監視中】現在のgameState:", gameState, " | 記録者ですか？:", isGameCreator);
   // --- State管理セクション ---
   const [players, setPlayers] = useState(initialTeamData.players || Object.keys(initialTeamData.playerStats || {}));
   const [playerStats, setPlayerStats] = useState(initialTeamData.playerStats || {});
@@ -1510,7 +1511,6 @@ const startGame = () => {
     );
   };
 
-  console.log("現在の gameState:", gameState, "記録者ですか？:", isGameCreator);
   
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
