@@ -228,7 +228,11 @@ const TeamManagementScreen = ({ initialProfiles, onSave, onBack }) => {
 // --- オーダー編集画面コンポーネント ---
 const LineupEditor = ({ players, initialLineup, initialOpponentLineup, onSave, onCancel }) => {
   const [lineup, setLineup] = useState(initialLineup);
-  const [opponentLineup, setOpponentLineup] = useState(initialOpponentLineup);
+  const [opponentLineup, setOpponentLineup] = useState(
+  Array.isArray(initialOpponentLineup) && initialOpponentLineup.length > 0
+    ? initialOpponentLineup
+    : Array(9).fill({ playerName: '', position: '' })
+);
   const positions = ['投', '捕', '一', '二', '三', '遊', '左', '中', '右', 'DP'];
 
   const handlePlayerChange = (index, playerName) => {
@@ -284,13 +288,43 @@ const LineupEditor = ({ players, initialLineup, initialOpponentLineup, onSave, o
           </div>
           {/* 相手チームオーダー */}
           <div>
-            <h3 className="text-lg font-semibold mb-2">相手チームオーダー（テキスト）</h3>
-            <textarea
-              value={opponentLineup}
-              onChange={(e) => setOpponentLineup(e.target.value)}
-              className="w-full h-5/6 p-2 border border-gray-300 rounded-md"
-              placeholder="1番 ショート ○○\n2番 センター △△\n...のように入力"
-            />
+            <h3 className="text-lg font-semibold mb-2">相手チームオーダー</h3>
+            <div className="space-y-2">
+              {opponentLineup.map((member, index) => (
+                <div key={index} className="grid grid-cols-3 gap-2 items-center">
+                  <span className="font-semibold">{index + 1}番</span>
+                  <input
+                    type="text"
+                    value={member.playerName}
+                    onChange={(e) => {
+                      const newLineup = [...opponentLineup];
+                      newLineup[index] = { ...newLineup[index], playerName: e.target.value };
+                      setOpponentLineup(newLineup);
+                    }}
+                    className="w-full px-2 py-1 border border-gray-300 rounded-md"
+                    placeholder="選手名"
+                  />
+                  <select
+                    value={member.position}
+                    onChange={(e) => {
+                      const newLineup = [...opponentLineup];
+                      newLineup[index] = { ...newLineup[index], position: e.target.value };
+                      setOpponentLineup(newLineup);
+                    }}
+                    className="w-full px-2 py-1 border border-gray-300 rounded-md"
+                  >
+                    <option value="">守備</option>
+                    {positions.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+              ))}
+            </div>
+            <button 
+              onClick={() => setOpponentLineup([...opponentLineup, { playerName: '', position: '' }])} 
+              className="mt-2 text-sm text-blue-600 hover:underline"
+            >
+              + 打順を追加
+            </button>
           </div>
         </div>
         <div className="flex justify-end space-x-4 p-4 border-t">
@@ -1930,9 +1964,11 @@ const GameStartDialog = () => {
                         member.playerName && <p key={index} className="truncate">{index + 1}. {member.playerName} ({member.position})</p>
                       ))}
                     </div>
-                    <div>
+                   <div>
                       <h4 className="font-bold text-yellow-300 mb-1">{opponentTeam}</h4>
-                      <pre className="whitespace-pre-wrap font-sans">{opponentLineup}</pre>
+                      {Array.isArray(opponentLineup) && opponentLineup.map((member, index) => (
+                        member.playerName && <p key={index} className="truncate">{index + 1}. {member.playerName} ({member.position})</p>
+                      ))}
                     </div>
                   </div>
                 </div>
