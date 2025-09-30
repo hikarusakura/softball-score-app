@@ -360,12 +360,35 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [myTeamLineup, setMyTeamLineup] = useState(Array(9).fill({ playerName: '', position: '' }));
   const [opponentLineup, setOpponentLineup] = useState('');
   const [showLineupEditor, setShowLineupEditor] = useState(false);
+  const [mainView, setMainView] = useState('timeline');
 
 
   // --- ポジション対応表 ---
   const positionMap = { '投': 'ピッチャー', '捕': 'キャッチャー', '一': 'ファースト', '二': 'セカンド', '三': 'サード', '遊': 'ショート', '左': 'レフト', '中': 'センター', '右': 'ライト' };
   
   // --- ヘルパー関数 & ロジック関数 ---
+const setNextBatter = (lastBatterName) => {
+    if (!myTeamLineup || myTeamLineup.length === 0) return;
+
+    const lastBatterIndex = myTeamLineup.findIndex(m => m.playerName === lastBatterName);
+    
+    // 代打などでオーダーにいない選手だった場合は、自動選択しない
+    if (lastBatterIndex === -1) {
+      setCurrentBatter('');
+      return;
+    }
+
+    const nextBatterIndex = (lastBatterIndex + 1) % myTeamLineup.length;
+    const nextBatter = myTeamLineup[nextBatterIndex];
+
+    if (nextBatter && nextBatter.playerName) {
+      setCurrentBatter(nextBatter.playerName);
+    } else {
+      // 次の打者が空欄の場合は、先頭に戻るか、空のままにする
+      setCurrentBatter(myTeamLineup[0]?.playerName || '');
+    }
+  };
+
   const getPlayerList = () => players || [];
 
   const sortedPlayers = React.useMemo(() => {
@@ -977,7 +1000,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       }
     }
 
-    setCurrentBatter('');
+    setNextBatter(batterName);
     setCustomBatter('');
     setUseCustomBatter(false);
     setSelectedPosition(null);
@@ -1024,6 +1047,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     if (isSacFly) {
       const { newOutCount, inningShouldChange } = processOut();
       addToTimeline(`アウト！ (${newOutCount}アウト)`, { outCount: newOutCount });
+      setNextBatter(batterName);
       if (inningShouldChange) {
         changeInning();
       }
@@ -1294,6 +1318,23 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   };
 
   // --- JSX ---
+if (showLineupEditor) {
+    const handleSaveLineup = (newLineup, newOpponentLineup) => {
+      setMyTeamLineup(newLineup);
+      setOpponentLineup(newOpponentLineup);
+      setShowLineupEditor(false);
+    };
+    return (
+      <LineupEditor
+        players={getPlayerList()}
+        initialLineup={myTeamLineup}
+        initialOpponentLineup={opponentLineup}
+        onSave={handleSaveLineup}
+        onCancel={() => setShowLineupEditor(false)}
+      />
+    );
+  }
+
   if (gameState === 'teamManagement') {
     const handleSaveTeams = async (newProfiles) => {
       const success = await updateTeamData(user.uid, { teamProfiles: newProfiles });
@@ -1674,23 +1715,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     </div>
   ); }
 
-// playing or watching view の直前に追加
-  if (showLineupEditor) {
-    const handleSaveLineup = (newLineup, newOpponentLineup) => {
-      setMyTeamLineup(newLineup);
-      setOpponentLineup(newOpponentLineup);
-      setShowLineupEditor(false);
-    };
-    return (
-      <LineupEditor
-        players={getPlayerList()}
-        initialLineup={myTeamLineup}
-        initialOpponentLineup={opponentLineup}
-        onSave={handleSaveLineup}
-        onCancel={() => setShowLineupEditor(false)}
-      />
-    );
-  }
+
 
     // playing or watching view
   const totalHomeScore = homeScore.reduce((a, b) => a + (b || 0), 0);
@@ -1846,15 +1871,56 @@ const GameStartDialog = () => {
                 <div className="absolute bottom-0 left-1/2 w-3 h-3 -ml-1.5 -mb-1.5 rounded-full border-2 border-white bg-red-600"></div>
               </div>
             </div>
-            <div className={`bg-white bg-opacity-10 rounded-lg p-3 overflow-y-auto ${isInputView ? 'max-h-32' : 'max-h-96'}`}>
-              <h3 className="font-bold mb-2 text-center text-sm">⚡ タイムライン ⚡</h3>
-              {timeline.length === 0 ? (<p className="text-center text-gray-300 text-xs">まだプレイがありません</p>) : (
-                timeline.map((entry, index) => (
-                  <div key={index} className="border-b border-gray-600 pb-1 mb-1 last:border-b-0">
-                    <div className="flex justify-between items-start text-xs"><span className="text-gray-300">{entry.time}</span><span className="text-white">{entry.inning}回 {entry.outCount}アウト</span></div>
-                    <div className="text-xs"><span className="font-medium text-yellow-300">[{entry.team}]</span> {entry.message}</div>
+            <div>
+              {/* 表示切替タブ */}
+              <div className="flex border-b border-gray-600 mb-2">
+                <button 
+                  onClick={() => setMainView('timeline')}
+                  className={`flex-1 text-sm py-1 ${mainView === 'timeline' ? 'text-white font-bold border-b-2 border-yellow-400' : 'text-gray-400'}`}
+                >
+                  タイムライン
+                </button>
+                <button 
+                  onClick={() => setMainView('lineup')}
+                  className={`flex-1 text-sm py-1 ${mainView === 'lineup' ? 'text-white font-bold border-b-2 border-yellow-400' : 'text-gray-400'}`}
+                >
+                  オーダー
+                </button>
+              </div>
+
+              {/* タイムライン表示 */}
+              {mainView === 'timeline' && (
+                <div className={`bg-white bg-opacity-10 rounded-lg p-3 overflow-y-auto ${isInputView ? 'max-h-32' : 'max-h-96'}`}>
+                  {timeline.length === 0 ? (<p className="text-center text-gray-300 text-xs">まだプレイがありません</p>) : (
+                    timeline.map((entry, index) => (
+                      <div key={index} className="border-b border-gray-600 pb-1 mb-1 last:border-b-0">
+                        <div className="flex justify-between items-start text-xs"><span className="text-gray-300">{entry.time}</span><span className="text-white">{entry.inning}回 {entry.outCount}アウト</span></div>
+                        <div className="text-xs"><span className="font-medium text-yellow-300">[{entry.team}]</span> {entry.message}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* オーダー表示 */}
+              {mainView === 'lineup' && (
+                <div className={`bg-white bg-opacity-10 rounded-lg p-3 overflow-y-auto text-xs ${isInputView ? 'max-h-32' : 'max-h-96'}`}>
+                  {isInputView && (
+                    <button onClick={() => setShowLineupEditor(true)} className="w-full mb-2 py-1 bg-indigo-500 text-white rounded-md text-xs">オーダーを編集</button>
+                  )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-bold text-yellow-300 mb-1">{myTeam}</h4>
+                      {myTeamLineup.map((member, index) => (
+                        member.playerName && <p key={index} className="truncate">{index + 1}. {member.playerName} ({member.position})</p>
+                      ))}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-yellow-300 mb-1">{opponentTeam}</h4>
+                      <pre className="whitespace-pre-wrap font-sans">{opponentLineup}</pre>
+                    </div>
                   </div>
-                ))
+                </div>
               )}
             </div>
             <GameHighlights inGameStats={inGameStats} players={players} />
