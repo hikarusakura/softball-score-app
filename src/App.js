@@ -1000,7 +1000,14 @@ const setNextBatter = (lastBatterName) => {
       }
     }
 
-    setNextBatter(batterName);
+    const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
+
+    if (isMyTeamBatting) {
+      setNextBatter(batterName);
+    } else {
+      setCurrentBatter('');
+    }
+
     setCustomBatter('');
     setUseCustomBatter(false);
     setSelectedPosition(null);
@@ -1045,14 +1052,22 @@ const setNextBatter = (lastBatterName) => {
     addToTimeline(message);
 
     if (isSacFly) {
-      const { newOutCount, inningShouldChange } = processOut();
-      addToTimeline(`アウト！ (${newOutCount}アウト)`, { outCount: newOutCount });
-      setNextBatter(batterName);
-      if (inningShouldChange) {
-        changeInning();
-      }
-      resetBso(); // Sac fly ends an at-bat
-    }
+  const { newOutCount, inningShouldChange } = processOut();
+  addToTimeline(`アウト！ (${newOutCount}アウト)`, { outCount: newOutCount });
+  
+  const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
+  if (isMyTeamBatting) {
+    setNextBatter(batterName);
+  } else {
+    setCurrentBatter('');
+  }
+
+  if (inningShouldChange) {
+    changeInning();
+  } else {
+    resetBso();
+  }
+}
 
     if (runsToAdd > 0) {
       const isMyTeamBatting = (isHomeTeam && currentTeamBatting === 'home') || (!isHomeTeam && currentTeamBatting === 'away');
