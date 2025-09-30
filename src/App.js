@@ -1713,15 +1713,16 @@ if (showLineupEditor) {
               <span className="text-sm font-medium text-gray-700">個人成績を自動記録する</span>
             </label>
           </div>
+          <button onClick={startGame} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
+            <Play className="h-5 w-5" />
+            <span>試合開始（新規記録）</span>
+          </button>
+
           <button 
             onClick={() => setShowLineupEditor(true)} 
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
           >
             オーダーを登録・編集
-          </button>
-          <button onClick={startGame} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
-            <Play className="h-5 w-5" />
-            <span>試合開始（新規記録）</span>
           </button>
           
           <div className="border-t border-gray-200 pt-6">
