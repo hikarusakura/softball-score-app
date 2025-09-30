@@ -225,6 +225,82 @@ const TeamManagementScreen = ({ initialProfiles, onSave, onBack }) => {
   );
 };
 
+// --- オーダー編集画面コンポーネント ---
+const LineupEditor = ({ players, initialLineup, initialOpponentLineup, onSave, onCancel }) => {
+  const [lineup, setLineup] = useState(initialLineup);
+  const [opponentLineup, setOpponentLineup] = useState(initialOpponentLineup);
+  const positions = ['投', '捕', '一', '二', '三', '遊', '左', '中', '右', 'DP'];
+
+  const handlePlayerChange = (index, playerName) => {
+    const newLineup = [...lineup];
+    newLineup[index] = { ...newLineup[index], playerName };
+    setLineup(newLineup);
+  };
+
+  const handlePositionChange = (index, position) => {
+    const newLineup = [...lineup];
+    newLineup[index] = { ...newLineup[index], position };
+    setLineup(newLineup);
+  };
+  
+  const handleAddRow = () => {
+    setLineup([...lineup, { playerName: '', position: '' }]);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl h-[90vh] flex flex-col">
+        <h2 className="text-2xl font-bold text-center p-4 border-b">オーダー登録・編集</h2>
+        <div className="flex-grow overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* 自チームオーダー */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">自チームオーダー</h3>
+            <div className="space-y-2">
+              {lineup.map((member, index) => (
+                <div key={index} className="grid grid-cols-3 gap-2 items-center">
+                  <span className="font-semibold">{index + 1}番</span>
+                  <select
+                    value={member.playerName}
+                    onChange={(e) => handlePlayerChange(index, e.target.value)}
+                    className="w-full px-2 py-1 border border-gray-300 rounded-md"
+                  >
+                    <option value="">選手を選択</option>
+                    {players.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                  <select
+                    value={member.position}
+                    onChange={(e) => handlePositionChange(index, e.target.value)}
+                    className="w-full px-2 py-1 border border-gray-300 rounded-md"
+                  >
+                    <option value="">守備</option>
+                    {positions.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+              ))}
+            </div>
+            <button onClick={handleAddRow} className="mt-2 text-sm text-blue-600 hover:underline">
+              + 打順を追加
+            </button>
+          </div>
+          {/* 相手チームオーダー */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">相手チームオーダー（テキスト）</h3>
+            <textarea
+              value={opponentLineup}
+              onChange={(e) => setOpponentLineup(e.target.value)}
+              className="w-full h-5/6 p-2 border border-gray-300 rounded-md"
+              placeholder="1番 ショート ○○\n2番 センター △△\n...のように入力"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end space-x-4 p-4 border-t">
+          <button onClick={onCancel} className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">キャンセル</button>
+          <button onClick={() => onSave(lineup, opponentLineup)} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">保存</button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // --- ログイン後のメインアプリ本体 ---
 const SoftballScoreApp = ({ user, initialTeamData }) => {
@@ -281,6 +357,9 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [stealingPlayer, setStealingPlayer] = useState(null);
   const [likeCount, setLikeCount] = useState(0);
   const [sortConfig, setSortConfig] = useState({ key: 'battingAverage', direction: 'descending' });
+  const [myTeamLineup, setMyTeamLineup] = useState(Array(9).fill({ playerName: '', position: '' }));
+  const [opponentLineup, setOpponentLineup] = useState('');
+  const [showLineupEditor, setShowLineupEditor] = useState(false);
 
 
   // --- ポジション対応表 ---
@@ -382,6 +461,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     setMyTeamPitcher('');
     setOpponentPitcher('');
     setLikeCount(0);
+    setMyTeamLineup(Array(9).fill({ playerName: '', position: '' }));
+    setOpponentLineup('');
   };
 
   const returnToSetup = () => {
@@ -396,6 +477,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const saveCurrentGameState = useCallback(async () => {
     if (!gameId || !isGameCreator) return;
     const currentState = {
+      myTeamLineup,
+      opponentLineup,
       likeCount,
       myTeamNameForGame,
       bsoCount,
@@ -478,6 +561,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
         setUseCustomBatter(data.useCustomBatter === true);
         setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
         setLikeCount(data.likeCount || 0);
+        setMyTeamLineup(data.myTeamLineup || Array(9).fill({ playerName: '', position: '' }));
+        setOpponentLineup(data.opponentLineup || '');
         
         if (mode === 'watch') {
           setGameId(gameIdToLoad);
@@ -558,6 +643,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
             setUseCustomBatter(data.useCustomBatter === true);
             setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
             setLikeCount(data.likeCount || 0);
+            setMyTeamLineup(data.myTeamLineup || Array(9).fill({ playerName: '', position: '' }));
+            setOpponentLineup(data.opponentLineup || '');
             setGameId(id);
             setIsGameCreator(false);
             setGameState('watching');
@@ -586,6 +673,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
 
   const saveStateToHistory = () => {
     const currentState = {
+      myTeamLineup,
+      opponentLineup,
       outCount,
       homeScore: [...homeScore],
       awayScore: [...awayScore],
@@ -1016,6 +1105,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
     let winner = isHomeTeam ? (finalHomeScore > finalAwayScore ? myTeam : opponentTeam) : (finalAwayScore > finalHomeScore ? myTeam : opponentTeam);
     if (finalHomeScore === finalAwayScore) winner = '引き分け';
     const gameData = {
+      myTeamLineup: myTeamLineup,
+      opponentLineup: opponentLineup,
       myTeamNameForGame: myTeam,
       inGameStats: inGameStats,
       tournamentName: tournamentName,
@@ -1037,6 +1128,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
 
   const showTimeline = (game) => {
     setSelectedGameTimeline(game);
+    setMyTeamLineup(game.myTeamLineup || Array(9).fill({ playerName: '', position: '' }));
+    setOpponentLineup(game.opponentLineup || '');
     setGameState('timeline');
   };
 
@@ -1526,6 +1619,12 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
               <span className="text-sm font-medium text-gray-700">個人成績を自動記録する</span>
             </label>
           </div>
+          <button 
+            onClick={() => setShowLineupEditor(true)} 
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+          >
+            オーダーを登録・編集
+          </button>
           <button onClick={startGame} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
             <Play className="h-5 w-5" />
             <span>試合開始（新規記録）</span>
@@ -1574,6 +1673,24 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       </div>
     </div>
   ); }
+
+// playing or watching view の直前に追加
+  if (showLineupEditor) {
+    const handleSaveLineup = (newLineup, newOpponentLineup) => {
+      setMyTeamLineup(newLineup);
+      setOpponentLineup(newOpponentLineup);
+      setShowLineupEditor(false);
+    };
+    return (
+      <LineupEditor
+        players={getPlayerList()}
+        initialLineup={myTeamLineup}
+        initialOpponentLineup={opponentLineup}
+        onSave={handleSaveLineup}
+        onCancel={() => setShowLineupEditor(false)}
+      />
+    );
+  }
 
     // playing or watching view
   const totalHomeScore = homeScore.reduce((a, b) => a + (b || 0), 0);
