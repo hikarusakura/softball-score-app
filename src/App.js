@@ -786,12 +786,16 @@ const setNextBatter = (lastBatterName) => {
     const gameIsHome = isHomeTeam;
     const gameRecordStats = isStatsRecordingEnabled;
     const gameMyTeam = selectedGameTeam;
+    const gameMyLineup = myTeamLineup;
+    const gameOpponentLineup = opponentLineup;
     resetGameStates();
     setOpponentTeam(gameOpponent);
     setTournamentName(gameTournament);
     setIsHomeTeam(gameIsHome);
     setIsStatsRecordingEnabled(gameRecordStats);
     setMyTeamNameForGame(gameMyTeam);
+    setMyTeamLineup(gameMyLineup);
+    setOpponentLineup(gameOpponentLineup);
     const newGameId = generateGameId();
     setGameStartDate(Date.now());
     setGameId(newGameId);
