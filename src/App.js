@@ -7,7 +7,7 @@ import {
   updateTeamData,
   incrementLikeCount
 } from './firebase';
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, onSnapshot } from "firebase/firestore";
 
 
 
