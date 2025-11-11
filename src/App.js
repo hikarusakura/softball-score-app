@@ -339,8 +339,8 @@ const LineupEditor = ({ players, initialLineup, initialOpponentLineup, onSave, o
 // --- ログイン後のメインアプリ本体 ---
 const SoftballScoreApp = ({ user, initialTeamData }) => {
   // --- State管理セクション ---
-  const [players, setPlayers] = useState(initialTeamData.players || Object.keys(initialTeamData.playerStats || {}));
-  const [playerStats, setPlayerStats] = useState(initialTeamData.playerStats || {});
+  const [players, setPlayers] = useState([]);
+  const [playerStats, setPlayerStats] = useState({});
   const [teamProfiles, setTeamProfiles] = useState(initialTeamData.teamProfiles || [initialTeamData.teamName || 'あなたのチーム']);
   const [selectedGameTeam, setSelectedGameTeam] = useState((initialTeamData.teamProfiles || [initialTeamData.teamName || 'あなたのチーム'])[0]);
   const [myTeamNameForGame, setMyTeamNameForGame] = useState('');
@@ -395,6 +395,34 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [opponentLineup, setOpponentLineup] = useState('');
   const [showLineupEditor, setShowLineupEditor] = useState(false);
   const [mainView, setMainView] = useState('timeline');
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [availableYears, setAvailableYears] = useState([new Date().getFullYear()]);
+
+  // --- ▽▽▽ このブロックを丸ごと追加 ▽▽▽ ---
+  useEffect(() => {
+    if (!user || !user.uid) return;
+
+    // 現在の年度（例: 2024）の選手・成績データを購読（監視）する
+    const yearRef = doc(db, 'teams', user.uid, 'years', String(currentYear));
+    const unsubscribe = onSnapshot(yearRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const yearData = docSnap.data();
+        console.log(`${currentYear}年度のデータを読み込みました`);
+        setPlayers(yearData.players || []);
+        setPlayerStats(yearData.playerStats || {});
+      } else {
+        // この年度のデータがまだ存在しない場合
+        console.log(`${currentYear}年度のデータはまだありません`);
+        setPlayers([]);
+        setPlayerStats({});
+      }
+    });
+
+    // コンポーネントが終了する時、またはcurrentYearが変わる時に購読を停止
+    return () => unsubscribe();
+
+  }, [user, currentYear]); // ★ user または currentYear が変わるたびに再実行
+  // --- △△△ ここまで追加 △△△ ---
 
 
   // --- ポジション対応表 ---
@@ -643,24 +671,17 @@ const setNextBatter = (lastBatterName) => {
     firebaseListener.current = newListener;
   };
   
-  useEffect(() => {
-    if (initialTeamData) {
-      setPlayerStats(initialTeamData.playerStats || {});
-      setPlayers(initialTeamData.players || Object.keys(initialTeamData.playerStats || {}));
-      const profiles = initialTeamData.teamProfiles || [initialTeamData.teamName || 'あなたのチーム'];
-      setTeamProfiles(profiles);
-      setSelectedGameTeam(profiles[0]);
-    }
-  }, [initialTeamData]);
 
-  useEffect(() => {
-    if (!user || !user.uid) return;
-    const teamRef = doc(db, 'teams', user.uid);
-    setDoc(teamRef, { 
-      playerStats: playerStats,
-      players: players 
-    }, { merge: true });
-  }, [playerStats, players, user]);
+
+useEffect(() => {
+    if (!user || !user.uid) return;
+    // ★ 保存先を /years/{currentYear} に変更
+    const yearRef = doc(db, 'teams', user.uid, 'years', String(currentYear)); 
+    setDoc(yearRef, { 
+      playerStats: playerStats,
+      players: players 
+    }, { merge: true }); // merge: true で、ドキュメント全体を上書きせず部分更新する
+  }, [playerStats, players, user, currentYear]); // ★ 依存配列に currentYear を追加
 
   useEffect(() => {
     // URLパラメータをチェックして観戦モードを開始する
@@ -1305,18 +1326,14 @@ const setNextBatter = (lastBatterName) => {
     setTempStats(prev => ({ ...prev, [statName]: parseInt(value, 10) || 0 }));
   };
 
-  const handleSaveStats = async (playerName) => {
-    if (window.confirm(`「${playerName}」の成績を保存しますか？`)) {
-      const success = await updatePlayerStats(user.uid, playerName, tempStats, true);
-      if (success) {
-        setPlayerStats(prev => ({ ...prev, [playerName]: tempStats }));
-        alert('成績を保存しました。');
-      } else {
-        alert('成績の保存に失敗しました。');
-      }
-      setEditingPlayer(null);
-    }
-  };
+const handleSaveStats = (playerName) => { // ★ async を削除
+    if (window.confirm(`「${playerName}」の成績を保存しますか？`)) {
+      // ★ Stateを更新するだけにする (自動保存useEffectがDBに書き込む)
+      setPlayerStats(prev => ({ ...prev, [playerName]: tempStats }));
+      alert('成績を保存しました。');
+      setEditingPlayer(null);
+    }
+  };
 
   const handleCancelEdit = () => {
     setEditingPlayer(null);
