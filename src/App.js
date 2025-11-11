@@ -9,7 +9,7 @@ import {
 } from './firebase';
 import { doc, setDoc, onSnapshot } from "firebase/firestore";
 
-//
+
 
 // --- ログイン画面コンポーネント ---
 const LoginScreen = ({ onLogin }) => {
