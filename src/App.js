@@ -1204,6 +1204,7 @@ useEffect(() => {
     const myTeam = myTeamNameForGame || selectedGameTeam;
     let winner = isHomeTeam ? (finalHomeScore > finalAwayScore ? myTeam : opponentTeam) : (finalAwayScore > finalHomeScore ? myTeam : opponentTeam);
     if (finalHomeScore === finalAwayScore) winner = '引き分け';
+    // eslint-disable-next-line no-unused-vars
     const gameData = {
       myTeamLineup: myTeamLineup,
       opponentLineup: opponentLineup,
@@ -1225,6 +1226,7 @@ useEffect(() => {
     setGameState('setup');
   };
 
+  // eslint-disable-next-line no-unused-vars
   const showTimeline = (game) => {
     setSelectedGameTimeline(game);
     setMyTeamLineup(game.myTeamLineup || Array(9).fill({ playerName: '', position: '' }));
