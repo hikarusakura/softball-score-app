@@ -161,7 +161,7 @@ const InGameStatsScreen = ({ players, inGameStats, isGameCreator, onBack }) => {
 
 
 // --- チーム管理画面コンポーネント ---
-const TeamManagementScreen = ({ initialProfiles, onSave, onBack }) => {
+const TeamManagementScreen = ({ initialProfiles, onSave, onBack, currentYear, availableYears, onYearChange, onYearAdd }) => {
   const [profiles, setProfiles] = useState(initialProfiles);
   const [newTeamName, setNewTeamName] = useState('');
 
@@ -199,6 +199,35 @@ const TeamManagementScreen = ({ initialProfiles, onSave, onBack }) => {
           <button onClick={onBack} className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"><ChevronLeft className="h-5 w-5" /></button>
           <h1 className="text-2xl font-bold text-gray-800">チーム管理</h1>
         </div>
+        {/* --- ▽▽▽ このブロックを丸ごと挿入 ▽▽▽ --- */}
+        <div className="mb-6 border-b pb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-2">年度の管理</h2>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">現在の年度</label>
+              <select 
+                value={currentYear} 
+                onChange={(e) => onYearChange(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              >
+                {(availableYears || []).sort((a, b) => b - a).map(year => 
+                  <option key={year} value={year}>{year}年度</option>
+                )}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">新年度を作成</label>
+              <button 
+                // ★ 次の年度を提案 (例: 2025年度が最新なら2026年度)
+                onClick={() => onYearAdd(Math.max(...availableYears) + 1)}
+                className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
+              >
+                {Math.max(...availableYears) + 1}年度を作成
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* --- △△△ ここまで挿入 △△△ --- */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">新しいチームを追加</label>
           <div className="flex space-x-2">
@@ -398,7 +427,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   // eslint-disable-next-line no-unused-vars
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   // eslint-disable-next-line no-unused-vars
-  const [availableYears, setAvailableYears] = useState([new Date().getFullYear()]);
+  const [availableYears, setAvailableYears] = useState(initialTeamData.availableYears || [new Date().getFullYear()]);
 
   // --- ▽▽▽ このブロックを丸ごと追加 ▽▽▽ ---
   useEffect(() => {
@@ -426,6 +455,16 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   }, [user, currentYear]); // ★ user または currentYear が変わるたびに再実行
   // --- △△△ ここまで追加 △△△ ---
 
+// --- ▽▽▽ このブロックを丸ごと追加 ▽▽▽ ---
+  useEffect(() => {
+    if (!user || !user.uid) return;
+    // ★ availableYears が変更されたら、DBのルートに保存
+    const teamRef = doc(db, 'teams', user.uid);
+    setDoc(teamRef, { 
+      availableYears: availableYears
+    }, { merge: true });
+  }, [availableYears, user]); // ★ availableYears が変わるたびに実行
+  // --- △△△ ここまで追加 △△△ ---
 
   // --- ポジション対応表 ---
   const positionMap = { '投': 'ピッチャー', '捕': 'キャッチャー', '一': 'ファースト', '二': 'セカンド', '三': 'サード', '遊': 'ショート', '左': 'レフト', '中': 'センター', '右': 'ライト' };
@@ -1409,18 +1448,41 @@ if (showLineupEditor) {
   }
 
   if (gameState === 'teamManagement') {
-    const handleSaveTeams = async (newProfiles) => {
-      const success = await updateTeamData(user.uid, { teamProfiles: newProfiles });
-      if (success) {
-        setTeamProfiles(newProfiles);
-        alert('チームリストを保存しました。');
-        setGameState('setup');
-      } else {
-        alert('保存に失敗しました。');
-      }
-    };
-    return <TeamManagementScreen initialProfiles={teamProfiles} onSave={handleSaveTeams} onBack={() => setGameState('setup')} />;
-  }
+    const handleSaveTeams = async (newProfiles) => {
+      // ... (変更なし) ...
+      const success = await updateTeamData(user.uid, { teamProfiles: newProfiles });
+      if (success) {
+        setTeamProfiles(newProfiles);
+        alert('チームリストを保存しました。');
+        setGameState('setup');
+      } else {
+        alert('保存に失敗しました。');
+      }
+    };
+    // ★ (変更なし)
+    return (
+      <TeamManagementScreen 
+        initialProfiles={teamProfiles} 
+        onSave={handleSaveTeams} 
+        onBack={() => setGameState('setup')}
+        // --- ▽▽▽ 以下を丸ごと追加 ▽▽▽ ---
+        currentYear={currentYear}
+        availableYears={availableYears}
+        onYearChange={(year) => setCurrentYear(year)}
+        onYearAdd={(newYear) => {
+          if (!availableYears.includes(newYear)) {
+            const updatedYears = [...availableYears, newYear].sort((a, b) => b - a); // 降順ソート
+            setAvailableYears(updatedYears);
+            setCurrentYear(newYear); // 新しい年度に自動で切り替え
+            alert(`${newYear}年度を作成しました。`);
+          } else {
+            alert(`${newYear}年度は既に存在します。`);
+          }
+        }}
+        // --- △△△ ここまで追加 △△△ ---
+      />
+    );
+  }
 
   if (gameState === 'inGameStatsScreen') {
     const handleBack = () => {
