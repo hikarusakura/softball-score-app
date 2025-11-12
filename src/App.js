@@ -372,6 +372,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [isGameCreator, setIsGameCreator] = useState(false);
   const [shareMessage, setShareMessage] = useState('');
   const [showShareDialog, setShowShareDialog] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [watchingGameId, setWatchingGameId] = useState('');
   const [resumeGameId, setResumeGameId] = useState('');
   const firebaseListener = useRef(null);
@@ -396,6 +397,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [showLineupEditor, setShowLineupEditor] = useState(false);
   const [mainView, setMainView] = useState('timeline');
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  // eslint-disable-next-line no-unused-vars
   const [availableYears, setAvailableYears] = useState([new Date().getFullYear()]);
 
   // --- ▽▽▽ このブロックを丸ごと追加 ▽▽▽ ---
@@ -597,7 +599,7 @@ const setNextBatter = (lastBatterName) => {
   }, [
     user.uid, gameId, isGameCreator, likeCount, myTeamNameForGame, bsoCount, inGameStats, myTeamPitcher, opponentPitcher, isStatsRecordingEnabled, tournamentName, opponentTeam, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, homeHits, awayHits,
-    timeline, currentBatter, customBatter, useCustomBatter, gameStartDate
+    timeline, currentBatter, customBatter, useCustomBatter, gameStartDate, myTeamLineup, opponentLineup
   ]);
 
   // ★useEffectの依存配列を修正
