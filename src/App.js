@@ -396,6 +396,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [opponentLineup, setOpponentLineup] = useState('');
   const [showLineupEditor, setShowLineupEditor] = useState(false);
   const [mainView, setMainView] = useState('timeline');
+  // eslint-disable-next-line no-unused-vars
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   // eslint-disable-next-line no-unused-vars
   const [availableYears, setAvailableYears] = useState([new Date().getFullYear()]);
