@@ -30,13 +30,13 @@ export const getTeamData = (teamId) => {
 
 // --- 試合データ関連関数 (すべてteamIdを引数に取るように修正) ---
 
-export const saveGameState = async (teamId, gameId, gameState) => {
-  const gameRef = doc(db, 'teams', teamId, 'games', gameId);
+export const saveGameState = async (teamId, year, gameId, gameState) => {
+  const gameRef = doc(db, 'teams', teamId, 'years', String(year), 'games', gameId);
   await setDoc(gameRef, { ...gameState, lastUpdated: Date.now() });
 };
 
-export const watchGameState = (teamId, gameId, callback, errorCallback) => {
-  const gameRef = doc(db, 'teams', teamId, 'games', gameId);
+export const watchGameState = (teamId, year, gameId, callback, errorCallback) => {
+  const gameRef = doc(db, 'teams', teamId, 'years', String(year), 'games', gameId);
   return onSnapshot(gameRef, callback, errorCallback);
 };
 
@@ -64,9 +64,9 @@ export const getAllGames = async (teamId) => {
   return games;
 };
 
-export const deleteGameFromFirebase = async (teamId, gameId) => {
+export const deleteGameFromFirebase = async (teamId, year, gameId) => {
   try {
-    const gameRef = doc(db, 'teams', teamId, 'games', gameId);
+    const gameRef = doc(db, 'teams', teamId, 'years', String(year), 'games', gameId);
     await deleteDoc(gameRef);
     return true;
   } catch (error) {

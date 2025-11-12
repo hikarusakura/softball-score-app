@@ -592,14 +592,14 @@ const setNextBatter = (lastBatterName) => {
       createdAt: gameStartDate || Date.now(),
     };
     try {
-      await saveGameState(user.uid, gameId, currentState);
+      await saveGameState(user.uid, currentYear, gameId, currentState);
     } catch (error) {
       console.error('保存失敗:', error);
     }
   }, [
     user.uid, gameId, isGameCreator, likeCount, myTeamNameForGame, bsoCount, inGameStats, myTeamPitcher, opponentPitcher, isStatsRecordingEnabled, tournamentName, opponentTeam, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, homeHits, awayHits,
-    timeline, currentBatter, customBatter, useCustomBatter, gameStartDate, myTeamLineup, opponentLineup
+    timeline, currentBatter, customBatter, useCustomBatter, gameStartDate, myTeamLineup, opponentLineup, currentYear
   ]);
 
   // ★useEffectの依存配列を修正
@@ -622,7 +622,7 @@ const setNextBatter = (lastBatterName) => {
 
     const profiles = initialTeamData.teamProfiles || [initialTeamData.teamName || 'あなたのチーム'];
     
-    const newListener = watchGameState(user.uid, gameIdToLoad, (doc) => {
+    const newListener = watchGameState(user.uid, currentYear, gameIdToLoad, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
         setMyTeamNameForGame(data.myTeamNameForGame || profiles[0]);
@@ -1255,7 +1255,7 @@ useEffect(() => {
       return;
     }
     if (window.confirm(`試合ID: ${gameIdToDelete} のデータを完全に削除しますか？`)) {
-      const success = await deleteGameFromFirebase(user.uid, gameIdToDelete);
+      const success = await deleteGameFromFirebase(user.uid, currentYear, gameIdToDelete);
       if (success) {
         setFirebaseGames(prevGames => prevGames.filter(game => game.id !== gameIdToDelete));
         alert('試合データを削除しました。');
