@@ -366,7 +366,6 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [useCustomBatter, setUseCustomBatter] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [freeComment, setFreeComment] = useState('');
-  const [pastGames, setPastGames] = useState([]);
   const [selectedGameTimeline, setSelectedGameTimeline] = useState(null);
   const [gameId, setGameId] = useState(null);
   const [isGameCreator, setIsGameCreator] = useState(false);
@@ -1222,7 +1221,6 @@ useEffect(() => {
       homeScoreInnings: homeScore.map(s => s === null ? 0 : s),
       awayScoreInnings: awayScore.map(s => s === null ? 0 : s)
     };
-    setPastGames(prev => [gameData, ...prev]);
     resetGameStates();
     setGameState('setup');
   };
@@ -1760,31 +1758,6 @@ if (showLineupEditor) {
             <button onClick={() => setGameState('statsScreen')} className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-3 rounded-lg text-xs">個人成績</button>
           </div>
         </div>
-        {pastGames.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">過去の試合（ローカル保存）</h2>
-            {pastGames.slice(0, 3).map((game, index) => {
-              const myTeam = game.myTeamNameForGame || teamProfiles[0];
-              return (
-                <div key={index} className="bg-gray-50 p-3 rounded-lg mb-2">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="text-sm text-gray-600">{game.date}</span>
-                      {game.gameId && (<span className="ml-2 text-xs text-gray-500 bg-gray-200 px-1 rounded">ID: {game.gameId}</span>)}
-                    </div>
-                    <span className="font-medium">vs {game.opponentTeam}</span>
-                  </div>
-                  <button onClick={() => showTimeline(game)} className="w-full text-center mt-1 hover:bg-gray-100 p-1 rounded transition-colors">
-                    <span className={`font-bold ${game.winner === myTeam ? 'text-blue-600' : 'text-red-600'}`}>
-                      {game.isHomeTeam ? myTeam : game.opponentTeam} {game.isHomeTeam ? game.homeScore : game.awayScore} - {game.isHomeTeam ? game.awayScore : game.homeScore} {game.isHomeTeam ? game.opponentTeam : myTeam} ({game.winner}勝利)
-                    </span>
-                    <div className="text-xs text-gray-500 mt-1">クリックで詳細表示</div>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
     </div>
   ); }
