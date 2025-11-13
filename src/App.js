@@ -1325,13 +1325,21 @@ useEffect(() => {
     setGameState('timeline');
   };
 
-  const handleFetchFirebaseGames = async () => {
-    setIsLoading(true);
-    const games = await getAllGames(user.uid);
-    setFirebaseGames(games);
-    setIsLoading(false);
-    setGameState('firebaseList');
-  };
+const handleFetchFirebaseGames = async () => {
+    setIsLoading(true);
+    try { 
+      // ★ currentYear を渡すように修正
+      const games = await getAllGames(user.uid, currentYear); 
+      
+      setFirebaseGames(games || []); // (念のため || [] を追加)
+      setGameState('firebaseList'); 
+    } catch (error) { 
+      console.error("試合一覧の読み込みに失敗しました: ", error);
+      alert("試合一覧の読み込みに失敗しました。");
+    } finally { 
+      setIsLoading(false);
+    }
+  };
 
   const handleDeleteFirebaseGame = async (gameIdToDelete) => {
     const correctPassword = initialTeamData.deletePassword;
