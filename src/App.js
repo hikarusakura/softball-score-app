@@ -444,8 +444,8 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       } else {
         // この年度のデータがまだ存在しない場合
         console.log(`${currentYear}年度のデータはまだありません`);
-        setPlayers([]);
-        setPlayerStats({});
+        //setPlayers([]);
+        //setPlayerStats({});
       }
     });
 
@@ -493,6 +493,16 @@ const setNextBatter = (lastBatterName) => {
   };
 
   const getPlayerList = () => players || [];
+
+  // --- ▽▽▽ この関数を丸ごと追加 ▽▽▽ ---
+  const handleYearChange = (year) => {
+    // 年度切り替え時に、古いデータが残らないよう明示的にリセットする
+    console.log(`年度を ${year} に切り替えます。Stateをリセットします。`);
+    setPlayers([]);
+    setPlayerStats({});
+    setCurrentYear(year);
+  };
+  // --- △△△ ここまで追加 △△△ ---
 
   const sortedPlayers = React.useMemo(() => {
     let sortablePlayers = [...(players || [])];
@@ -1261,6 +1271,40 @@ useEffect(() => {
       homeScoreInnings: homeScore.map(s => s === null ? 0 : s),
       awayScoreInnings: awayScore.map(s => s === null ? 0 : s)
     };
+
+// --- ▽▽▽ 試合結果テキスト生成（ここから） ▽▽▽ ---
+    
+    // 1. 自チームと相手チームの最終スコアを確定
+    const myFinalScore = isHomeTeam ? finalHomeScore : finalAwayScore;
+    const opponentFinalScore = isHomeTeam ? finalAwayScore : finalHomeScore;
+
+    // 2. 勝敗に応じた絵文字と記号を決定
+    let resultPrefix = '△'; // 引き分けがデフォルト
+    let resultSuffix = '';
+
+    if (winner === myTeam) {
+      resultPrefix = '〇';
+      resultSuffix = '✨';
+    } else if (winner === opponentTeam) {
+      resultPrefix = '●';
+      resultSuffix = '💧';
+    }
+
+    // 3. スコアテキストを作成
+    const scoreText = `${resultPrefix}${myFinalScore}-${opponentFinalScore}${resultSuffix}`;
+    
+    // 4. 大会名（あれば）を追加
+    const tournamentText = tournamentName ? `${tournamentName}\n` : '';
+
+    // 5. 最終的なメッセージを組み立て
+    const resultMessage = `◇試合結果◇\n${tournamentText}対${opponentTeam}\n${scoreText}`;
+
+    // 6. コピー用のプロンプトダイアログを表示
+    // (promptの第2引数にテキストを入れると、それが入力欄に表示されます)
+    prompt("試合結果をコピーしてください:", resultMessage);
+
+    // --- △△△ 試合結果テキスト生成（ここまで） △△△ ---
+
     resetGameStates();
     setGameState('setup');
   };
@@ -1468,7 +1512,7 @@ if (showLineupEditor) {
         // --- ▽▽▽ 以下を丸ごと追加 ▽▽▽ ---
         currentYear={currentYear}
         availableYears={availableYears}
-        onYearChange={(year) => setCurrentYear(year)}
+        onYearChange={(year) => handleYearChange(year)}
         onYearAdd={(newYear) => {
           if (!availableYears.includes(newYear)) {
             const updatedYears = [...availableYears, newYear].sort((a, b) => b - a); // 降順ソート
@@ -1763,7 +1807,7 @@ if (showLineupEditor) {
           <label className="block text-sm font-medium text-gray-700 mb-2">現在の年度</label>
           <select 
             value={currentYear} 
-            onChange={(e) => setCurrentYear(Number(e.target.value))}
+            onChange={(e) => handleYearChange(Number(e.target.value))}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           >
             {(availableYears || []).sort((a, b) => b - a).map(year => 
