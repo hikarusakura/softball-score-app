@@ -61,6 +61,9 @@ export const getAllGames = async (teamId, year) => {
   querySnapshot.forEach((doc) => {
     games.push({ id: doc.id, ...doc.data() });
   });
+  games.sort((a, b) => {
+    return (b.createdAt || 0) - (a.createdAt || 0); // 降順 (新しい順)
+  });
   return games;
 };
 
