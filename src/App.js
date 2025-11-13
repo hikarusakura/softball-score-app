@@ -428,10 +428,12 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   // eslint-disable-next-line no-unused-vars
   const [availableYears, setAvailableYears] = useState(initialTeamData.availableYears || [new Date().getFullYear()]);
+  const [isDataLoading, setIsDataLoading] = useState(true);
 
-  // --- ▽▽▽ このブロックを丸ごと追加 ▽▽▽ ---
-  useEffect(() => {
+useEffect(() => {
     if (!user || !user.uid) return;
+
+    setIsDataLoading(true); // ★ 読み込み開始（ロック）
 
     // 現在の年度（例: 2024）の選手・成績データを購読（監視）する
     const yearRef = doc(db, 'teams', user.uid, 'years', String(currentYear));
@@ -444,16 +446,19 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
       } else {
         // この年度のデータがまだ存在しない場合
         console.log(`${currentYear}年度のデータはまだありません`);
-        //setPlayers([]);
-        //setPlayerStats({});
+        // setPlayers([]); // (ここは前回の修正通りコメントアウトのまま)
+        // setPlayerStats({});
       }
+      setIsDataLoading(false); // ★ 読み込み完了（ロック解除）
+    }, (error) => { // ★ エラーハンドラを追加
+      console.error("選手データの読み込みに失敗:", error);
+      setIsDataLoading(false); // ★ エラー時もロック解除
     });
 
     // コンポーネントが終了する時、またはcurrentYearが変わる時に購読を停止
     return () => unsubscribe();
 
-  }, [user, currentYear]); // ★ user または currentYear が変わるたびに再実行
-  // --- △△△ ここまで追加 △△△ ---
+  }, [user, currentYear]);
 
 // --- ▽▽▽ このブロックを丸ごと追加 ▽▽▽ ---
   useEffect(() => {
@@ -498,6 +503,7 @@ const setNextBatter = (lastBatterName) => {
   const handleYearChange = (year) => {
     // 年度切り替え時に、古いデータが残らないよう明示的にリセットする
     console.log(`年度を ${year} に切り替えます。Stateをリセットします。`);
+    setIsDataLoading(true); // ★ ロックを追加
     setPlayers([]);
     setPlayerStats({});
     setCurrentYear(year);
@@ -725,14 +731,16 @@ const setNextBatter = (lastBatterName) => {
 
 
 useEffect(() => {
-    if (!user || !user.uid) return;
+    if (!user || !user.uid || isDataLoading) {
+      return; 
+    }
     // ★ 保存先を /years/{currentYear} に変更
     const yearRef = doc(db, 'teams', user.uid, 'years', String(currentYear)); 
     setDoc(yearRef, { 
       playerStats: playerStats,
       players: players 
     }, { merge: true }); // merge: true で、ドキュメント全体を上書きせず部分更新する
-  }, [playerStats, players, user, currentYear]); // ★ 依存配列に currentYear を追加
+  }, [playerStats, players, user, currentYear, isDataLoading]); // ★ 依存配列に currentYear を追加
 
   useEffect(() => {
     // URLパラメータをチェックして観戦モードを開始する
