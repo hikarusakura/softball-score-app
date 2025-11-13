@@ -53,7 +53,7 @@ export const generateGameId = () => {
   return result;
 };
 
-export const getAllGames = async (teamId) => {
+export const getAllGames = async (teamId, year) => {
   const gamesCollectionRef = collection(db, 'teams', teamId, 'years', String(year), 'games');
   const q = query(gamesCollectionRef, orderBy("createdAt", "desc"));
   const querySnapshot = await getDocs(q);
