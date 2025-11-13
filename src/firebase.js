@@ -54,7 +54,7 @@ export const generateGameId = () => {
 };
 
 export const getAllGames = async (teamId) => {
-  const gamesCollectionRef = collection(db, 'teams', teamId, 'games');
+  const gamesCollectionRef = collection(db, 'teams', teamId, 'years', String(year), 'games');
   const q = query(gamesCollectionRef, orderBy("createdAt", "desc"));
   const querySnapshot = await getDocs(q);
   const games = [];
