@@ -55,7 +55,7 @@ export const generateGameId = () => {
 
 export const getAllGames = async (teamId, year) => {
   const gamesCollectionRef = collection(db, 'teams', teamId, 'years', String(year), 'games');
-  const q = query(gamesCollectionRef, orderBy("createdAt", "desc"));
+  const q = query(gamesCollectionRef);
   const querySnapshot = await getDocs(q);
   const games = [];
   querySnapshot.forEach((doc) => {
@@ -77,8 +77,8 @@ export const deleteGameFromFirebase = async (teamId, year, gameId) => {
 
 // ★★★ 選手成績更新のロジックを修正 ★★★
 // 特定の選手の成績を更新する（加算・上書き両対応）
-export const updatePlayerStats = async (teamId, playerName, statsData, isOverwrite = false) => {
-  const teamRef = doc(db, 'teams', teamId);
+export const updatePlayerStats = async (teamId, year, playerName, statsData, isOverwrite = false) => {
+  const teamRef = doc(db, 'teams', teamId, 'years', String(year));
   try {
     const updateData = {};
     if (isOverwrite) {
@@ -129,9 +129,9 @@ export const updateTeamData = async (teamId, dataToUpdate) => {
   }
 };
 
-export const incrementLikeCount = async (userId, gameId) => {
-  if (!userId || !gameId) return false;
-  const gameRef = doc(db, 'teams', userId, 'games', gameId);
+export const incrementLikeCount = async (userId, year, gameId) => {
+  if (!userId || !gameId || !year) return false;
+  const gameRef = doc(db, 'teams', userId, 'years', String(year), 'games', gameId);
   try {
     await updateDoc(gameRef, {
       likeCount: increment(1)

@@ -1105,7 +1105,7 @@ useEffect(() => {
         return newStats;
       });
       if (isStatsRecordingEnabled) {
-        updatePlayerStats(user.uid, batterName, statsUpdate);
+        updatePlayerStats(user.uid, currentYear, batterName, statsUpdate);
         setPlayerStats(prev => {
           const newStats = { ...prev };
           const player = { ...(newStats[batterName] || {}) };
@@ -1209,7 +1209,7 @@ useEffect(() => {
         return newStats;
       });
       if (isStatsRecordingEnabled) {
-        updatePlayerStats(user.uid, batterName, statsUpdate);
+        updatePlayerStats(user.uid, currentYear, batterName, statsUpdate);
         setPlayerStats(prev => {
           const newStats = { ...prev };
           const player = { ...(newStats[batterName] || {}) };
@@ -1982,7 +1982,7 @@ const GameStartDialog = () => {
       <StolenBaseModal />
       {gameState === 'watching' && (
         <button
-          onClick={() => incrementLikeCount(user.uid, gameId)}
+          onClick={() => incrementLikeCount(user.uid, currentYear, gameId)}
           className="fixed bottom-4 right-4 z-50 flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg transition-transform transform hover:scale-110"
         >
           <Heart className="w-8 h-8 text-pink-500" fill="currentColor" />
