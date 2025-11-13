@@ -365,6 +365,29 @@ const LineupEditor = ({ players, initialLineup, initialOpponentLineup, onSave, o
   );
 };
 
+const GameStartDialog = () => {
+    if (!showShareDialog) return null;
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <h3 className="text-lg font-bold mb-4 text-center">{dialogTitle}</h3>
+          <div className="bg-gray-100 p-3 rounded-lg mb-4 whitespace-pre-wrap text-sm">
+            {shareMessage}
+          </div>
+          <div className="flex space-x-3">
+            <button onClick={copyToClipboard} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2">
+              <Copy className="h-4 w-4" />
+              <span>コピー</span>
+            </button>
+            <button onClick={() => setShowShareDialog(false)} className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg">
+              閉じる
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
 // --- ログイン後のメインアプリ本体 ---
 const SoftballScoreApp = ({ user, initialTeamData }) => {
   // --- State管理セクション ---
@@ -424,6 +447,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [opponentLineup, setOpponentLineup] = useState('');
   const [showLineupEditor, setShowLineupEditor] = useState(false);
   const [mainView, setMainView] = useState('timeline');
+  const [dialogTitle, setDialogTitle] = useState('共有メッセージ');
   // eslint-disable-next-line no-unused-vars
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   // eslint-disable-next-line no-unused-vars
@@ -880,6 +904,7 @@ useEffect(() => {
     setGameStartDate(Date.now());
     setGameId(newGameId);
     const message = `◆試合速報開始◆\n${gameTournament}\n対 ${gameOpponent}`;
+    setDialogTitle('共有メッセージ');
     setShareMessage(message);
     setIsGameCreator(true);
     setGameState('playing');
@@ -1307,9 +1332,10 @@ useEffect(() => {
     // 5. 最終的なメッセージを組み立て
     const resultMessage = `◇試合結果◇\n${tournamentText}対${opponentTeam}\n${scoreText}`;
 
-    // 6. コピー用のプロンプトダイアログを表示
-    // (promptの第2引数にテキストを入れると、それが入力欄に表示されます)
-    prompt("試合結果をコピーしてください:", resultMessage);
+    // 6. ★ promptの代わりにダイアログ用のStateをセット
+    setDialogTitle('◇試合結果◇');
+    setShareMessage(resultMessage);
+    setShowShareDialog(true);
 
     // --- △△△ 試合結果テキスト生成（ここまで） △△△ ---
 
@@ -1506,6 +1532,8 @@ if (showLineupEditor) {
       />
     );
   }
+
+  <GameStartDialog /> 
 
   if (gameState === 'teamManagement') {
     const handleSaveTeams = async (newProfiles) => {
@@ -1917,28 +1945,7 @@ if (showLineupEditor) {
     }
   })();
   
-const GameStartDialog = () => {
-    if (!showShareDialog) return null;
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-          <h3 className="text-lg font-bold mb-4 text-center">共有メッセージ</h3>
-          <div className="bg-gray-100 p-3 rounded-lg mb-4 whitespace-pre-wrap text-sm">
-            {shareMessage}
-          </div>
-          <div className="flex space-x-3">
-            <button onClick={copyToClipboard} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2">
-              <Copy className="h-4 w-4" />
-              <span>コピー</span>
-            </button>
-            <button onClick={() => setShowShareDialog(false)} className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg">
-              閉じる
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+
 
   const StolenBaseModal = () => {
     if (!showStolenBaseModal) return null;
@@ -1986,8 +1993,7 @@ const GameStartDialog = () => {
   
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      <GameStartDialog  />
-      <StolenBaseModal />
+        <StolenBaseModal />
       {gameState === 'watching' && (
         <button
           onClick={() => incrementLikeCount(user.uid, currentYear, gameId)}
