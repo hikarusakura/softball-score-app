@@ -1534,13 +1534,6 @@ if (showLineupEditor) {
     );
   }
 
-  <GameStartDialog 
-    showShareDialog={showShareDialog}
-    dialogTitle={dialogTitle}
-    shareMessage={shareMessage}
-    copyToClipboard={copyToClipboard}
-    setShowShareDialog={setShowShareDialog}
-  />
 
   if (gameState === 'teamManagement') {
     const handleSaveTeams = async (newProfiles) => {
@@ -1844,6 +1837,16 @@ if (showLineupEditor) {
 
   if (gameState === 'setup') { return (
     <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 p-4">
+      
+      {/* --- ▽▽▽ このブロックを丸ごと挿入 ▽▽▽ --- */}
+      <GameStartDialog 
+        showShareDialog={showShareDialog}
+        dialogTitle={dialogTitle}
+        shareMessage={shareMessage}
+        copyToClipboard={copyToClipboard}
+        setShowShareDialog={setShowShareDialog}
+      />
+      {/* --- △△△ ここまで挿入 △△△ --- */}
       <div className="max-w-md mx-auto bg-white rounded-xl shadow-2xl p-8">
         <div className="text-right mb-4">
           <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2 px-4 rounded-lg">ログアウト</button>
@@ -2010,7 +2013,7 @@ if (showLineupEditor) {
         setShowShareDialog={setShowShareDialog}
       />
       {/* --- △△△ ここまで挿入 △△△ --- */}
-      
+
         <StolenBaseModal />
       {gameState === 'watching' && (
         <button
