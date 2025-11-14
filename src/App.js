@@ -365,28 +365,29 @@ const LineupEditor = ({ players, initialLineup, initialOpponentLineup, onSave, o
   );
 };
 
-const GameStartDialog = () => {
-    if (!showShareDialog) return null;
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-          <h3 className="text-lg font-bold mb-4 text-center">{dialogTitle}</h3>
-          <div className="bg-gray-100 p-3 rounded-lg mb-4 whitespace-pre-wrap text-sm">
-            {shareMessage}
-          </div>
-          <div className="flex space-x-3">
-            <button onClick={copyToClipboard} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2">
-              <Copy className="h-4 w-4" />
-              <span>コピー</span>
-            </button>
-            <button onClick={() => setShowShareDialog(false)} className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg">
-              閉じる
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+// ★ 引数として受け取るように変更
+const GameStartDialog = ({ showShareDialog, dialogTitle, shareMessage, copyToClipboard, setShowShareDialog }) => {
+    if (!showShareDialog) return null;
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <h3 className="text-lg font-bold mb-4 text-center">{dialogTitle}</h3>
+          <div className="bg-gray-100 p-3 rounded-lg mb-4 whitespace-pre-wrap text-sm">
+            {shareMessage}
+          </div>
+          <div className="flex space-x-3">
+            <button onClick={copyToClipboard} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2">
+              <Copy className="h-4 w-4" />
+              <span>コピー</span>
+            </button>
+            <button onClick={() => setShowShareDialog(false)} className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg">
+              閉じる
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
 // --- ログイン後のメインアプリ本体 ---
 const SoftballScoreApp = ({ user, initialTeamData }) => {
@@ -1533,7 +1534,13 @@ if (showLineupEditor) {
     );
   }
 
-  <GameStartDialog /> 
+  <GameStartDialog 
+    showShareDialog={showShareDialog}
+    dialogTitle={dialogTitle}
+    shareMessage={shareMessage}
+    copyToClipboard={copyToClipboard}
+    setShowShareDialog={setShowShareDialog}
+  />
 
   if (gameState === 'teamManagement') {
     const handleSaveTeams = async (newProfiles) => {
