@@ -376,21 +376,17 @@ const GameStartDialog = ({ showShareDialog, dialogTitle, shareMessage, copyToCli
             {shareMessage}
           </div>
 {/* ★ "grid" から "flex" に戻し、"space-x-3" で隙間を空ける */}
-          <div className="flex space-x-3">
+          <div className="flex justify-between items-center">
             <button 
               onClick={copyToClipboard} 
               // ★ "flex-1" で幅を均等に分け合う
-              className="w-[48%] bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded-lg flex items-center justify-center space-x-2 whitespace-nowrap"
-            >
-              {/* アイコンを復活させると、"コピー"が縦書きになるのを防げます */}
-              <Copy className="h-4 w-4" />
-              <span>コピー</span>
+              className="w-[48%] bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded-lg flex items-center justify-center space-x-2 whitespace-nowrap" >
+              コピー
             </button>
             <button 
               onClick={() => setShowShareDialog(false)} 
               // ★ "flex-1" で幅を均等に分け合う
-              className="w-[48%] bg-gray-500 hover:bg-gray-600 text-white py-1 px-4 rounded-lg whitespace-nowrap flex justify-center items-center"
-            >
+              className="w-[48%] bg-gray-500 hover:bg-gray-600 text-white py-1 px-4 rounded-lg whitespace-nowrap flex justify-center items-center" >
               閉じる
             </button>
           </div>
