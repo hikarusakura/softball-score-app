@@ -629,7 +629,7 @@ const setNextBatter = (lastBatterName) => {
     setOpponentPitcher('');
     setLikeCount(0);
     setMyTeamLineup(Array(9).fill({ playerName: '', position: '' }));
-    setOpponentLineup('');
+    setOpponentLineup(Array(9).fill({ playerName: '', position: '' }));
   };
 
   const returnToSetup = () => {
