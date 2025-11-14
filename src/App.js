@@ -376,7 +376,7 @@ const GameStartDialog = ({ showShareDialog, dialogTitle, shareMessage, copyToCli
           <div className="bg-gray-100 p-3 rounded-lg mb-4 whitespace-pre-wrap text-sm">
             {shareMessage}
           </div>
-          <div className="flex space-x-3">
+          <div className="grid grid-cols-2 gap-2 mb-3">
             {/* ★ py-1 に変更 */}
             <button onClick={copyToClipboard} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded-lg flex items-center justify-center space-x-2 whitespace-nowrap">
               <Copy className="h-4 w-4" />
