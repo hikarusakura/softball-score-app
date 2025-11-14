@@ -383,7 +383,7 @@ const GameStartDialog = ({ showShareDialog, dialogTitle, shareMessage, copyToCli
               <span>コピー</span>
             </button>
             {/* ★ py-1 に変更 */}
-            <button onClick={() => setShowShareDialog(false)} className="w-full bg-gray-500 hover:bg-gray-600 text-white py-1 px-4 rounded-lg whitespace-nowrap">
+            <button onClick={() => setShowShareDialog(false)} className="w-full bg-gray-500 hover:bg-gray-600 text-white py-1 px-4 rounded-lg whitespace-nowrap flex justify-center items-center">
               閉じる
             </button>
           </div>
