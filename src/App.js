@@ -2006,7 +2006,7 @@ if (showLineupEditor) {
   };
   
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen flex flex-col">
 
       {/* --- ▽▽▽ このブロックを丸ごと挿入 ▽▽▽ --- */}
       <GameStartDialog 
