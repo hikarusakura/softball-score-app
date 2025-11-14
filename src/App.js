@@ -370,11 +370,9 @@ const GameStartDialog = ({ showShareDialog, dialogTitle, shareMessage, copyToCli
     if (!showShareDialog) return null;
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="bg-white rounded-lg p-6 w-full mx-4">
           <h3 className="text-lg font-bold mb-4 text-center">{dialogTitle}</h3>
-          <div className="bg-gray-100 p-3 rounded-lg mb-4 whitespace-pre-wrap text-sm">
-            {shareMessage}
-          </div>
+          <div className="bg-gray-100 p-3 rounded-lg mb-4 whitespace-pre-wrap text-sm">{shareMessage}</div>
 {/* ★ "grid" から "flex" に戻し、"space-x-3" で隙間を空ける */}
           <div className="flex justify-between items-center">
             <button 
@@ -1967,7 +1965,7 @@ if (showLineupEditor) {
     if (!showStolenBaseModal) return null;
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 w-full mx-4">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
           {stealingPlayer ? (
             <div>
               <h3 className="text-lg font-bold mb-4 text-center"><span className="font-normal">{stealingPlayer} が</span><br/>どの塁へ盗塁しましたか？</h3>
