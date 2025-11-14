@@ -378,12 +378,12 @@ const GameStartDialog = ({ showShareDialog, dialogTitle, shareMessage, copyToCli
           </div>
           <div className="flex space-x-3">
             {/* ★ py-1 に変更 */}
-            <button onClick={copyToClipboard} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded-lg flex items-center justify-center space-x-2 whitespace-nowrap">
+            <button onClick={copyToClipboard} className="w-32 bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded-lg flex items-center justify-center space-x-2 whitespace-nowrap">
               <Copy className="h-4 w-4" />
               <span>コピー</span>
             </button>
             {/* ★ py-1 に変更 */}
-            <button onClick={() => setShowShareDialog(false)} className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-1 px-4 rounded-lg whitespace-nowrap">
+            <button onClick={() => setShowShareDialog(false)} className="w-32 bg-gray-500 hover:bg-gray-600 text-white py-1 px-4 rounded-lg whitespace-nowrap">
               閉じる
             </button>
           </div>
