@@ -449,7 +449,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [likeCount, setLikeCount] = useState(0);
   const [sortConfig, setSortConfig] = useState({ key: 'battingAverage', direction: 'descending' });
   const [myTeamLineup, setMyTeamLineup] = useState(Array(9).fill({ playerName: '', position: '' }));
-  const [opponentLineup, setOpponentLineup] = useState('');
+  const [opponentLineup, setOpponentLineup] = useState(Array(9).fill({ playerName: '', position: '' }));
   const [showLineupEditor, setShowLineupEditor] = useState(false);
   const [mainView, setMainView] = useState('timeline');
   const [dialogTitle, setDialogTitle] = useState('共有メッセージ');
@@ -1266,7 +1266,7 @@ useEffect(() => {
     });
 
     if (isStatsRecordingEnabled) {
-      updatePlayerStats(user.uid, playerName, statsUpdate);
+      updatePlayerStats(user.uid, currentYear, playerName, statsUpdate);
       setPlayerStats(prev => {
         const newStats = { ...prev };
         const player = { ...(newStats[playerName] || {}) };
@@ -2031,11 +2031,11 @@ if (showLineupEditor) {
         </button>
       )}
       <div className={isInputView ? "h-1/2" : "h-full"}>
-        <div className="h-full bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
-          <div className="max-w-4xl mx-auto relative">
+        <div className="h-full bg-gradient-to-r from-blue-900 to-green-800 text-white overflow-auto">
+          <div className="max-w-4xl mx-auto relative p-3">
             { gameState === 'watching' && (<button onClick={returnToSetup} className="absolute top-0 left-0 z-40 p-2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white rounded-full transition-colors" aria-label="セットアップに戻る"><ChevronLeft className="h-6 w-6" /></button>)}
             <button onClick={() => setGameState('inGameStatsScreen')} className="absolute top-0 right-0 z-40 px-3 py-1 bg-black bg-opacity-50 hover:bg-opacity-75 text-white rounded-lg text-xs font-semibold">個人成績</button>
-            <div className="text-center mb-3 ">
+            <div className="text-center mb-3">
               <h1 className="text-lg font-bold">⚾ {myTeam} 試合速報 ⚾</h1>
               <p className="text-xs text-gray-300">試合日時: {formatDate(gameStartDate)}{tournamentName && ` (${tournamentName})`}</p>
               <p className="text-xs truncate">{myTeam} vs {opponentTeam}</p>
