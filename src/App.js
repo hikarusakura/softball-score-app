@@ -2072,10 +2072,10 @@ if (showLineupEditor) {
               <BSOIndicator />
               <div className="relative w-24 h-24">
                 <div className="absolute inset-0 border-2 border-white transform rotate-45"></div>
-                <div className={`absolute top-1/2 left-0 w-3 h-3 -ml-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.third ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
-                <div className={`absolute top-0 left-1/2 w-3 h-3 -ml-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.second ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
-                <div className={`absolute top-1/2 right-0 w-3 h-3 -mr-1.5 -mt-1.5 rounded-full border-2 border-white ${bases.first ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
-                <div className="absolute bottom-0 left-1/2 w-3 h-3 -ml-1.5 -mb-1.5 rounded-full border-2 border-white bg-red-600"></div>
+                <div className={`absolute top-1/2 left-0 w-3 h-3 -ml-1.5 -mt-1.5 transform rotate-45 border-2 border-white ${bases.third ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
+                <div className={`absolute top-0 left-1/2 w-3 h-3 -ml-1.5 -mt-1.5 transform rotate-45 border-2 border-white ${bases.second ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
+                <div className={`absolute top-1/2 right-0 w-3 h-3 -mr-1.5 -mt-1.5 transform rotate-45 border-2 border-white ${bases.first ? 'bg-yellow-400' : 'bg-gray-700'}`}></div>
+                <div className="absolute bottom-0 left-1/2 w-3 h-3 -ml-1.5 -mb-1.5 transform rotate-45 border-2 border-white bg-red-600"></div>
               </div>
             </div>
             <div>
