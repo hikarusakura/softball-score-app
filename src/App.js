@@ -1810,15 +1810,6 @@ if (showLineupEditor) {
             <button onClick={handleAddPlayer} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">追加</button>
           </div>
         </div>
-        <div className="mb-6 border-t pt-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-2">削除用パスワードの変更</h2>
-          <div className="space-y-2">
-            <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="現在のパスワード" />
-            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="新しいパスワード" />
-            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="新しいパスワード（確認用）" />
-            <button onClick={handleUpdatePassword} className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold">パスワードを更新</button>
-          </div>
-        </div>
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-2">現在の選手リスト</h2>
           <div className="space-y-2 max-h-96 overflow-y-auto bg-gray-50 p-3 rounded-lg">
@@ -1834,6 +1825,15 @@ if (showLineupEditor) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+        <div className="mb-6 border-t pt-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-2">削除用パスワードの変更</h2>
+          <div className="space-y-2">
+            <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="現在のパスワード" />
+            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="新しいパスワード" />
+            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="新しいパスワード（確認用）" />
+            <button onClick={handleUpdatePassword} className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold">パスワードを更新</button>
           </div>
         </div>
       </div>
