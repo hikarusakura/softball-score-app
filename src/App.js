@@ -2000,7 +2000,7 @@ if (showLineupEditor) {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-blue-900">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-green-400 to-blue-500">
       <GameStartDialog 
         showShareDialog={showShareDialog}
         dialogTitle={dialogTitle}
