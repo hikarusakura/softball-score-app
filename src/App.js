@@ -2007,8 +2007,6 @@ if (showLineupEditor) {
   
   return (
     <div className="min-h-screen flex flex-col bg-blue-900">
-
-      {/* --- ▽▽▽ このブロックを丸ごと挿入 ▽▽▽ --- */}
       <GameStartDialog 
         showShareDialog={showShareDialog}
         dialogTitle={dialogTitle}
@@ -2016,8 +2014,6 @@ if (showLineupEditor) {
         copyToClipboard={copyToClipboard}
         setShowShareDialog={setShowShareDialog}
       />
-      {/* --- △△△ ここまで挿入 △△△ --- */}
-
         <StolenBaseModal />
       {gameState === 'watching' && (
         <button
