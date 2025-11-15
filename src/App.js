@@ -1841,8 +1841,6 @@ if (showLineupEditor) {
 
   if (gameState === 'setup') { return (
     <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 p-4">
-
-      {/* --- ▽▽▽ このブロックを丸ごと挿入 ▽▽▽ --- */}
       <GameStartDialog 
         showShareDialog={showShareDialog}
         dialogTitle={dialogTitle}
@@ -1850,7 +1848,6 @@ if (showLineupEditor) {
         copyToClipboard={copyToClipboard}
         setShowShareDialog={setShowShareDialog}
       />
-      {/* --- △△△ ここまで挿入 △△△ --- */}
       <div className="max-w-md mx-auto bg-white rounded-xl shadow-2xl p-8">
         <div className="text-right mb-4">
           <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2 px-4 rounded-lg">ログアウト</button>
@@ -1858,9 +1855,7 @@ if (showLineupEditor) {
         <div className="text-center mb-8">
           <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
           <h1 className="text-3xl font-bold text-gray-800 mb-2">試合速報</h1>
-          
         </div>
-        {/* --- ▽▽▽ このブロックを丸ごと挿入 ▽▽▽ --- */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">現在の年度</label>
           <select 
@@ -1873,7 +1868,6 @@ if (showLineupEditor) {
              )}
           </select>
         </div>
-        {/* --- △△△ ここまで挿入 △△△ --- */}
         <div className="space-y-6">
           <div className="border-t border-gray-200 pt-6">
             <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
@@ -2014,12 +2008,11 @@ if (showLineupEditor) {
         copyToClipboard={copyToClipboard}
         setShowShareDialog={setShowShareDialog}
       />
-        <StolenBaseModal />
+      <StolenBaseModal />
       {gameState === 'watching' && (
         <button
           onClick={() => incrementLikeCount(user.uid, currentYear, gameId)}
-          className="fixed bottom-4 right-4 z-50 flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg transition-transform transform hover:scale-110"
-        >
+          className="fixed bottom-4 right-4 z-50 flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg transition-transform transform hover:scale-110">
           <Heart className="w-8 h-8 text-pink-500" fill="currentColor" />
           <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
             {likeCount}
