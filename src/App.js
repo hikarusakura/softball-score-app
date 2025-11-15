@@ -1877,7 +1877,8 @@ if (showLineupEditor) {
               <span>{isLoading ? '読込中...' : '試合速報を閲覧'}</span>
             </button>
           </div>
-          <div className="bg-gray-50 p-6 rounded-lg shadow-inner">
+          <div className="bg-gray-50 p-6 rounded-lg shadow-inner space-y-6">
+          <div className="">
             <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">記録者モード</h3>
           <div className="mb-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">あなたのチーム</label>
@@ -1927,10 +1928,11 @@ if (showLineupEditor) {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2 border-t border-gray-200 pt-6">
+          <div className="grid grid-cols-3 gap-2">
             <button onClick={() => setGameState('playerManagement')} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-3 rounded-lg text-xs">選手管理</button>
             <button onClick={() => setGameState('teamManagement')} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-3 rounded-lg text-xs">チーム管理</button>
             <button onClick={() => setGameState('statsScreen')} className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-3 rounded-lg text-xs">個人成績</button>
+            </div>
           </div>
         </div>
       </div>
