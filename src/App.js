@@ -364,31 +364,31 @@ const LineupEditor = ({ players, initialLineup, initialOpponentLineup, onSave, o
 
 // ★ 引数として受け取るように変更
 const GameStartDialog = ({ showShareDialog, dialogTitle, shareMessage, copyToClipboard, setShowShareDialog }) => {
-    if (!showShareDialog) return null;
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 w-full mx-4">
-          <h3 className="text-lg font-bold mb-4 text-center">{dialogTitle}</h3>
-          <div className="bg-gray-100 p-3 rounded-lg mb-4 whitespace-pre-wrap text-sm">{shareMessage}</div>
+    if (!showShareDialog) return null;
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full mx-4">
+          <h3 className="text-lg font-bold mb-4 text-center">{dialogTitle}</h3>
+          <div className="bg-gray-100 p-3 rounded-lg mb-4 whitespace-pre-wrap text-sm">{shareMessage}</div>
 {/* ★ "grid" から "flex" に戻し、"space-x-3" で隙間を空ける */}
-          <div className="flex justify-between items-center">
-            <button 
-              onClick={copyToClipboard} 
-              // ★ "flex-1" で幅を均等に分け合う
-              className="w-[48%] bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 whitespace-nowrap" >
-              コピー
-            </button>
-            <button 
-              onClick={() => setShowShareDialog(false)} 
-              // ★ "flex-1" で幅を均等に分け合う
-              className="w-[48%] bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg whitespace-nowrap flex justify-center items-center" >
-              閉じる
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+          <div className="flex justify-between items-center">
+            <button 
+              onClick={copyToClipboard} 
+              // ★ "flex-1" で幅を均等に分け合う
+              className="w-[48%] bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center space-x-2 whitespace-nowrap" >
+              コピー
+            </button>
+            <button 
+              onClick={() => setShowShareDialog(false)} 
+              // ★ "flex-1" で幅を均等に分け合う
+              className="w-[48%] bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg whitespace-nowrap flex justify-center items-center" >
+              閉じる
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
 // --- ログイン後のメインアプリ本体 ---
 const SoftballScoreApp = ({ user, initialTeamData }) => {
@@ -457,58 +457,58 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [isDataLoading, setIsDataLoading] = useState(true);
 
 useEffect(() => {
-    if (!user || !user.uid) return;
+    if (!user || !user.uid) return;
 
-    setIsDataLoading(true); // ★ 読み込み開始（ロック）
+    setIsDataLoading(true); // ★ 読み込み開始（ロック）
 
-    // 現在の年度（例: 2024）の選手・成績データを購読（監視）する
-    const yearRef = doc(db, 'teams', user.uid, 'years', String(currentYear));
-    const unsubscribe = onSnapshot(yearRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const yearData = docSnap.data();
-        console.log(`${currentYear}年度のデータを読み込みました`);
-        setPlayers(yearData.players || []);
-        setPlayerStats(yearData.playerStats || {});
-      } else {
-        // この年度のデータがまだ存在しない場合
-        console.log(`${currentYear}年度のデータはまだありません`);
-        // setPlayers([]); // (ここは前回の修正通りコメントアウトのまま)
-        // setPlayerStats({});
-      }
-      setIsDataLoading(false); // ★ 読み込み完了（ロック解除）
-    }, (error) => { // ★ エラーハンドラを追加
-      console.error("選手データの読み込みに失敗:", error);
-      setIsDataLoading(false); // ★ エラー時もロック解除
-    });
+    // 現在の年度（例: 2024）の選手・成績データを購読（監視）する
+    const yearRef = doc(db, 'teams', user.uid, 'years', String(currentYear));
+    const unsubscribe = onSnapshot(yearRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const yearData = docSnap.data();
+        console.log(`${currentYear}年度のデータを読み込みました`);
+        setPlayers(yearData.players || []);
+        setPlayerStats(yearData.playerStats || {});
+      } else {
+        // この年度のデータがまだ存在しない場合
+        console.log(`${currentYear}年度のデータはまだありません`);
+        // setPlayers([]); // (ここは前回の修正通りコメントアウトのまま)
+        // setPlayerStats({});
+      }
+      setIsDataLoading(false); // ★ 読み込み完了（ロック解除）
+    }, (error) => { // ★ エラーハンドラを追加
+      console.error("選手データの読み込みに失敗:", error);
+      setIsDataLoading(false); // ★ エラー時もロック解除
+    });
 
-    // コンポーネントが終了する時、またはcurrentYearが変わる時に購読を停止
-    return () => unsubscribe();
+    // コンポーネントが終了する時、またはcurrentYearが変わる時に購読を停止
+    return () => unsubscribe();
 
-  }, [user, currentYear]);
+  }, [user, currentYear]);
 
 // --- ▽▽▽ このブロックを丸ごと追加 ▽▽▽ ---
-  useEffect(() => {
-    if (!user || !user.uid) return;
-    // ★ availableYears が変更されたら、DBのルートに保存
-    const teamRef = doc(db, 'teams', user.uid);
-    setDoc(teamRef, { 
-      availableYears: availableYears
-    }, { merge: true });
-  }, [availableYears, user]); // ★ availableYears が変わるたびに実行
-  // --- △△△ ここまで追加 △△△ ---
+  useEffect(() => {
+    if (!user || !user.uid) return;
+    // ★ availableYears が変更されたら、DBのルートに保存
+    const teamRef = doc(db, 'teams', user.uid);
+    setDoc(teamRef, { 
+      availableYears: availableYears
+    }, { merge: true });
+  }, [availableYears, user]); // ★ availableYears が変わるたびに実行
+  // --- △△△ ここまで追加 △△△ ---
 
 useEffect(() => {
-    // ★ 読み込み中 or ユーザー未定義なら保存しない
-    if (!user || !user.uid || isDataLoading) {
-      return; 
-    }
-    // ★ 現在の年度(currentYear)の場所に保存する
-    const yearRef = doc(db, 'teams', user.uid, 'years', String(currentYear)); 
-    setDoc(yearRef, { 
-      playerStats: playerStats,
-      players: players 
-    }, { merge: true }); 
-  }, [playerStats, players, user, currentYear, isDataLoading]); // ★ 依存配列
+    // ★ 読み込み中 or ユーザー未定義なら保存しない
+    if (!user || !user.uid || isDataLoading) {
+      return; 
+    }
+    // ★ 現在の年度(currentYear)の場所に保存する
+    const yearRef = doc(db, 'teams', user.uid, 'years', String(currentYear)); 
+    setDoc(yearRef, { 
+      playerStats: playerStats,
+      players: players 
+    }, { merge: true }); 
+  }, [playerStats, players, user, currentYear, isDataLoading]); // ★ 依存配列
 
   // --- ポジション対応表 ---
   const positionMap = { '投': 'ピッチャー', '捕': 'キャッチャー', '一': 'ファースト', '二': 'セカンド', '三': 'サード', '遊': 'ショート', '左': 'レフト', '中': 'センター', '右': 'ライト' };
@@ -539,14 +539,14 @@ const setNextBatter = (lastBatterName) => {
   const getPlayerList = () => players || [];
 
   // --- ▽▽▽ この関数を丸ごと追加 ▽▽▽ ---
-  const handleYearChange = (year) => {
-    // 年度切り替え時に、古いデータが残らないよう明示的にリセットする
-    console.log(`年度を ${year} に切り替えます。Stateをリセットします。`);
+  const handleYearChange = (year) => {
+    // 年度切り替え時に、古いデータが残らないよう明示的にリセットする
+    console.log(`年度を ${year} に切り替えます。Stateをリセットします。`);
     setIsDataLoading(true); // ★ ロックを追加
-    setPlayers([]);
-    setPlayerStats({});
-    setCurrentYear(year);
-  };
+    setPlayers([]);
+    setPlayerStats({});
+    setCurrentYear(year);
+  };
   // --- △△△ ここまで追加 △△△ ---
 
   const sortedPlayers = React.useMemo(() => {
@@ -1309,38 +1309,38 @@ const setNextBatter = (lastBatterName) => {
     };
 
 // --- ▽▽▽ 試合結果テキスト生成（ここから） ▽▽▽ ---
-    
-    // 1. 自チームと相手チームの最終スコアを確定
-    const myFinalScore = isHomeTeam ? finalHomeScore : finalAwayScore;
-    const opponentFinalScore = isHomeTeam ? finalAwayScore : finalHomeScore;
+    
+    // 1. 自チームと相手チームの最終スコアを確定
+    const myFinalScore = isHomeTeam ? finalHomeScore : finalAwayScore;
+    const opponentFinalScore = isHomeTeam ? finalAwayScore : finalHomeScore;
 
-    // 2. 勝敗に応じた絵文字と記号を決定
-    let resultPrefix = '△'; // 引き分けがデフォルト
-    let resultSuffix = '';
+    // 2. 勝敗に応じた絵文字と記号を決定
+    let resultPrefix = '△'; // 引き分けがデフォルト
+    let resultSuffix = '';
 
-    if (winner === myTeam) {
-      resultPrefix = '〇';
-      resultSuffix = '✨';
-    } else if (winner === opponentTeam) {
-      resultPrefix = '●';
-      resultSuffix = '💧';
-    }
+    if (winner === myTeam) {
+      resultPrefix = '〇';
+      resultSuffix = '✨';
+    } else if (winner === opponentTeam) {
+      resultPrefix = '●';
+      resultSuffix = '💧';
+    }
 
-    // 3. スコアテキストを作成
-    const scoreText = `${resultPrefix}${myFinalScore}-${opponentFinalScore}${resultSuffix}`;
-    
-    // 4. 大会名（あれば）を追加
-    const tournamentText = tournamentName ? `${tournamentName}\n` : '';
+    // 3. スコアテキストを作成
+    const scoreText = `${resultPrefix}${myFinalScore}-${opponentFinalScore}${resultSuffix}`;
+    
+    // 4. 大会名（あれば）を追加
+    const tournamentText = tournamentName ? `${tournamentName}\n` : '';
 
-    // 5. 最終的なメッセージを組み立て
-    const resultMessage = `◇試合結果◇\n${tournamentText}対${opponentTeam}\n${scoreText}`;
+    // 5. 最終的なメッセージを組み立て
+    const resultMessage = `◇試合結果◇\n${tournamentText}対${opponentTeam}\n${scoreText}`;
 
-    // 6. ★ promptの代わりにダイアログ用のStateをセット
-    setDialogTitle('◇試合結果◇');
-    setShareMessage(resultMessage);
-    setShowShareDialog(true);
+    // 6. ★ promptの代わりにダイアログ用のStateをセット
+    setDialogTitle('◇試合結果◇');
+    setShareMessage(resultMessage);
+    setShowShareDialog(true);
 
-    // --- △△△ 試合結果テキスト生成（ここまで） △△△ ---
+    // --- △△△ 試合結果テキスト生成（ここまで） △△△ ---
 
     resetGameStates();
     setGameState('setup');
@@ -1355,20 +1355,20 @@ const setNextBatter = (lastBatterName) => {
   };
 
 const handleFetchFirebaseGames = async () => {
-    setIsLoading(true);
-    try { 
-      // ★ currentYear を渡すように修正
-      const games = await getAllGames(user.uid, currentYear); 
-      
-      setFirebaseGames(games || []); // (念のため || [] を追加)
-      setGameState('firebaseList'); 
-    } catch (error) { 
-      console.error("試合一覧の読み込みに失敗しました: ", error);
-      alert("試合一覧の読み込みに失敗しました。");
-    } finally { 
-      setIsLoading(false);
-    }
-  };
+    setIsLoading(true);
+    try { 
+      // ★ currentYear を渡すように修正
+      const games = await getAllGames(user.uid, currentYear); 
+      
+      setFirebaseGames(games || []); // (念のため || [] を追加)
+      setGameState('firebaseList'); 
+    } catch (error) { 
+      console.error("試合一覧の読み込みに失敗しました: ", error);
+      alert("試合一覧の読み込みに失敗しました。");
+    } finally { 
+      setIsLoading(false);
+    }
+  };
 
   const handleDeleteFirebaseGame = async (gameIdToDelete) => {
     const correctPassword = initialTeamData.deletePassword;
@@ -1458,13 +1458,13 @@ const handleFetchFirebaseGames = async () => {
   };
 
 const handleSaveStats = (playerName) => { // ★ async を削除
-    if (window.confirm(`「${playerName}」の成績を保存しますか？`)) {
-      // ★ Stateを更新するだけにする (自動保存useEffectがDBに書き込む)
-      setPlayerStats(prev => ({ ...prev, [playerName]: tempStats }));
-      alert('成績を保存しました。');
-      setEditingPlayer(null);
-    }
-  };
+    if (window.confirm(`「${playerName}」の成績を保存しますか？`)) {
+      // ★ Stateを更新するだけにする (自動保存useEffectがDBに書き込む)
+      setPlayerStats(prev => ({ ...prev, [playerName]: tempStats }));
+      alert('成績を保存しました。');
+      setEditingPlayer(null);
+    }
+  };
 
   const handleCancelEdit = () => {
     setEditingPlayer(null);
@@ -1538,41 +1538,41 @@ if (showLineupEditor) {
 
 
   if (gameState === 'teamManagement') {
-    const handleSaveTeams = async (newProfiles) => {
-      // ... (変更なし) ...
-      const success = await updateTeamData(user.uid, { teamProfiles: newProfiles });
-      if (success) {
-        setTeamProfiles(newProfiles);
-        alert('チームリストを保存しました。');
-        setGameState('setup');
-      } else {
-        alert('保存に失敗しました。');
-      }
-    };
-    // ★ (変更なし)
-    return (
-      <TeamManagementScreen 
-        initialProfiles={teamProfiles} 
-        onSave={handleSaveTeams} 
-        onBack={() => setGameState('setup')}
-        // --- ▽▽▽ 以下を丸ごと追加 ▽▽▽ ---
-        currentYear={currentYear}
-        availableYears={availableYears}
-        onYearChange={(year) => handleYearChange(year)}
-        onYearAdd={(newYear) => {
-          if (!availableYears.includes(newYear)) {
-            const updatedYears = [...availableYears, newYear].sort((a, b) => b - a); // 降順ソート
-            setAvailableYears(updatedYears);
-            setCurrentYear(newYear); // 新しい年度に自動で切り替え
-            alert(`${newYear}年度を作成しました。`);
-          } else {
-            alert(`${newYear}年度は既に存在します。`);
-          }
-        }}
-        // --- △△△ ここまで追加 △△△ ---
-      />
-    );
-  }
+    const handleSaveTeams = async (newProfiles) => {
+      // ... (変更なし) ...
+      const success = await updateTeamData(user.uid, { teamProfiles: newProfiles });
+      if (success) {
+        setTeamProfiles(newProfiles);
+        alert('チームリストを保存しました。');
+        setGameState('setup');
+      } else {
+        alert('保存に失敗しました。');
+      }
+    };
+    // ★ (変更なし)
+    return (
+      <TeamManagementScreen 
+        initialProfiles={teamProfiles} 
+        onSave={handleSaveTeams} 
+        onBack={() => setGameState('setup')}
+        // --- ▽▽▽ 以下を丸ごと追加 ▽▽▽ ---
+        currentYear={currentYear}
+        availableYears={availableYears}
+        onYearChange={(year) => handleYearChange(year)}
+        onYearAdd={(newYear) => {
+          if (!availableYears.includes(newYear)) {
+            const updatedYears = [...availableYears, newYear].sort((a, b) => b - a); // 降順ソート
+            setAvailableYears(updatedYears);
+            setCurrentYear(newYear); // 新しい年度に自動で切り替え
+            alert(`${newYear}年度を作成しました。`);
+          } else {
+            alert(`${newYear}年度は既に存在します。`);
+          }
+        }}
+        // --- △△△ ここまで追加 △△△ ---
+      />
+    );
+  }
 
   if (gameState === 'inGameStatsScreen') {
     const handleBack = () => {
@@ -1839,13 +1839,13 @@ if (showLineupEditor) {
 
   if (gameState === 'setup') { return (
     <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500 p-4">
-      <GameStartDialog 
-        showShareDialog={showShareDialog}
-        dialogTitle={dialogTitle}
-        shareMessage={shareMessage}
-        copyToClipboard={copyToClipboard}
-        setShowShareDialog={setShowShareDialog}
-      />
+      <GameStartDialog 
+        showShareDialog={showShareDialog}
+        dialogTitle={dialogTitle}
+        shareMessage={shareMessage}
+        copyToClipboard={copyToClipboard}
+        setShowShareDialog={setShowShareDialog}
+      />
       <div className="max-w-md mx-auto bg-white rounded-xl shadow-2xl p-8">
         <div className="text-right mb-4">
           <button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2 px-4 rounded-lg">ログアウト</button>
@@ -1854,18 +1854,18 @@ if (showLineupEditor) {
           <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
           <h1 className="text-3xl font-bold text-gray-800 mb-2">試合速報</h1>
         </div>
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">現在の年度</label>
-          <select 
-            value={currentYear} 
-            onChange={(e) => handleYearChange(Number(e.target.value))}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            {(availableYears || []).sort((a, b) => b - a).map(year => 
-              <option key={year} value={year}>{year}年度</option>
-             )}
-          </select>
-        </div>
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">現在の年度</label>
+          <select 
+            value={currentYear} 
+            onChange={(e) => handleYearChange(Number(e.target.value))}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          >
+            {(availableYears || []).sort((a, b) => b - a).map(year => 
+              <option key={year} value={year}>{year}年度</option>
+             )}
+          </select>
+        </div>
         <div className="space-y-6">
           <div className="bg-gray-50 p-6 rounded-lg shadow-inner">
             <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
