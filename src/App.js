@@ -500,6 +500,19 @@ useEffect(() => {
   }, [availableYears, user]); // ★ availableYears が変わるたびに実行
   // --- △△△ ここまで追加 △△△ ---
 
+useEffect(() => {
+    // ★ 読み込み中 or ユーザー未定義なら保存しない
+    if (!user || !user.uid || isDataLoading) {
+      return; 
+    }
+    // ★ 現在の年度(currentYear)の場所に保存する
+    const yearRef = doc(db, 'teams', user.uid, 'years', String(currentYear)); 
+    setDoc(yearRef, { 
+      playerStats: playerStats,
+      players: players 
+    }, { merge: true }); 
+  }, [playerStats, players, user, currentYear, isDataLoading]); // ★ 依存配列
+
   // --- ポジション対応表 ---
   const positionMap = { '投': 'ピッチャー', '捕': 'キャッチャー', '一': 'ファースト', '二': 'セカンド', '三': 'サード', '遊': 'ショート', '左': 'レフト', '中': 'センター', '右': 'ライト' };
   
@@ -758,18 +771,6 @@ const setNextBatter = (lastBatterName) => {
   };
   
 
-
-useEffect(() => {
-    if (!user || !user.uid || isDataLoading) {
-      return; 
-    }
-    // ★ 保存先を /years/{currentYear} に変更
-    const yearRef = doc(db, 'teams', user.uid, 'years', String(currentYear)); 
-    setDoc(yearRef, { 
-      playerStats: playerStats,
-      players: players 
-    }, { merge: true }); // merge: true で、ドキュメント全体を上書きせず部分更新する
-  }, [playerStats, players, user, currentYear, isDataLoading]); // ★ 依存配列に currentYear を追加
 
   useEffect(() => {
     // URLパラメータをチェックして観戦モードを開始する
@@ -2000,7 +2001,7 @@ if (showLineupEditor) {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-green-400 to-blue-500">
+    <div className="min-h-screen flex flex-col bg-blue-900">
       <GameStartDialog 
         showShareDialog={showShareDialog}
         dialogTitle={dialogTitle}
