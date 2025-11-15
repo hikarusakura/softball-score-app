@@ -1870,14 +1870,14 @@ if (showLineupEditor) {
           </select>
         </div>
         <div className="space-y-6">
-          <div className="border-t border-gray-200 pt-6">
+          <div className="bg-gray-50 p-6 rounded-lg shadow-inner">
             <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">観戦モード</h3>
             <button onClick={handleFetchFirebaseGames} disabled={isLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-purple-300">
               <Eye className="h-5 w-5" />
               <span>{isLoading ? '読込中...' : '試合速報を閲覧'}</span>
             </button>
           </div>
-          <div className="border-t border-gray-200 pt-6">
+          <div className="bg-gray-50 p-6 rounded-lg shadow-inner">
             <h3 className="text-lg font-medium text-gray-800 mb-4 text-center">記録者モード</h3>
           <div className="mb-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">あなたのチーム</label>
