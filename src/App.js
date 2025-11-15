@@ -199,35 +199,32 @@ const TeamManagementScreen = ({ initialProfiles, onSave, onBack, currentYear, av
           <button onClick={onBack} className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"><ChevronLeft className="h-5 w-5" /></button>
           <h1 className="text-2xl font-bold text-gray-800">チーム管理</h1>
         </div>
-        {/* --- ▽▽▽ このブロックを丸ごと挿入 ▽▽▽ --- */}
-        <div className="mb-6 border-b pb-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-2">年度の管理</h2>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">現在の年度</label>
-              <select 
-                value={currentYear} 
-                onChange={(e) => onYearChange(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                {(availableYears || []).sort((a, b) => b - a).map(year => 
-                  <option key={year} value={year}>{year}年度</option>
-                )}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">新年度を作成</label>
-              <button 
-                // ★ 次の年度を提案 (例: 2025年度が最新なら2026年度)
-                onClick={() => onYearAdd(Math.max(...availableYears) + 1)}
-                className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
-              >
-                {Math.max(...availableYears) + 1}年度を作成
-              </button>
-            </div>
-          </div>
-        </div>
-        {/* --- △△△ ここまで挿入 △△△ --- */}
+        <div className="mb-6 border-b pb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-2">年度の管理</h2>
+          <div className="grid grid-cols-2 gap-2">
+           <div>
+           <label className="block text-sm font-medium text-gray-700 mb-1">現在の年度</label>
+              <select 
+                value={currentYear} 
+                onChange={(e) => onYearChange(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              >
+               {(availableYears || []).sort((a, b) => b - a).map(year => 
+                 <option key={year} value={year}>{year}年度</option>
+                )}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">新年度を作成</label>
+              <button 
+                // ★ 次の年度を提案 (例: 2025年度が最新なら2026年度)
+                onClick={() => onYearAdd(Math.max(...availableYears) + 1)}
+                className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold">{Math.max(...availableYears) + 1}年度を作成
+              </button>
+            </div>
+         </div>
+        </div>
+        {/* --- △△△ ここまで挿入 △△△ --- */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">新しいチームを追加</label>
           <div className="flex space-x-2">
