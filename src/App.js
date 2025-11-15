@@ -2002,13 +2002,13 @@ if (showLineupEditor) {
   
   return (
     <div className="min-h-screen flex flex-col bg-blue-900">
-      <GameStartDialog 
-        showShareDialog={showShareDialog}
-        dialogTitle={dialogTitle}
-        shareMessage={shareMessage}
-        copyToClipboard={copyToClipboard}
-        setShowShareDialog={setShowShareDialog}
-      />
+      <GameStartDialog 
+      showShareDialog={showShareDialog}
+      dialogTitle={dialogTitle}
+      shareMessage={shareMessage}
+      copyToClipboard={copyToClipboard}
+      setShowShareDialog={setShowShareDialog}
+      />
       <StolenBaseModal />
       {gameState === 'watching' && (
         <button
