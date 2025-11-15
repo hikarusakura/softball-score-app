@@ -2010,16 +2010,17 @@ if (showLineupEditor) {
       setShowShareDialog={setShowShareDialog}
       />
       <StolenBaseModal />
-      {gameState === 'watching' && (
-        <button
-          onClick={() => incrementLikeCount(user.uid, currentYear, gameId)}
-          className="fixed bottom-4 right-4 z-50 flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg transition-transform transform hover:scale-110">
+      <button
+          // ★ 記録者(isGameCreator)でない場合のみクリック可能にする
+          onClick={!isGameCreator ? () => incrementLikeCount(user.uid, currentYear, gameId) : undefined}
+          // ★ 記録者の場合は押せないスタイル(cursor-not-allowed)を追加
+          className={`fixed bottom-4 right-4 z-50 flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg ${!isGameCreator ? 'transition-transform transform hover:scale-110' : 'cursor-not-allowed opacity-75'}`}
+        >
           <Heart className="w-8 h-8 text-pink-500" fill="currentColor" />
           <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
             {likeCount}
           </span>
         </button>
-      )}
       <div className={isInputView ? "h-1/2" : "h-full"}>
         <div className="h-full bg-gradient-to-r from-blue-900 to-green-800 text-white p-3 overflow-auto">
           <div className="max-w-4xl mx-auto relative p-3">
