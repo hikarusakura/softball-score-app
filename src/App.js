@@ -1928,6 +1928,7 @@ if (showLineupEditor) {
               </button>
             </div>
           </div>
+          <div className="border-t border-gray-200 pt-6"></div>
           <div className="grid grid-cols-3 gap-2">
             <button onClick={() => setGameState('playerManagement')} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-3 rounded-lg text-xs">選手管理</button>
             <button onClick={() => setGameState('teamManagement')} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-3 rounded-lg text-xs">チーム管理</button>
