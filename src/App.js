@@ -10,7 +10,7 @@ import {
 import { doc, setDoc, onSnapshot, getDoc } from "firebase/firestore";
 
 
-
+//
 // --- ログイン画面コンポーネント ---
 const LoginScreen = ({ onLogin }) => {
   const [teamId, setTeamId] = useState('');
