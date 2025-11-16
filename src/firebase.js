@@ -32,7 +32,7 @@ export const getTeamData = (teamId) => {
 
 export const saveGameState = async (teamId, year, gameId, gameState) => {
   const gameRef = doc(db, 'teams', teamId, 'years', String(year), 'games', gameId);
-  await setDoc(gameRef, { ...gameState, lastUpdated: Date.now() });
+  await setDoc(gameRef, { ...gameState, lastUpdated: Date.now() }, { merge: true });
 };
 
 export const watchGameState = (teamId, year, gameId, callback, errorCallback) => {

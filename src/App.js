@@ -660,7 +660,6 @@ const setNextBatter = (lastBatterName) => {
     const currentState = {
       myTeamLineup,
       opponentLineup,
-      likeCount,
       myTeamNameForGame,
       bsoCount,
       inGameStats,
@@ -691,7 +690,7 @@ const setNextBatter = (lastBatterName) => {
       console.error('保存失敗:', error);
     }
   }, [
-    user.uid, gameId, isGameCreator, likeCount, myTeamNameForGame, bsoCount, inGameStats, myTeamPitcher, opponentPitcher, isStatsRecordingEnabled, tournamentName, opponentTeam, isHomeTeam, currentInning, 
+    user.uid, gameId, isGameCreator, myTeamNameForGame, bsoCount, inGameStats, myTeamPitcher, opponentPitcher, isStatsRecordingEnabled, tournamentName, opponentTeam, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, homeHits, awayHits,
     timeline, currentBatter, customBatter, useCustomBatter, gameStartDate, myTeamLineup, opponentLineup, currentYear
   ]);
