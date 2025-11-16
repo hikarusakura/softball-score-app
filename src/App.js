@@ -846,16 +846,7 @@ const setNextBatter = (lastBatterName) => {
         setMyTeamLineup(data.myTeamLineup || Array(9).fill({ playerName: '', position: '' }));
         setOpponentLineup(data.opponentLineup || '');
         
-        if (mode === 'watch') {
-          setGameId(gameIdToLoad);
-          setIsGameCreator(false);
-          setGameState('watching');
-        } else if (mode === 'resume') {
-          setIsResuming(true);
-          setGameId(gameIdToLoad);
-          setIsGameCreator(true);
-          setGameState('playing');
-        }
+        
       } else {
         alert('指定された試合IDが見つかりませんでした。');
         returnToSetup();
