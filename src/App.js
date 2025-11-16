@@ -952,9 +952,7 @@ const loadGame = async (id, mode = 'watch') => { // ★ async を追加
   	  firebaseListener.current = newListener;
   	}
   };
-      loadGameForSpectator(gameIdFromUrl, teamIdFromUrl);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+}
 
   useEffect(() => {
     if (isResuming) {
