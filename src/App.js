@@ -7,7 +7,7 @@ import {
   updateTeamData,
   incrementLikeCount
 } from './firebase';
-import { doc, setDoc, onSnapshot } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, getDoc } from "firebase/firestore";
 
 
 
@@ -805,7 +805,7 @@ const setNextBatter = (lastBatterName) => {
     saveCurrentGameState();
   }, [gameState, isGameCreator, isResuming, saveCurrentGameState]);
   
-  const loadGame = (id, mode = 'watch') => {
+  const loadGame = async (id, mode = 'watch') => {
     const gameIdToLoad = id;
     if (!gameIdToLoad || gameIdToLoad.trim() === '') {
       alert('試合IDを入力してください。');
@@ -817,6 +817,36 @@ const setNextBatter = (lastBatterName) => {
 
     const profiles = initialTeamData.teamProfiles || [initialTeamData.teamName || 'あなたのチーム'];
     
+    // --- ▽▽▽ 修正ここから ▽▽▽ ---
+    if (mode === 'resume') {
+      // ★ 1. 先にデータが存在するか「1回だけ」チェック
+      const gameRef = doc(db, 'teams', user.uid, 'years', String(currentYear), 'games', gameIdToLoad);
+      try {
+        const docSnap = await getDoc(gameRef); // ★ getDoc を使用
+        if (!docSnap.exists()) {
+          alert('指定された試合IDが見つかりませんでした。\n（年度が正しいか確認してください）');
+          return; // ★ 画面遷移せず終了
+        }
+      } catch (error) {
+        console.error("試合の読み込みチェックに失敗:", error);
+        alert('試合の読み込みに失敗しました。');
+        return;
+      }
+      
+      // ★ 2. データが存在することを確認してから画面遷移
+      setIsResuming(true);
+      setGameId(gameIdToLoad);
+      setIsGameCreator(true);
+      setGameState('playing');
+
+    } else if (mode === 'watch') {
+      // ★ 観戦モードは即座に画面遷移（観戦者が年度を間違えることはないため）
+      setGameId(gameIdToLoad);
+      setIsGameCreator(false);
+      setGameState('watching');
+    }
+    // --- △△△ 修正ここまで △△△ ---
+
     const newListener = watchGameState(user.uid, currentYear, gameIdToLoad, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
@@ -848,7 +878,7 @@ const setNextBatter = (lastBatterName) => {
         
         
       } else {
-        alert('指定された試合IDが見つかりませんでした。');
+        alert('監視対象の試合データが見つからなくなりました。セットアップ画面に戻ります。');
         returnToSetup();
       }
     }, (error) => {
