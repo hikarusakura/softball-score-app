@@ -399,7 +399,7 @@ const ScoreEditor = ({
   opponentTeamName, 
   isHomeTeam, 
   onSave, 
-  onCancel 
+  onBack 
 }) => {
   const [homeScores, setHomeScores] = useState(initialHomeScore.map(s => s ?? ''));
   const [awayScores, setAwayScores] = useState(initialAwayScore.map(s => s ?? ''));
@@ -451,11 +451,17 @@ const ScoreEditor = ({
     />
   );
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-sm">
-        <h2 className="text-xl font-bold text-center p-4 border-b">スコア修正</h2>
-        <div className="p-4 max-h-[70vh] overflow-y-auto">
+return (
+    // ★ statsScreen や playerManagement と同じレイアウトに変更
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6">
+        {/* ★ ヘッダー (戻るボタン) を追加 */}
+        <div className="flex items-center mb-6">
+          <button onClick={onBack} className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"><ChevronLeft className="h-5 w-5" /></button>
+          <h1 className="text-2xl font-bold text-gray-800">スコア修正</h1>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto">
           <div className="grid grid-cols-3 gap-y-2 items-center text-center font-semibold mb-2">
             <div className="text-left">回</div>
             <div>{opponentTeamName}</div>
@@ -469,24 +475,22 @@ const ScoreEditor = ({
             </div>
           ))}
         </div>
-        <div className="flex justify-end space-x-4 p-4 border-t">
-          <button onClick={onCancel} className="px-5 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">キャンセル</button>
+        {/* ★ 保存ボタンのデザインを変更 */}
+        <div className="mt-8 border-t pt-6">
           <button 
             onClick={() => {
-              // ★ 保存時に文字列を数値(またはnull)に変換
               const convertToNumeric = (arr) => arr.map(val => val === '' ? null : parseInt(val, 10));
               onSave(convertToNumeric(homeScores), convertToNumeric(awayScores));
             }} 
-            className="px-5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg"
           >
-            保存
+            保存して戻る
           </button>
         </div>
       </div>
     </div>
   );
 };
-// --- △△△ ここまで追加 △△△ ---
 
 // --- ログイン後のメインアプリ本体 ---
 const SoftballScoreApp = ({ user, initialTeamData }) => {
@@ -553,7 +557,6 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   // eslint-disable-next-line no-unused-vars
   const [availableYears, setAvailableYears] = useState(initialTeamData.availableYears || [new Date().getFullYear()]);
   const [isDataLoading, setIsDataLoading] = useState(true);
-  const [showScoreEditor, setShowScoreEditor] = useState(false);
 
 useEffect(() => {
     if (!user || !user.uid) return;
@@ -1617,13 +1620,13 @@ const handleSaveStats = (playerName) => { // ★ async を削除
   };
  
   // --- ▽▽▽ このブロックを丸ごと挿入 ▽▽▽ ---
-  if (showScoreEditor) {
+  if (gameState === 'scoreEditor') {
     const handleSaveScores = (newHomeScore, newAwayScore) => {
-      saveStateToHistory(); // 「元に戻す」用に現在の状態を保存
+      saveStateToHistory(); 
       setHomeScore(newHomeScore);
       setAwayScore(newAwayScore);
       addToTimeline("スコアボードが手動で修正されました。");
-      setShowScoreEditor(false);
+      setGameState('playing'); // ★ setShowScoreEditor(false) から変更
     };
     return (
       <ScoreEditor
@@ -1633,7 +1636,7 @@ const handleSaveStats = (playerName) => { // ★ async を削除
         opponentTeamName={opponentTeam}
         isHomeTeam={isHomeTeam}
         onSave={handleSaveScores}
-        onCancel={() => setShowScoreEditor(false)}
+        onBack={() => setGameState('playing')}
       />
     );
   }
@@ -2264,7 +2267,7 @@ if (showLineupEditor) {
               <h2 className="text-lg font-bold text-gray-800">📝 スコア入力</h2>
               <div className="flex space-x-2">
                 <button onClick={undoLastAction} disabled={history.length === 0} className="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-xs transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">元に戻す</button>
-                <button onClick={() => setShowScoreEditor(true)} className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-xs transition-colors">スコア修正</button>
+                <button onClick={() => setGameState('scoreEditor')} className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-xs transition-colors">スコア修正</button>
                 <button onClick={forceChange} className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs transition-colors">チェンジ</button>
                 <button onClick={endGame} className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs transition-colors">試合終了</button>
               </div>
