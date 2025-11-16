@@ -3,7 +3,7 @@ import { Play, Trophy, Eye, ChevronLeft, Copy, Heart } from 'lucide-react';
 import {
   db, saveGameState, watchGameState, stopWatching,
   generateGameId, getAllGames, deleteGameFromFirebase,
-  login, logout, onAuth, getTeamData, updatePlayerStats,
+  login, logout, onAuth, getTeamData,
   updateTeamData,
   incrementLikeCount
 } from './firebase';
@@ -1288,8 +1288,7 @@ const setNextBatter = (lastBatterName) => {
         return newStats;
       });
       if (isStatsRecordingEnabled) {
-        updatePlayerStats(user.uid, currentYear, batterName, statsUpdate);
-        setPlayerStats(prev => {
+          setPlayerStats(prev => {
           const newStats = { ...prev };
           const player = { ...(newStats[batterName] || {}) };
           for (const key in statsUpdate) {
@@ -1392,8 +1391,7 @@ const setNextBatter = (lastBatterName) => {
         return newStats;
       });
       if (isStatsRecordingEnabled) {
-        updatePlayerStats(user.uid, currentYear, batterName, statsUpdate);
-        setPlayerStats(prev => {
+          setPlayerStats(prev => {
           const newStats = { ...prev };
           const player = { ...(newStats[batterName] || {}) };
           for (const key in statsUpdate) {
@@ -1419,8 +1417,7 @@ const setNextBatter = (lastBatterName) => {
     });
 
     if (isStatsRecordingEnabled) {
-      updatePlayerStats(user.uid, currentYear, playerName, statsUpdate);
-      setPlayerStats(prev => {
+        setPlayerStats(prev => {
         const newStats = { ...prev };
         const player = { ...(newStats[playerName] || {}) };
         player.stolenBases = (player.stolenBases || 0) + 1;
