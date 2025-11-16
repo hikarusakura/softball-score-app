@@ -936,7 +936,7 @@ const loadGame = async (id, mode = 'watch') => { // ★ async を追加
   	  	  setCurrentBatter(data.currentBatter || '');
   	  	  setCustomBatter(data.customBatter || '');
   	  	  setUseCustomBatter(data.useCustomBatter === true);
-V 	  	  setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
+  	  	  setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
   	  	  setLikeCount(data.likeCount || 0);
   	  	  setMyTeamLineup(data.myTeamLineup || Array(9).fill({ playerName: '', position: '' }));
   	  	  setOpponentLineup(data.opponentLineup || Array(9).fill({ playerName: '', position: '' }));
@@ -2372,7 +2372,6 @@ if (showLineupEditor) {
       )}
     </div>
   );
-};
 
 
 // --- アプリケーションの親コンポーネント ---
