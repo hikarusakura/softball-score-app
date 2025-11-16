@@ -436,7 +436,7 @@ const ScoreEditor = ({
       pattern="[0-9]*"
       value={isHomeTeam ? homeScores[inningIndex] : awayScores[inningIndex] ?? ''}
       onChange={(e) => handleScoreChange(isHomeTeam ? 'home' : 'away', inningIndex, e.target.value)}
-      className="w-16 text-center border rounded-md py-1"
+      className="w-full text-center border rounded-md py-1"
     />
   );
 
@@ -447,33 +447,66 @@ const ScoreEditor = ({
       pattern="[0-9]*"
       value={isHomeTeam ? awayScores[inningIndex] : homeScores[inningIndex] ?? ''}
       onChange={(e) => handleScoreChange(isHomeTeam ? 'away' : 'home', inningIndex, e.target.value)}
-      className="w-16 text-center border rounded-md py-1"
+      className="w-full text-center border rounded-md py-1"
     />
   );
 
 return (
     // ★ statsScreen や playerManagement と同じレイアウトに変更
     <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6">
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
         {/* ★ ヘッダー (戻るボタン) を追加 */}
         <div className="flex items-center mb-6">
           <button onClick={onBack} className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"><ChevronLeft className="h-5 w-5" /></button>
           <h1 className="text-2xl font-bold text-gray-800">スコア修正</h1>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto">
-          <div className="grid grid-cols-3 gap-y-2 items-center text-center font-semibold mb-2">
-            <div className="text-left">回</div>
-            <div>{opponentTeamName}</div>
-            <div>{myTeamName}</div>
-          </div>
-          {Array.from({ length: inningsCount }).map((_, index) => (
-            <div key={index} className="grid grid-cols-3 gap-y-2 items-center text-center py-1">
-              <div className="text-left font-semibold">{index + 1}回</div>
-              <OpponentTeamComponent inningIndex={index} />
-              <MyTeamComponent inningIndex={index} />
+        {/* --- ▽▽▽ ここから横並びレイアウトに変更 ▽▽▽ --- */}
+        <div className="overflow-x-auto">
+          <div className="flex flex-col space-y-2" style={{ minWidth: `${(inningsCount + 2) * 4}rem` }}>
+            
+            {/* ヘッダー行 (イニング) */}
+            <div className="flex items-center space-x-2">
+              <div className="w-24 font-semibold text-sm">チーム</div> {/* チーム名列 */}
+              {Array.from({ length: inningsCount }).map((_, index) => (
+                <div key={index} className="w-12 text-center font-semibold">{index + 1}</div>
+              ))}
+              <div className="w-12 text-center font-semibold">計</div> {/* 合計列 */}
             </div>
-          ))}
+
+            {/* 相手チーム行 */}
+            <div className="flex items-center space-x-2">
+              <div className="w-24 font-semibold text-sm truncate" title={isHomeTeam ? opponentTeamName : myTeamName}>
+                {isHomeTeam ? opponentTeamName : myTeamName}
+              </div>
+              {Array.from({ length: inningsCount }).map((_, index) => (
+                <div key={index} className="w-12">
+                  <OpponentTeamComponent inningIndex={index} />
+                </div>
+              ))}
+              {/* 相手合計 (入力中は自動計算) */}
+              <div className="w-12 text-center font-bold">
+                {(isHomeTeam ? awayScores : homeScores).reduce((acc, score) => acc + (parseInt(score) || 0), 0)}
+              </div>
+            </div>
+
+            {/* 自チーム行 */}
+            <div className="flex items-center space-x-2">
+              <div className="w-24 font-semibold text-sm truncate" title={isHomeTeam ? myTeamName : opponentTeamName}>
+                {isHomeTeam ? myTeamName : opponentTeamName}
+              </div>
+              {Array.from({ length: inningsCount }).map((_, index) => (
+                <div key={index} className="w-12">
+                  <MyTeamComponent inningIndex={index} />
+                </div>
+              ))}
+              {/* 自チーム合計 (入力中は自動計算) */}
+              <div className="w-12 text-center font-bold">
+                {(isHomeTeam ? homeScores : awayScores).reduce((acc, score) => acc + (parseInt(score) || 0), 0)}
+              </div>
+            </div>
+
+          </div>
         </div>
         {/* ★ 保存ボタンのデザインを変更 */}
         <div className="mt-8 border-t pt-6">
