@@ -838,121 +838,148 @@ const setNextBatter = (lastBatterName) => {
     saveCurrentGameState();
   }, [gameState, isGameCreator, isResuming, saveCurrentGameState]);
   
-const loadGame = async (id, mode = 'watch') => { // ★ async を追加
-    const gameIdToLoad = id;
-  	if (!gameIdToLoad || gameIdToLoad.trim() === '') {
-  	  alert('試合IDを入力してください。');
-  	  return;
-  	}
-  	if (firebaseListener.current) {
-  	  stopWatching(firebaseListener.current);
-  	  firebaseListener.current = null; // 確実にリスナーを止める
-  	}
+  const loadGame = async (id, mode = 'watch') => {
+    const gameIdToLoad = id;
+    if (!gameIdToLoad || gameIdToLoad.trim() === '') {
+      alert('試合IDを入力してください。');
+      return;
+    }
+    if (firebaseListener.current) {
+      stopWatching(firebaseListener.current);
+    }
 
-  	const profiles = initialTeamData.teamProfiles || [initialTeamData.teamName || 'あなたのチーム'];
-  	const gameRef = doc(db, 'teams', user.uid, 'years', String(currentYear), 'games', gameIdToLoad);
+    const profiles = initialTeamData.teamProfiles || [initialTeamData.teamName || 'あなたのチーム'];
+    
+    // --- ▽▽▽ 修正ここから ▽▽▽ ---
+    if (mode === 'resume') {
+      // ★ 1. 先にデータが存在するか「1回だけ」チェック
+      const gameRef = doc(db, 'teams', user.uid, 'years', String(currentYear), 'games', gameIdToLoad);
+      try {
+        const docSnap = await getDoc(gameRef); // ★ getDoc を使用
+        if (!docSnap.exists()) {
+          alert('指定された試合IDが見つかりませんでした。\n（年度が正しいか確認してください）');
+          return; // ★ 画面遷移せず終了
+        }
+      } catch (error) {
+        console.error("試合の読み込みチェックに失敗:", error);
+        alert('試合の読み込みに失敗しました。');
+        return;
+      }
+      
+      // ★ 2. データが存在することを確認してから画面遷移
+      setIsResuming(true);
+      setGameId(gameIdToLoad);
+      setIsGameCreator(true);
+      setGameState('playing');
 
-  	if (mode === 'resume') {
-  	  // --- 記録再開モード ---
-  	  // 1. getDocで「1回だけ」データを取得
-  	  try {
-  	  	const docSnap = await getDoc(gameRef); // ★ getDoc を使用
-  	  	if (!docSnap.exists()) {
-  	  	  alert('指定された試合IDが見つかりませんでした。\n（年度が正しいか確認してください）');
-  	  	  return; // ★ 画面遷移せず終了
-  	  	}
-  	  	 
-  	  	// 2. 取得したデータでStateをセット
-  	  	const data = docSnap.data();
-  	  	setMyTeamNameForGame(data.myTeamNameForGame || profiles[0]);
-  	  	setBsoCount(data.bsoCount || { b: 0, s: 0 });
-  	  	setInGameStats(data.inGameStats || {});
-  	  	setMyTeamPitcher(data.myTeamPitcher || '');
-  	  	setOpponentPitcher(data.opponentPitcher || '');
-  	  	setIsStatsRecordingEnabled(data.isStatsRecordingEnabled !== undefined ? data.isStatsRecordingEnabled : true);
-  	  	setTournamentName(data.tournamentName || '');
-  	  	setOpponentTeam(data.opponentTeam || '');
-  	  	setIsHomeTeam(data.isHomeTeam === true);
-  	  	setCurrentInning(typeof data.currentInning === 'number' ? data.currentInning : 1);
-  	  	setCurrentTeamBatting(data.currentTeamBatting || 'away');
-  	  	setOutCount(typeof data.outCount === 'number' ? data.outCount : 0);
-  	  	setBases(data.bases && typeof data.bases === 'object' ? data.bases : { first: false, second: false, third: false });
-  	  	setHomeScore(Array.isArray(data.homeScore) ? data.homeScore : Array(7).fill(null));
-  	  	setAwayScore(Array.isArray(data.awayScore) ? data.awayScore : Array(7).fill(null));
-  	  	setHomeHits(data.homeHits || 0);
-  	  	setAwayHits(data.awayHits || 0);
-  	  	setTimeline(Array.isArray(data.timeline) ? data.timeline : []);
-  	  	setCurrentBatter(data.currentBatter || '');
-  	  	setCustomBatter(data.customBatter || '');
-  	  	setUseCustomBatter(data.useCustomBatter === true);
-  	  	setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
-  	  	setLikeCount(data.likeCount || 0);
-  	  	setMyTeamLineup(data.myTeamLineup || Array(9).fill({ playerName: '', position: '' }));
-  	  	setOpponentLineup(data.opponentLineup || Array(9).fill({ playerName: '', position: '' }));
+    } else if (mode === 'watch') {
+      // ★ 観戦モードは即座に画面遷移（観戦者が年度を間違えることはないため）
+      setGameId(gameIdToLoad);
+      setIsGameCreator(false);
+      setGameState('watching');
+    }
+    // --- △△△ 修正ここまで △△△ ---
 
-  	  	// 3. 画面遷移
-  	  	setIsResuming(true); // 自動保存はまだロック
-  	  	setGameId(gameIdToLoad);
-  	  	setIsGameCreator(true);
-  	  	setGameState('playing');
-  	  	// ★ 記録者モードでは監視(watchGameState)は開始しない ★
+    const newListener = watchGameState(user.uid, currentYear, gameIdToLoad, (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        setMyTeamNameForGame(data.myTeamNameForGame || profiles[0]);
+        setBsoCount(data.bsoCount || { b: 0, s: 0 });
+        setInGameStats(data.inGameStats || {});
+        setMyTeamPitcher(data.myTeamPitcher || '');
+        setOpponentPitcher(data.opponentPitcher || '');
+        setIsStatsRecordingEnabled(data.isStatsRecordingEnabled !== undefined ? data.isStatsRecordingEnabled : true);
+        setTournamentName(data.tournamentName || '');
+        setOpponentTeam(data.opponentTeam || '');
+        setIsHomeTeam(data.isHomeTeam === true);
+        setCurrentInning(typeof data.currentInning === 'number' ? data.currentInning : 1);
+        setCurrentTeamBatting(data.currentTeamBatting || 'away');
+        setOutCount(typeof data.outCount === 'number' ? data.outCount : 0);
+        setBases(data.bases && typeof data.bases === 'object' ? data.bases : { first: false, second: false, third: false });
+        setHomeScore(Array.isArray(data.homeScore) ? data.homeScore : Array(7).fill(null));
+        setAwayScore(Array.isArray(data.awayScore) ? data.awayScore : Array(7).fill(null));
+        setHomeHits(data.homeHits || 0);
+        setAwayHits(data.awayHits || 0);
+        setTimeline(Array.isArray(data.timeline) ? data.timeline : []);
+        setCurrentBatter(data.currentBatter || '');
+        setCustomBatter(data.customBatter || '');
+        setUseCustomBatter(data.useCustomBatter === true);
+        setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
+        setLikeCount(data.likeCount || 0);
+        setMyTeamLineup(data.myTeamLineup || Array(9).fill({ playerName: '', position: '' }));
+        setOpponentLineup(data.opponentLineup || '');
+        
+        
+      } else {
+        alert('監視対象の試合データが見つからなくなりました。セットアップ画面に戻ります。');
+        returnToSetup();
+      }
+    }, (error) => {
+      console.error('[App.js] Firebaseからのデータ取得でエラーが発生しました。', error);
+      alert('データの読み込みに失敗しました。');
+      returnToSetup();
+    });
+    firebaseListener.current = newListener;
+  };
+  
 
-  	  } catch (error) {
-  	  	console.error("試合の読み込みチェックに失敗:", error);
-  	  	alert('試合の読み込みに失敗しました。');
-  	  	return;
-  	  }
 
-  	} else if (mode === 'watch') {
-  	  // --- 観戦モード ---
-  	  // 1. 即座に画面遷移
-  	  setGameId(gameIdToLoad);
-  	  setIsGameCreator(false);
-  	  setGameState('watching');
-  	   
-  	  // 2. 監視(watchGameState)を開始
-  	  const newListener = watchGameState(user.uid, currentYear, gameIdToLoad, (doc) => {
-  	  	if (doc.exists()) {
-  	  	  const data = doc.data();
-  	  	  // 3. 取得したデータでStateをセット
-  	  	  setMyTeamNameForGame(data.myTeamNameForGame || profiles[0]);
-  	  	  setBsoCount(data.bsoCount || { b: 0, s: 0 });
-  	  	  setInGameStats(data.inGameStats || {});
-  	  	  setMyTeamPitcher(data.myTeamPitcher || '');
-  	  	  setOpponentPitcher(data.opponentPitcher || '');
-  	  	  setIsStatsRecordingEnabled(data.isStatsRecordingEnabled !== undefined ? data.isStatsRecordingEnabled : true);
-  	  	  setTournamentName(data.tournamentName || '');
-  	  	  setOpponentTeam(data.opponentTeam || '');
-  	  	  setIsHomeTeam(data.isHomeTeam === true);
-  	  	  setCurrentInning(typeof data.currentInning === 'number' ? data.currentInning : 1);
-  	  	  setCurrentTeamBatting(data.currentTeamBatting || 'away');
-  	  	  setOutCount(typeof data.outCount === 'number' ? data.outCount : 0);
-  	  	  setBases(data.bases && typeof data.bases === 'object' ? data.bases : { first: false, second: false, third: false });
-  	  	  setHomeScore(Array.isArray(data.homeScore) ? data.homeScore : Array(7).fill(null));
-  	  	  setAwayScore(Array.isArray(data.awayScore) ? data.awayScore : Array(7).fill(null));
-  	  	  setHomeHits(data.homeHits || 0);
-  	  	  setAwayHits(data.awayHits || 0);
-  	  	  setTimeline(Array.isArray(data.timeline) ? data.timeline : []);
-  	  	  setCurrentBatter(data.currentBatter || '');
-  	  	  setCustomBatter(data.customBatter || '');
-  	  	  setUseCustomBatter(data.useCustomBatter === true);
-  	  	  setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
-  	  	  setLikeCount(data.likeCount || 0);
-  	  	  setMyTeamLineup(data.myTeamLineup || Array(9).fill({ playerName: '', position: '' }));
-  	  	  setOpponentLineup(data.opponentLineup || Array(9).fill({ playerName: '', position: '' }));
-  	  	} else {
-  	  	  alert('監視対象の試合データが見つからなくなりました。セットアップ画面に戻ります。');
-  	  	  returnToSetup();
-  	  	}
-  	  }, (error) => {
-  	  	console.error('[App.js] Firebaseからのデータ取得でエラーが発生しました。', error);
-  	  	alert('データの読み込みに失敗しました。');
-  	  	returnToSetup();
-  	  });
-  	  firebaseListener.current = newListener;
-  	}
-  };
-}
+  useEffect(() => {
+    // URLパラメータをチェックして観戦モードを開始する
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameIdFromUrl = urlParams.get('gameId');
+    const teamIdFromUrl = urlParams.get('teamId');
+
+    if (gameIdFromUrl && teamIdFromUrl) {
+      const loadGameForSpectator = (id, teamId) => {
+        if (firebaseListener.current) {
+          stopWatching(firebaseListener.current);
+        }
+        const newListener = watchGameState(teamId, id, (doc) => {
+          if (doc.exists()) {
+            const data = doc.data();
+            const profiles = teamProfiles || ['あなたのチーム'];
+            setMyTeamNameForGame(data.myTeamNameForGame || profiles[0]);
+            setBsoCount(data.bsoCount || { b: 0, s: 0 });
+            setInGameStats(data.inGameStats || {});
+            setMyTeamPitcher(data.myTeamPitcher || '');
+            setOpponentPitcher(data.opponentPitcher || '');
+            setIsStatsRecordingEnabled(data.isStatsRecordingEnabled !== undefined ? data.isStatsRecordingEnabled : true);
+            setTournamentName(data.tournamentName || '');
+            setOpponentTeam(data.opponentTeam || '');
+            setIsHomeTeam(data.isHomeTeam === true);
+            setCurrentInning(typeof data.currentInning === 'number' ? data.currentInning : 1);
+            setCurrentTeamBatting(data.currentTeamBatting || 'away');
+            setOutCount(typeof data.outCount === 'number' ? data.outCount : 0);
+            setBases(data.bases && typeof data.bases === 'object' ? data.bases : { first: false, second: false, third: false });
+            setHomeScore(Array.isArray(data.homeScore) ? data.homeScore : Array(7).fill(null));
+            setAwayScore(Array.isArray(data.awayScore) ? data.awayScore : Array(7).fill(null));
+            setHomeHits(data.homeHits || 0);
+            setAwayHits(data.awayHits || 0);
+            setTimeline(Array.isArray(data.timeline) ? data.timeline : []);
+            setCurrentBatter(data.currentBatter || '');
+            setCustomBatter(data.customBatter || '');
+            setUseCustomBatter(data.useCustomBatter === true);
+            setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
+            setLikeCount(data.likeCount || 0);
+            setMyTeamLineup(data.myTeamLineup || Array(9).fill({ playerName: '', position: '' }));
+            setOpponentLineup(data.opponentLineup || '');
+            setGameId(id);
+            setIsGameCreator(false);
+            setGameState('watching');
+          } else {
+            alert('指定された試合IDが見つかりませんでした。');
+          }
+        }, (error) => {
+          console.error('観戦モードでのデータ取得エラー:', error);
+          alert('データの読み込みに失敗しました。');
+        });
+        firebaseListener.current = newListener;
+      };
+      loadGameForSpectator(gameIdFromUrl, teamIdFromUrl);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); 
 
   useEffect(() => {
     if (isResuming) {
@@ -2150,7 +2177,7 @@ if (showLineupEditor) {
       </div>
     );
   };
-  if (gameState === 'playing' || gameState === 'watching') {
+  
   return (
     <div className="min-h-screen flex flex-col bg-blue-900">
       <GameStartDialog 
@@ -2370,7 +2397,8 @@ if (showLineupEditor) {
       )}
     </div>
   );
-  }
+};
+
 
 // --- アプリケーションの親コンポーネント ---
 const App = () => {
