@@ -426,7 +426,9 @@ const ScoreEditor = ({
 
   const MyTeamComponent = ({inningIndex}) => (
     <input
-      type="number"
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
       value={isHomeTeam ? homeScores[inningIndex] ?? '' : awayScores[inningIndex] ?? ''}
       onChange={(e) => handleScoreChange(isHomeTeam ? 'home' : 'away', inningIndex, e.target.value)}
       className="w-16 text-center border rounded-md py-1"
@@ -435,7 +437,9 @@ const ScoreEditor = ({
 
   const OpponentTeamComponent = ({inningIndex}) => (
     <input
-      type="number"
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
       value={isHomeTeam ? awayScores[inningIndex] ?? '' : homeScores[inningIndex] ?? ''}
       onChange={(e) => handleScoreChange(isHomeTeam ? 'away' : 'home', inningIndex, e.target.value)}
       className="w-16 text-center border rounded-md py-1"
