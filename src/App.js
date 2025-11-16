@@ -401,20 +401,25 @@ const ScoreEditor = ({
   onSave, 
   onCancel 
 }) => {
-  const [homeScores, setHomeScores] = useState([...initialHomeScore]);
-  const [awayScores, setAwayScores] = useState([...initialAwayScore]);
+  const [homeScores, setHomeScores] = useState(initialHomeScore.map(s => s ?? ''));
+  const [awayScores, setAwayScores] = useState(initialAwayScore.map(s => s ?? ''));
 
   // イニングの最大数を計算 (通常7回だが、延長も考慮)
   const inningsCount = Math.max(homeScores.length, awayScores.length, 7);
 
   const handleScoreChange = (team, inningIndex, value) => {
+    // ★ valueが数字(0-9)と空文字以外なら入力を無視 (pattern="[0-9]*"の補助)
+    if (!/^[0-9]*$/.test(value)) {
+      return;
+    }
     const newScores = team === 'home' ? [...homeScores] : [...awayScores];
-    // 入力が空の場合は null (未入力) に、それ以外は数値に
-    newScores[inningIndex] = value === '' ? null : parseInt(value, 10) || 0;
+    // ★ 文字列のままStateに保存
+    newScores[inningIndex] = value;
+
 
     // 必要に応じて配列の長さを拡張
     while (newScores.length < inningsCount) {
-      newScores.push(null);
+      newScores.push('');
     }
 
     if (team === 'home') {
@@ -429,7 +434,7 @@ const ScoreEditor = ({
       type="text"
       inputMode="numeric"
       pattern="[0-9]*"
-      value={isHomeTeam ? homeScores[inningIndex] ?? '' : awayScores[inningIndex] ?? ''}
+      value={isHomeTeam ? homeScores[inningIndex] : awayScores[inningIndex] ?? ''}
       onChange={(e) => handleScoreChange(isHomeTeam ? 'home' : 'away', inningIndex, e.target.value)}
       className="w-16 text-center border rounded-md py-1"
     />
@@ -440,7 +445,7 @@ const ScoreEditor = ({
       type="text"
       inputMode="numeric"
       pattern="[0-9]*"
-      value={isHomeTeam ? awayScores[inningIndex] ?? '' : homeScores[inningIndex] ?? ''}
+      value={isHomeTeam ? awayScores[inningIndex] : homeScores[inningIndex] ?? ''}
       onChange={(e) => handleScoreChange(isHomeTeam ? 'away' : 'home', inningIndex, e.target.value)}
       className="w-16 text-center border rounded-md py-1"
     />
@@ -466,7 +471,16 @@ const ScoreEditor = ({
         </div>
         <div className="flex justify-end space-x-4 p-4 border-t">
           <button onClick={onCancel} className="px-5 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">キャンセル</button>
-          <button onClick={() => onSave(homeScores, awayScores)} className="px-5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">保存</button>
+          <button 
+            onClick={() => {
+              // ★ 保存時に文字列を数値(またはnull)に変換
+              const convertToNumeric = (arr) => arr.map(val => val === '' ? null : parseInt(val, 10));
+              onSave(convertToNumeric(homeScores), convertToNumeric(awayScores));
+            }} 
+            className="px-5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+          >
+            保存
+          </button>
         </div>
       </div>
     </div>
