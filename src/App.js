@@ -2150,7 +2150,7 @@ if (showLineupEditor) {
       </div>
     );
   };
-  
+  if (gameState === 'playing' || gameState === 'watching') {
   return (
     <div className="min-h-screen flex flex-col bg-blue-900">
       <GameStartDialog 
@@ -2370,7 +2370,7 @@ if (showLineupEditor) {
       )}
     </div>
   );
-
+  }
 
 // --- アプリケーションの親コンポーネント ---
 const App = () => {
