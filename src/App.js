@@ -390,6 +390,86 @@ const GameStartDialog = ({ showShareDialog, dialogTitle, shareMessage, copyToCli
     );
   };
 
+  // --- ▽▽▽ このコンポーネントを丸ごと追加 ▽▽▽ ---
+// --- スコア編集画面コンポーネント ---
+const ScoreEditor = ({ 
+  initialHomeScore, 
+  initialAwayScore, 
+  myTeamName, 
+  opponentTeamName, 
+  isHomeTeam, 
+  onSave, 
+  onCancel 
+}) => {
+  const [homeScores, setHomeScores] = useState([...initialHomeScore]);
+  const [awayScores, setAwayScores] = useState([...initialAwayScore]);
+
+  // イニングの最大数を計算 (通常7回だが、延長も考慮)
+  const inningsCount = Math.max(homeScores.length, awayScores.length, 7);
+
+  const handleScoreChange = (team, inningIndex, value) => {
+    const newScores = team === 'home' ? [...homeScores] : [...awayScores];
+    // 入力が空の場合は null (未入力) に、それ以外は数値に
+    newScores[inningIndex] = value === '' ? null : parseInt(value, 10) || 0;
+
+    // 必要に応じて配列の長さを拡張
+    while (newScores.length < inningsCount) {
+      newScores.push(null);
+    }
+
+    if (team === 'home') {
+      setHomeScores(newScores);
+    } else {
+      setAwayScores(newScores);
+    }
+  };
+
+  const MyTeamComponent = ({inningIndex}) => (
+    <input
+      type="number"
+      value={isHomeTeam ? homeScores[inningIndex] ?? '' : awayScores[inningIndex] ?? ''}
+      onChange={(e) => handleScoreChange(isHomeTeam ? 'home' : 'away', inningIndex, e.target.value)}
+      className="w-16 text-center border rounded-md py-1"
+    />
+  );
+
+  const OpponentTeamComponent = ({inningIndex}) => (
+    <input
+      type="number"
+      value={isHomeTeam ? awayScores[inningIndex] ?? '' : homeScores[inningIndex] ?? ''}
+      onChange={(e) => handleScoreChange(isHomeTeam ? 'away' : 'home', inningIndex, e.target.value)}
+      className="w-16 text-center border rounded-md py-1"
+    />
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-sm">
+        <h2 className="text-xl font-bold text-center p-4 border-b">スコア修正</h2>
+        <div className="p-4 max-h-[70vh] overflow-y-auto">
+          <div className="grid grid-cols-3 gap-y-2 items-center text-center font-semibold mb-2">
+            <div className="text-left">回</div>
+            <div>{opponentTeamName}</div>
+            <div>{myTeamName}</div>
+          </div>
+          {Array.from({ length: inningsCount }).map((_, index) => (
+            <div key={index} className="grid grid-cols-3 gap-y-2 items-center text-center py-1">
+              <div className="text-left font-semibold">{index + 1}回</div>
+              <OpponentTeamComponent inningIndex={index} />
+              <MyTeamComponent inningIndex={index} />
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end space-x-4 p-4 border-t">
+          <button onClick={onCancel} className="px-5 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-lg">キャンセル</button>
+          <button onClick={() => onSave(homeScores, awayScores)} className="px-5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">保存</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+// --- △△△ ここまで追加 △△△ ---
+
 // --- ログイン後のメインアプリ本体 ---
 const SoftballScoreApp = ({ user, initialTeamData }) => {
   // --- State管理セクション ---
@@ -455,6 +535,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   // eslint-disable-next-line no-unused-vars
   const [availableYears, setAvailableYears] = useState(initialTeamData.availableYears || [new Date().getFullYear()]);
   const [isDataLoading, setIsDataLoading] = useState(true);
+  const [showScoreEditor, setShowScoreEditor] = useState(false);
 
 useEffect(() => {
     if (!user || !user.uid) return;
@@ -1516,6 +1597,29 @@ const handleSaveStats = (playerName) => { // ★ async を削除
       </div>
     );
   };
+ 
+  // --- ▽▽▽ このブロックを丸ごと挿入 ▽▽▽ ---
+  if (showScoreEditor) {
+    const handleSaveScores = (newHomeScore, newAwayScore) => {
+      saveStateToHistory(); // 「元に戻す」用に現在の状態を保存
+      setHomeScore(newHomeScore);
+      setAwayScore(newAwayScore);
+      addToTimeline("スコアボードが手動で修正されました。");
+      setShowScoreEditor(false);
+    };
+    return (
+      <ScoreEditor
+        initialHomeScore={homeScore}
+        initialAwayScore={awayScore}
+        myTeamName={myTeamNameForGame || selectedGameTeam}
+        opponentTeamName={opponentTeam}
+        isHomeTeam={isHomeTeam}
+        onSave={handleSaveScores}
+        onCancel={() => setShowScoreEditor(false)}
+      />
+    );
+  }
+  // --- △△△ ここまで挿入 △△△ ---
 
   // --- JSX ---
 if (showLineupEditor) {
@@ -2142,6 +2246,7 @@ if (showLineupEditor) {
               <h2 className="text-lg font-bold text-gray-800">📝 スコア入力</h2>
               <div className="flex space-x-2">
                 <button onClick={undoLastAction} disabled={history.length === 0} className="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-xs transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">元に戻す</button>
+                <button onClick={() => setShowScoreEditor(true)} className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-xs transition-colors">スコア修正</button>
                 <button onClick={forceChange} className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs transition-colors">チェンジ</button>
                 <button onClick={endGame} className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs transition-colors">試合終了</button>
               </div>
