@@ -981,16 +981,12 @@ const setNextBatter = (lastBatterName) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); 
 
-  useEffect(() => {
-    if (isResuming) {
-      const timer = setTimeout(() => {
-        setIsResuming(false);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isResuming]);
 
   const saveStateToHistory = () => {
+    // ★ 試合再開後、最初の操作が行われたらこのフラグをfalseにする
+    if (isResuming) {
+      setIsResuming(false);
+    }
     const currentState = {
       myTeamLineup,
       opponentLineup,
@@ -2175,6 +2171,8 @@ if (showLineupEditor) {
     );
   };
   
+  if (gameState === 'playing' || gameState === 'watching') {
+
   return (
     <div className="min-h-screen flex flex-col bg-blue-900">
       <GameStartDialog 
@@ -2396,6 +2394,7 @@ if (showLineupEditor) {
   );
 };
 
+}
 
 // --- アプリケーションの親コンポーネント ---
 const App = () => {
