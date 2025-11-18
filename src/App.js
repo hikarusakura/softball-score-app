@@ -401,114 +401,101 @@ const ScoreEditor = ({
   onSave, 
   onBack 
 }) => {
+  // Stateは「Home（後攻）」と「Away（先攻）」で管理
   const [homeScores, setHomeScores] = useState(initialHomeScore.map(s => s ?? ''));
   const [awayScores, setAwayScores] = useState(initialAwayScore.map(s => s ?? ''));
 
-  // イニングの最大数を計算 (通常7回だが、延長も考慮)
+  // イニングの最大数を計算
   const inningsCount = Math.max(homeScores.length, awayScores.length, 7);
 
-  const handleScoreChange = (team, inningIndex, value) => {
-    // ★ valueが数字(0-9)と空文字以外なら入力を無視 (pattern="[0-9]*"の補助)
-    if (!/^[0-9]*$/.test(value)) {
-      return;
-    }
-    const newScores = team === 'home' ? [...homeScores] : [...awayScores];
-    // ★ 文字列のままStateに保存
+  // チーム名を「先攻（Top）」と「後攻（Bottom）」に振り分け
+  const topTeamName = isHomeTeam ? opponentTeamName : myTeamName;    // 先攻チーム名
+  const bottomTeamName = isHomeTeam ? myTeamName : opponentTeamName; // 後攻チーム名
+
+  const handleScoreChange = (teamType, inningIndex, value) => {
+    if (!/^[0-9]*$/.test(value)) return;
+
+    const isHome = teamType === 'home';
+    const currentScores = isHome ? homeScores : awayScores;
+    const setScores = isHome ? setHomeScores : setAwayScores;
+
+    const newScores = [...currentScores];
     newScores[inningIndex] = value;
 
-
-    // 必要に応じて配列の長さを拡張
+    // 必要に応じて配列を拡張
     while (newScores.length < inningsCount) {
       newScores.push('');
     }
-
-    if (team === 'home') {
-      setHomeScores(newScores);
-    } else {
-      setAwayScores(newScores);
-    }
+    setScores(newScores);
   };
 
-  const MyTeamComponent = ({inningIndex}) => (
+  // 共通の入力欄コンポーネント
+  const ScoreInput = ({ teamType, inningIndex, scores }) => (
     <input
       type="text"
       inputMode="numeric"
       pattern="[0-9]*"
-      value={isHomeTeam ? homeScores[inningIndex] : awayScores[inningIndex] ?? ''}
-      onChange={(e) => handleScoreChange(isHomeTeam ? 'home' : 'away', inningIndex, e.target.value)}
+      value={scores[inningIndex] ?? ''}
+      onChange={(e) => handleScoreChange(teamType, inningIndex, e.target.value)}
       className="w-full text-center border rounded-md py-1"
     />
   );
 
-  const OpponentTeamComponent = ({inningIndex}) => (
-    <input
-      type="text"
-      inputMode="numeric"
-      pattern="[0-9]*"
-      value={isHomeTeam ? awayScores[inningIndex] : homeScores[inningIndex] ?? ''}
-      onChange={(e) => handleScoreChange(isHomeTeam ? 'away' : 'home', inningIndex, e.target.value)}
-      className="w-full text-center border rounded-md py-1"
-    />
-  );
-
-return (
-    // ★ statsScreen や playerManagement と同じレイアウトに変更
+  return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        {/* ★ ヘッダー (戻るボタン) を追加 */}
         <div className="flex items-center mb-6">
           <button onClick={onBack} className="mr-4 p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full"><ChevronLeft className="h-5 w-5" /></button>
           <h1 className="text-2xl font-bold text-gray-800">スコア修正</h1>
         </div>
 
-        {/* --- ▽▽▽ ここから横並びレイアウトに変更 ▽▽▽ --- */}
         <div className="overflow-x-auto">
           <div className="flex flex-col space-y-2" style={{ minWidth: `${(inningsCount + 2) * 4}rem` }}>
             
             {/* ヘッダー行 (イニング) */}
             <div className="flex items-center space-x-2">
-              <div className="w-24 font-semibold text-sm">チーム</div> {/* チーム名列 */}
+              <div className="w-24 font-semibold text-sm">チーム</div>
               {Array.from({ length: inningsCount }).map((_, index) => (
                 <div key={index} className="w-12 text-center font-semibold">{index + 1}</div>
               ))}
-              <div className="w-12 text-center font-semibold">計</div> {/* 合計列 */}
+              <div className="w-12 text-center font-semibold">計</div>
             </div>
 
-            {/* 相手チーム行 */}
+            {/* --- 上段：先攻 (Away) チーム行 --- */}
             <div className="flex items-center space-x-2">
-              <div className="w-24 font-semibold text-sm truncate" title={isHomeTeam ? opponentTeamName : myTeamName}>
-                {isHomeTeam ? opponentTeamName : myTeamName}
+              <div className="w-24 font-semibold text-sm truncate" title={topTeamName}>
+                {topTeamName}
               </div>
               {Array.from({ length: inningsCount }).map((_, index) => (
                 <div key={index} className="w-12">
-                  <OpponentTeamComponent inningIndex={index} />
+                  {/* awayScores をバインド */}
+                  <ScoreInput teamType="away" inningIndex={index} scores={awayScores} />
                 </div>
               ))}
-              {/* 相手合計 (入力中は自動計算) */}
               <div className="w-12 text-center font-bold">
-                {(isHomeTeam ? awayScores : homeScores).reduce((acc, score) => acc + (parseInt(score) || 0), 0)}
+                {awayScores.reduce((acc, score) => acc + (parseInt(score) || 0), 0)}
               </div>
             </div>
 
-            {/* 自チーム行 */}
+            {/* --- 下段：後攻 (Home) チーム行 --- */}
             <div className="flex items-center space-x-2">
-              <div className="w-24 font-semibold text-sm truncate" title={isHomeTeam ? myTeamName : opponentTeamName}>
-                {isHomeTeam ? myTeamName : opponentTeamName}
+              <div className="w-24 font-semibold text-sm truncate" title={bottomTeamName}>
+                {bottomTeamName}
               </div>
               {Array.from({ length: inningsCount }).map((_, index) => (
                 <div key={index} className="w-12">
-                  <MyTeamComponent inningIndex={index} />
+                  {/* homeScores をバインド */}
+                  <ScoreInput teamType="home" inningIndex={index} scores={homeScores} />
                 </div>
               ))}
-              {/* 自チーム合計 (入力中は自動計算) */}
               <div className="w-12 text-center font-bold">
-                {(isHomeTeam ? homeScores : awayScores).reduce((acc, score) => acc + (parseInt(score) || 0), 0)}
+                {homeScores.reduce((acc, score) => acc + (parseInt(score) || 0), 0)}
               </div>
             </div>
 
           </div>
         </div>
-        {/* ★ 保存ボタンのデザインを変更 */}
+
         <div className="mt-8 border-t pt-6">
           <button 
             onClick={() => {
