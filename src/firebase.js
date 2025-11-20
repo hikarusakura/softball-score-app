@@ -2,13 +2,13 @@ import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, query, getDoc, deleteDoc, updateDoc, increment } from "firebase/firestore";
 const firebaseConfig = {
-  apiKey: "AIzaSyAz0Lm3rKe5W9r0R_Efye9sIkT7WDQwYvo",
-  authDomain: "softball-score-app.firebaseapp.com",
-  databaseURL: "https://softball-score-app-default-rtdb.firebaseio.com",
-  projectId: "softball-score-app",
-  storageBucket: "softball-score-app.appspot.com",
-  messagingSenderId: "752191549444",
-  appId: "1:752191549444:web:f914184a01593a555f0551"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
