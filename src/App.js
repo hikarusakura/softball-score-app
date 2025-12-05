@@ -1860,17 +1860,6 @@ if (showLineupEditor) {
           ))}
         </div>
         <GameHighlights inGameStats={selectedGameTimeline.inGameStats || {}} players={getPlayerList()} />
-
-        {/* --- ▽▽▽ ここにボタンを追加 ▽▽▽ --- */}
-            <button 
-              onClick={handleGenerateReport}
-              className="mt-4 w-full bg-gradient-to-r from-gray-700 to-gray-900 text-white font-serif py-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 hover:opacity-90 transition-opacity"
-            >
-              <span>📰</span>
-              <span>AI戦評新聞を発行する</span>
-            </button>
-            {/* --- △△△ ここまで追加 △△△ --- */}
-            
       </div>
     </div>
   ); }
@@ -2402,6 +2391,17 @@ if (showLineupEditor) {
               )}
             </div>
             <GameHighlights inGameStats={inGameStats} players={players} />
+
+{/* --- ▽▽▽ ここにボタンを追加 ▽▽▽ --- */}
+            <button 
+              onClick={handleGenerateReport}
+              className="mt-4 w-full bg-gradient-to-r from-gray-700 to-gray-900 text-white font-serif py-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 hover:opacity-90 transition-opacity"
+            >
+              <span>📰</span>
+              <span>AI戦評新聞を発行する</span>
+            </button>
+            {/* --- △△△ ここまで追加 △△△ --- */}
+
           </div>
         </div>
       </div>
