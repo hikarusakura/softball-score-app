@@ -586,9 +586,9 @@ const NewspaperModal = ({ isOpen, onClose, article, isLoading, gameData }) => {
                   
                   {/* 記事本文 */}
                   <p className="text-base md:text-xl leading-relaxed text-justify font-medium text-gray-800" style={{ lineHeight: '1.8' }}>
-                    <span className="float-left text-4xl font-bold text-red-600 mr-1 mt-[-2px] leading-none">【</span>
+                    <span className="float-left text-4xl font-bold text-red-600 mr-1 mt-[-2px] leading-none"></span>
                     {article.content}
-                    <span className="text-lg font-bold text-red-600 ml-1">】</span>
+                    <span className="text-lg font-bold text-red-600 ml-1"></span>
                   </p>
 
                   {/* ★ ピックアップ選手 (記事の下に移動) */}
