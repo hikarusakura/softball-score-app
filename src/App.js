@@ -1535,49 +1535,60 @@ const handleFetchFirebaseGames = async () => {
     }
   };
 
-// --- ▽▽▽ 新聞生成関数 ▽▽▽ ---
-  const handleGenerateReport = async () => {
-    if (!selectedGameTimeline) return;
+// --- ▽▽▽ 新聞生成関数（修正版） ▽▽▽ ---
+      const handleGenerateReport = async () => {
+        // ★ 現在のスコアから勝者を判定
+        const totalHome = homeScore.reduce((a, b) => a + (b || 0), 0);
+        const totalAway = awayScore.reduce((a, b) => a + (b || 0), 0);
+        let currentWinner = '引き分け';
+        const myTeam = myTeamNameForGame || selectedGameTeam;
 
-    setShowNewspaper(true);
-    setIsGenerating(true);
+        if (totalHome !== totalAway) {
+          if (isHomeTeam) {
+            currentWinner = totalHome > totalAway ? myTeam : opponentTeam;
+          } else {
+            currentWinner = totalAway > totalHome ? myTeam : opponentTeam;
+          }
+        }
+        
+        setShowNewspaper(true);
+        setIsGenerating(true);
 
-    // AIに渡すデータを整形
-    const myTeam = selectedGameTimeline.myTeamNameForGame || '自チーム';
-    const gameDataForAI = {
-      tournamentName: selectedGameTimeline.tournamentName,
-      date: selectedGameTimeline.date,
-      myTeam: myTeam,
-      opponentTeam: selectedGameTimeline.opponentTeam,
-      totalMyScore: selectedGameTimeline.homeScore, // ※簡易的にhomeを入れています
-      totalOpponentScore: selectedGameTimeline.awayScore,
-      winner: selectedGameTimeline.winner,
-      timeline: selectedGameTimeline.timeline,
-      hitLeaders: (getPlayerList() || [])
-        .filter(p => selectedGameTimeline.inGameStats?.[p]?.hits > 0)
-        .map(p => ({ name: p, count: selectedGameTimeline.inGameStats[p].hits }))
-    };
+        // ★ 現在のStateを使ってデータを整形
+        const gameDataForAI = {
+          tournamentName: tournamentName,
+          date: formatDate(gameStartDate),
+          myTeam: myTeam,
+          opponentTeam: opponentTeam,
+          totalMyScore: isHomeTeam ? totalHome : totalAway,
+          totalOpponentScore: isHomeTeam ? totalAway : totalHome,
+          winner: currentWinner,
+          timeline: timeline,
+          hitLeaders: (getPlayerList() || [])
+            .filter(p => inGameStats?.[p]?.hits > 0)
+            .map(p => ({ name: p, count: inGameStats[p].hits }))
+        };
 
-    try {
-      const response = await fetch('/api/generate-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gameData: gameDataForAI }),
-      });
+        try {
+          const response = await fetch('/api/generate-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ gameData: gameDataForAI }),
+          });
 
-      if (!response.ok) throw new Error('Generation failed');
+          if (!response.ok) throw new Error('Generation failed');
 
-      const data = await response.json();
-      setNewspaperData(data);
-    } catch (error) {
-      console.error(error);
-      alert('記事の作成に失敗しました。');
-      setShowNewspaper(false);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-  // --- △△△ 新聞生成関数 △△△ ---
+          const data = await response.json();
+          setNewspaperData(data);
+        } catch (error) {
+          console.error(error);
+          alert('記事の作成に失敗しました。');
+          setShowNewspaper(false);
+        } finally {
+          setIsGenerating(false);
+        }
+      };
+      // --- △△△ 新聞生成関数（修正版） △△△ ---
 
   const handleDeleteFirebaseGame = async (gameIdToDelete) => {
     const correctPassword = initialTeamData.deletePassword;
@@ -1851,15 +1862,15 @@ if (showLineupEditor) {
         <GameHighlights inGameStats={selectedGameTimeline.inGameStats || {}} players={getPlayerList()} />
 
         {/* --- ▽▽▽ ここにボタンを追加 ▽▽▽ --- */}
-        <button 
-          onClick={handleGenerateReport}
-          className="mt-4 w-full bg-gradient-to-r from-gray-700 to-gray-900 text-white font-serif py-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 hover:opacity-90 transition-opacity"
-        >
-          <span>📰</span>
-          <span>AI戦評新聞を発行する</span>
-        </button>
-        {/* --- △△△ ここまで追加 △△△ --- */}
-
+            <button 
+              onClick={handleGenerateReport}
+              className="mt-4 w-full bg-gradient-to-r from-gray-700 to-gray-900 text-white font-serif py-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 hover:opacity-90 transition-opacity"
+            >
+              <span>📰</span>
+              <span>AI戦評新聞を発行する</span>
+            </button>
+            {/* --- △△△ ここまで追加 △△△ --- */}
+            
       </div>
     </div>
   ); }
