@@ -512,13 +512,12 @@ const ScoreEditor = ({
   );
 };
 
-// --- ▽▽▽ AI新聞記事モーダル（スマホ最適化・修正版） ▽▽▽ ---
+// --- ▽▽▽ AI新聞記事モーダル（スマホ完全対応版） ▽▽▽ ---
 const NewspaperModal = ({ isOpen, onClose, article, isLoading, gameData }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-2 overflow-y-auto">
-      {/* スマホでの余白を調整 (my-4) */}
       <div className="bg-[#fdfbf7] w-full max-w-4xl rounded-sm shadow-2xl overflow-hidden relative text-gray-900 font-serif my-4" style={{backgroundImage: 'url("https://www.transparenttextures.com/patterns/cream-paper.png")'}}>
         
         <button onClick={onClose} className="absolute top-2 right-2 z-20 bg-gray-200 rounded-full p-1 hover:bg-gray-300 transition-colors">
@@ -538,95 +537,89 @@ const NewspaperModal = ({ isOpen, onClose, article, isLoading, gameData }) => {
             {/* --- ヘッダーエリア --- */}
             <div className="bg-red-700 text-white p-2 flex justify-between items-end border-b-4 border-black">
               <div>
-                <h2 className="text-xs font-bold tracking-widest bg-black text-yellow-400 px-2 py-0.5 inline-block transform -skew-x-12">速報</h2>
-                <span className="ml-2 text-xs opacity-90">{gameData?.date}</span>
+                <h2 className="text-[10px] font-bold tracking-widest bg-black text-yellow-400 px-2 py-0.5 inline-block transform -skew-x-12">速報</h2>
+                <span className="ml-2 text-[10px] opacity-90">{gameData?.date}</span>
               </div>
-              <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter leading-none" style={{fontFamily: '"Arial Black", sans-serif'}}>
+              <h1 className="text-2xl md:text-4xl font-black italic tracking-tighter leading-none" style={{fontFamily: '"Arial Black", sans-serif'}}>
                 SOFTBALL<span className="text-yellow-400">Times</span>
               </h1>
             </div>
 
             <div className="p-4 md:p-8">
-              {/* --- 大見出し --- */}
-              <div className="mb-6 text-center">
-                <h1 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-blue-700 to-blue-900 leading-tight drop-shadow-sm stroke-black" 
-                    style={{ WebkitTextStroke: '1px black', textShadow: '2px 2px 0px rgba(200,200,200,0.5)' }}>
+              
+              {/* --- 大見出し (スマホでは文字サイズを抑え、改行を許可) --- */}
+              <div className="mb-4 text-center">
+                <h1 className="text-2xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-blue-700 to-blue-900 leading-tight drop-shadow-sm stroke-black break-words" 
+                    style={{ WebkitTextStroke: '0.5px black', textShadow: '1px 1px 0px rgba(200,200,200,0.5)' }}>
                   {article.headline}
                 </h1>
-                <div className="h-1 w-full bg-black mt-2 mb-1"></div>
-                <div className="h-0.5 w-full bg-black mb-6"></div>
+                <div className="h-0.5 w-full bg-black mt-3 mb-4"></div>
               </div>
 
               {/* --- レイアウト（スマホ:縦並び / PC:横並び） --- */}
-              <div className="flex flex-col md:flex-row gap-8">
+              <div className="flex flex-col md:flex-row gap-6">
                 
-                {/* ★ 右カラム（スコアボード等）：スマホでは上に表示 (order-1) 
-                    PCでは右側に表示 (md:order-2, md:w-72)
-                */}
-                <div className="order-1 md:order-2 w-full md:w-72 flex-shrink-0 space-y-6">
+                {/* ★ 右カラム（スコアボード）：スマホでは一番上 (order-1) */}
+                <div className="order-1 md:order-2 w-full md:w-64 flex-shrink-0">
                   
-                  {/* スコアボード */}
-                  <div className="border-4 border-black p-2 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                    <h3 className="text-center font-bold bg-black text-white py-1 mb-2 text-sm">SCORE BOARD</h3>
-                    {/* ★ ここを修正: collapse を border-collapse に変更 */}
-                    <table className="w-full text-center text-base font-bold border-collapse">
-                      <thead>
-                        <tr className="border-b-2 border-gray-400">
-                          <th className="py-2 text-left pl-2">TEAM</th>
-                          <th className="py-2 w-12 bg-gray-100">R</th>
-                        </tr>
-                      </thead>
+                  {/* スコアボード (コンパクト化) */}
+                  <div className="border-2 border-black p-1 bg-white shadow-md">
+                    <h3 className="text-center font-bold bg-black text-white py-0.5 mb-1 text-xs">SCORE BOARD</h3>
+                    <table className="w-full text-center text-sm font-bold border-collapse">
                       <tbody>
                         <tr className="border-b border-dashed border-gray-300">
-                          <td className="py-3 text-left pl-2 truncate max-w-[120px]">{gameData?.opponentTeam}</td>
-                          <td className="py-3 text-2xl font-black bg-gray-50">{gameData?.totalOpponentScore}</td>
+                          <td className="py-1 text-left pl-2 truncate max-w-[150px]">{gameData?.opponentTeam}</td>
+                          <td className="py-1 text-lg font-black text-right pr-3">{gameData?.totalOpponentScore}</td>
                         </tr>
                         <tr>
-                          <td className="py-3 text-left pl-2 truncate max-w-[120px]">{gameData?.myTeam}</td>
-                          <td className="py-3 text-2xl font-black text-red-600 bg-gray-50">{gameData?.totalMyScore}</td>
+                          <td className="py-1 text-left pl-2 truncate max-w-[150px]">{gameData?.myTeam}</td>
+                          <td className="py-1 text-lg font-black text-red-600 text-right pr-3">{gameData?.totalMyScore}</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
 
-                  {/* ヒーロー（活躍選手） */}
-                  {gameData?.hitLeaders && gameData.hitLeaders.length > 0 && (
-                    <div className="bg-yellow-100 border-2 border-yellow-500 p-4 rounded-lg relative mt-6 transform rotate-1">
-                      <div className="absolute -top-3 -left-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 transform -rotate-6 shadow-md">
-                        Pickup Players!
-                      </div>
-                      <ul className="mt-1 space-y-2">
-                        {gameData.hitLeaders.slice(0, 3).map((p, i) => (
-                          <li key={i} className="flex justify-between items-center text-sm border-b border-yellow-200 pb-1 last:border-0">
-                            <span className="font-bold text-gray-800 text-base">{p.name}</span>
-                            <span className="bg-white px-3 py-0.5 rounded-full text-sm font-bold text-yellow-700 border border-yellow-300">{p.count}安打</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                 </div>
 
-                {/* ★ 左カラム（記事本文）：スマホでは下に表示 (order-2)
-                */}
+                {/* ★ 左カラム（記事本文 + ピックアップ）：スマホではその下 (order-2) */}
                 <div className="order-2 md:order-1 flex-1">
-                  <p className="text-lg leading-loose text-justify font-medium text-gray-800" style={{ lineHeight: '1.8' }}>
-                    <span className="float-left text-5xl font-bold text-red-600 mr-2 mt-[-4px] leading-none">【</span>
+                  
+                  {/* 記事本文 */}
+                  <p className="text-base md:text-xl leading-relaxed text-justify font-medium text-gray-800" style={{ lineHeight: '1.8' }}>
+                    <span className="float-left text-4xl font-bold text-red-600 mr-1 mt-[-2px] leading-none">【</span>
                     {article.content}
-                    <span className="text-xl font-bold text-red-600 ml-1">】</span>
+                    <span className="text-lg font-bold text-red-600 ml-1">】</span>
                   </p>
 
-                  {/* 広告風スペース (記事の下に配置) */}
-                  <div className="mt-8 bg-gray-100 h-20 flex items-center justify-center text-gray-400 text-xs text-center border-2 border-dashed border-gray-300 rounded">
-                    ここにチームの<br/>スポンサー広告が入ります
+                  {/* ★ ピックアップ選手 (記事の下に移動) */}
+                  {gameData?.hitLeaders && gameData.hitLeaders.length > 0 && (
+                    <div className="mt-8 border-t-2 border-dotted border-gray-400 pt-4">
+                      <div className="bg-yellow-50 border border-yellow-200 p-3 rounded relative">
+                        <div className="absolute -top-2.5 left-2 bg-yellow-500 text-white text-[10px] font-bold px-2 py-0.5 shadow-sm">
+                          Pickup Players!
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {gameData.hitLeaders.slice(0, 5).map((p, i) => (
+                            <span key={i} className="text-xs font-bold text-gray-700 bg-white px-2 py-1 border border-yellow-300 rounded-full">
+                              {p.name} <span className="text-red-600 ml-1">{p.count}安打</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 広告風スペース */}
+                  <div className="mt-6 bg-gray-100 h-16 flex items-center justify-center text-gray-400 text-[10px] text-center border border-dashed border-gray-300 rounded">
+                    広告スペース<br/>(スポンサー募集中)
                   </div>
                 </div>
 
               </div>
 
               {/* フッター */}
-              <div className="mt-8 pt-2 border-t-2 border-gray-800 flex justify-between items-center text-xs text-gray-500">
-                <span>Generated by Gemini 2.0 Flash</span>
+              <div className="mt-6 pt-2 border-t-2 border-gray-800 flex justify-between items-center text-[10px] text-gray-500">
+                <span>Generated by Gemini 2.0</span>
                 <span className="font-bold">ソフトボール速報アプリ</span>
               </div>
             </div>
