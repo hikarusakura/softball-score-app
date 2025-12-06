@@ -1232,7 +1232,7 @@ const setNextBatter = (lastBatterName) => {
     }
     const inningHalf = (nextTeamBatting === 'home') ? '裏' : '表';
     const message = `${nextInning}回${inningHalf}開始`;
-    addToTimeline(message, { inning: nextInning, team: truncateTeamName(nextTeamName), outCount: 0 });
+    addToTimeline(message, { inning: nextInning, team: truncateTeamName(nextTeamName), outCount: 0, inningHalf: inningHalf });
     setCurrentTeamBatting(nextTeamBatting);
     setCurrentInning(nextInning);
     setOutCount(0);
