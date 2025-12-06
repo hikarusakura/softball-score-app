@@ -41,7 +41,8 @@ export default async function handler(req, res) {
       - 勝者: ${gameData.winner}
       - タイムライン（試合経過）:
         ※「表」の攻撃は先攻チーム、「裏」の攻撃は後攻チームです。
-        ${gameData.timeline.map(t => `・${t.inning}回 ${t.message}`).join('\n')}
+        // ★ ${t.inningHalf || ''} を追加して、AIに「1回表」と明確に伝える
+        ${gameData.timeline.map(t => `・${t.inning}回${t.inningHalf || ''} ${t.message}`).join('\n')}
       - 活躍選手（安打数）:
         ${gameData.hitLeaders.map(p => `${p.name} (${p.count}安打)`).join(', ')}
     `;

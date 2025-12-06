@@ -1156,10 +1156,12 @@ const setNextBatter = (lastBatterName) => {
 
   const addToTimeline = (message, eventDetails = {}) => {
     const timestamp = new Date().toLocaleTimeString();
+    const currentHalf = currentTeamBatting === 'away' ? '表' : '裏';
     const newEntry = {
       time: timestamp,
       message: message,
       inning: eventDetails.inning !== undefined ? eventDetails.inning : currentInning,
+      inningHalf: eventDetails.inningHalf !== undefined ? eventDetails.inningHalf : currentHalf,
       team: eventDetails.team !== undefined ? eventDetails.team : getCurrentTeamName(),
       outCount: eventDetails.outCount !== undefined ? eventDetails.outCount : outCount,
     };
@@ -1934,7 +1936,7 @@ if (showLineupEditor) {
             <div key={index} className="border-b border-gray-300 pb-2 mb-2 last:border-b-0">
               <div className="flex justify-between items-start text-sm">
                 <span className="text-gray-500">{entry.time}</span>
-                <span className="text-gray-500">{entry.inning}回 {entry.outCount}アウト</span>
+                <span className="text-gray-500">{entry.inning}回{entry.inningHalf || ''} {entry.outCount}アウト</span>
               </div>
               <div className="text-sm"><span className="font-medium text-blue-600">[{entry.team}]</span> {entry.message}</div>
             </div>
