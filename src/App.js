@@ -1698,6 +1698,7 @@ const handleFetchFirebaseGames = async () => {
           hitLeaders: (getPlayerList() || [])
             .filter(p => inGameStats?.[p]?.hits > 0)
             .map(p => ({ name: p, count: inGameStats[p].hits }))
+           .sort((a, b) => b.count - a.count)
         };
 
         setNewspaperGameData(gameDataForAI);
