@@ -1936,7 +1936,7 @@ if (showLineupEditor) {
             <div key={index} className="border-b border-gray-300 pb-2 mb-2 last:border-b-0">
               <div className="flex justify-between items-start text-sm">
                 <span className="text-gray-500">{entry.time}</span>
-                <span className="text-gray-500">{entry.inning}回{entry.inningHalf || ''} {entry.outCount}アウト</span>
+                <span className="text-gray-500">{entry.inning}回{entry.inningHalf} {entry.outCount}アウト</span>
               </div>
               <div className="text-sm"><span className="font-medium text-blue-600">[{entry.team}]</span> {entry.message}</div>
             </div>
@@ -2443,7 +2443,7 @@ if (showLineupEditor) {
                   {timeline.length === 0 ? (<p className="text-center text-gray-300 text-xs">まだプレイがありません</p>) : (
                     timeline.map((entry, index) => (
                       <div key={index} className="border-b border-gray-600 pb-1 mb-1 last:border-b-0">
-                        <div className="flex justify-between items-start text-xs"><span className="text-gray-300">{entry.time}</span><span className="text-white">{entry.inning}回 {entry.outCount}アウト</span></div>
+                        <div className="flex justify-between items-start text-xs"><span className="text-gray-300">{entry.time}</span><span className="text-white">{entry.inning}回{entry.inningHalf} {entry.outCount}アウト</span></div>
                         <div className="text-xs"><span className="font-medium text-yellow-300">[{entry.team}]</span> {entry.message}</div>
                       </div>
                     ))
