@@ -15,6 +15,7 @@ export default async function handler(req, res) {
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    // ★ モデル名は最新のものを使用
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     // AIへの指示書（プロンプト）を作成
@@ -41,7 +42,6 @@ export default async function handler(req, res) {
       - 勝者: ${gameData.winner}
       - タイムライン（試合経過）:
         ※「表」の攻撃は先攻チーム、「裏」の攻撃は後攻チームです。
-        // ★ ${t.inningHalf || ''} を追加して、AIに「1回表」と明確に伝える
         ${gameData.timeline.map(t => `・${t.inning}回${t.inningHalf || ''} ${t.message}`).join('\n')}
       - 活躍選手（安打数）:
         ${gameData.hitLeaders.map(p => `${p.name} (${p.count}安打)`).join(', ')}
@@ -52,7 +52,6 @@ export default async function handler(req, res) {
     const text = response.text();
 
     // JSON部分だけを抽出して返す
-    // (AIが余計な文字をつけることがあるため整形)
     const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const article = JSON.parse(jsonStr);
 
