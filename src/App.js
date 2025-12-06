@@ -562,18 +562,43 @@ const NewspaperModal = ({ isOpen, onClose, article, isLoading, gameData }) => {
                 {/* ★ 右カラム（スコアボード）：スマホでは一番上 (order-1) */}
                 <div className="order-1 md:order-2 w-full md:w-64 flex-shrink-0">
                   
-                  {/* スコアボード (コンパクト化) */}
-                  <div className="border-2 border-black p-1 bg-white shadow-md">
+                  {/* スコアボード (ラインスコア形式) */}
+                  <div className="border-2 border-black p-1 bg-white shadow-md overflow-x-auto">
                     <h3 className="text-center font-bold bg-black text-white py-0.5 mb-1 text-xs">SCORE BOARD</h3>
-                    <table className="w-full text-center text-sm font-bold border-collapse">
-                      <tbody>
-                        <tr className="border-b border-dashed border-gray-300">
-                          <td className="py-1 text-left pl-2 truncate max-w-[150px]">{gameData?.opponentTeam}</td>
-                          <td className="py-1 text-lg font-black text-right pr-3">{gameData?.totalOpponentScore}</td>
+                    <table className="w-full text-center text-xs font-bold border-collapse" style={{minWidth: '200px'}}>
+                      <thead>
+                        <tr className="bg-gray-100 border-b-2 border-gray-400">
+                          <th className="py-1 px-1 text-left min-w-[60px]">TEAM</th>
+                          {/* イニングヘッダー (1〜7回まで表示) */}
+                          {[...Array(7)].map((_, i) => (
+                            <th key={i} className="py-1 w-6 font-normal">{i + 1}</th>
+                          ))}
+                          <th className="py-1 w-8 bg-gray-200 border-l border-gray-300">R</th>
                         </tr>
+                      </thead>
+                      <tbody>
+                        {/* 先攻チーム */}
+                        <tr className="border-b border-dashed border-gray-300">
+                          <td className="py-1 px-1 text-left truncate max-w-[80px]">{gameData?.topTeam}</td>
+                          {/* スコア配列を展開 (7回分) */}
+                          {[...Array(7)].map((_, i) => (
+                            <td key={i} className="py-1">
+                              {gameData?.topScoreArray && gameData.topScoreArray[i] !== null ? gameData.topScoreArray[i] : 0}
+                            </td>
+                          ))}
+                          <td className="py-1 text-base font-black bg-gray-50 border-l border-gray-300">{gameData?.topScore}</td>
+                        </tr>
+                        {/* 後攻チーム */}
                         <tr>
-                          <td className="py-1 text-left pl-2 truncate max-w-[150px]">{gameData?.myTeam}</td>
-                          <td className="py-1 text-lg font-black text-red-600 text-right pr-3">{gameData?.totalMyScore}</td>
+                          <td className="py-1 px-1 text-left truncate max-w-[80px]">{gameData?.bottomTeam}</td>
+                          {/* スコア配列を展開 (7回分) */}
+                          {[...Array(7)].map((_, i) => (
+                            <td key={i} className="py-1">
+                              {gameData?.bottomScoreArray && gameData.bottomScoreArray[i] !== null ? gameData.bottomScoreArray[i] : (i < (gameData?.topScoreArray?.filter(s => s !== null).length || 0) ? 'x' : 0)}
+                              {/* ※後攻の未入力部分は簡易的に '0' または 'x' (サヨナラ等のロジックは複雑になるため一旦0かx表示) */}
+                            </td>
+                          ))}
+                          <td className="py-1 text-base font-black bg-gray-50 border-l border-gray-300">{gameData?.bottomScore}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -1627,7 +1652,7 @@ const handleFetchFirebaseGames = async () => {
           alert('パスワードが違います。');
           return;
         }
-        
+
         const totalHome = homeScore.reduce((a, b) => a + (b || 0), 0);
         const totalAway = awayScore.reduce((a, b) => a + (b || 0), 0);
         let currentWinner = '引き分け';
@@ -1650,6 +1675,10 @@ const handleFetchFirebaseGames = async () => {
         const topTeamScore = isHomeTeam ? totalAway : totalHome;   // 先攻スコア
         const bottomTeamScore = isHomeTeam ? totalHome : totalAway; // 後攻スコア
 
+        // ★ イニングごとのスコア配列を取得
+        const topScoreArray = isHomeTeam ? awayScore : homeScore;
+        const bottomScoreArray = isHomeTeam ? homeScore : awayScore;
+
         const gameDataForAI = {
           tournamentName: tournamentName,
           date: formatDate(gameStartDate),
@@ -1663,6 +1692,8 @@ const handleFetchFirebaseGames = async () => {
           bottomTeam: bottomTeamName,
           topScore: topTeamScore,
           bottomScore: bottomTeamScore,
+          topScoreArray: topScoreArray,
+          bottomScoreArray: bottomScoreArray,
           timeline: timeline,
           hitLeaders: (getPlayerList() || [])
             .filter(p => inGameStats?.[p]?.hits > 0)
