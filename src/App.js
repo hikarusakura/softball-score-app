@@ -1609,6 +1609,25 @@ const handleFetchFirebaseGames = async () => {
 
 // --- ▽▽▽ 新聞生成関数（先攻・後攻対応版） ▽▽▽ ---
       const handleGenerateReport = async () => {
+  // 1. 実行の確認
+        if (!window.confirm('AI戦評新聞を作成しますか？\n（作成には10〜20秒ほどかかります）')) {
+          return;
+        }
+
+        // 2. パスワードの確認（削除用パスワードを流用）
+        const correctPassword = initialTeamData.deletePassword;
+        if (!correctPassword) {
+          alert('パスワードが設定されていません。\n「選手管理」画面で削除用パスワードを設定してください。');
+          return;
+        }
+
+        const inputPassword = prompt('機能を使用するにはパスワードを入力してください：');
+        if (inputPassword === null) return; // キャンセルされた場合
+        if (inputPassword !== correctPassword) {
+          alert('パスワードが違います。');
+          return;
+        }
+        
         const totalHome = homeScore.reduce((a, b) => a + (b || 0), 0);
         const totalAway = awayScore.reduce((a, b) => a + (b || 0), 0);
         let currentWinner = '引き分け';
