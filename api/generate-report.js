@@ -33,12 +33,14 @@ export default async function handler(req, res) {
       【試合データ】
       - 大会名: ${gameData.tournamentName || '練習試合'}
       - 日付: ${gameData.date}
-      - 対戦カード: ${gameData.myTeam} vs ${gameData.opponentTeam}
-      - スコア:
-        ${gameData.myTeam}: ${gameData.totalMyScore}点
-        ${gameData.opponentTeam}: ${gameData.totalOpponentScore}点
+      - 先攻（表の攻撃）: ${gameData.topTeam}
+      - 後攻（裏の攻撃）: ${gameData.bottomTeam}
+      - スコア結果:
+        ${gameData.topTeam}: ${gameData.topScore}点
+        ${gameData.bottomTeam}: ${gameData.bottomScore}点
       - 勝者: ${gameData.winner}
-      - 試合経過（タイムライン）:
+      - タイムライン（試合経過）:
+        ※「表」の攻撃は先攻チーム、「裏」の攻撃は後攻チームです。
         ${gameData.timeline.map(t => `・${t.inning}回 ${t.message}`).join('\n')}
       - 活躍選手（安打数）:
         ${gameData.hitLeaders.map(p => `${p.name} (${p.count}安打)`).join(', ')}

@@ -1605,60 +1605,70 @@ const handleFetchFirebaseGames = async () => {
     }
   };
 
-// --- ▽▽▽ 新聞生成関数（修正版） ▽▽▽ ---
-      const handleGenerateReport = async () => {
-        // ★ 現在のスコアから勝者を判定
-        const totalHome = homeScore.reduce((a, b) => a + (b || 0), 0);
-        const totalAway = awayScore.reduce((a, b) => a + (b || 0), 0);
-        let currentWinner = '引き分け';
-        const myTeam = myTeamNameForGame || selectedGameTeam;
+// --- ▽▽▽ 新聞生成関数（先攻・後攻対応版） ▽▽▽ ---
+      const handleGenerateReport = async () => {
+        const totalHome = homeScore.reduce((a, b) => a + (b || 0), 0);
+        const totalAway = awayScore.reduce((a, b) => a + (b || 0), 0);
+        let currentWinner = '引き分け';
+        const myTeam = myTeamNameForGame || selectedGameTeam;
 
-        if (totalHome !== totalAway) {
-          if (isHomeTeam) {
-            currentWinner = totalHome > totalAway ? myTeam : opponentTeam;
-          } else {
-            currentWinner = totalAway > totalHome ? myTeam : opponentTeam;
-          }
-        }
-        
-        setShowNewspaper(true);
-        setIsGenerating(true);
+        if (totalHome !== totalAway) {
+          if (isHomeTeam) {
+            currentWinner = totalHome > totalAway ? myTeam : opponentTeam;
+          } else {
+            currentWinner = totalAway > totalHome ? myTeam : opponentTeam;
+          }
+        }
+        
+        setShowNewspaper(true);
+        setIsGenerating(true);
 
-        // ★ 現在のStateを使ってデータを整形
-        const gameDataForAI = {
-          tournamentName: tournamentName,
-          date: formatDate(gameStartDate),
-          myTeam: myTeam,
-          opponentTeam: opponentTeam,
-          totalMyScore: isHomeTeam ? totalHome : totalAway,
-          totalOpponentScore: isHomeTeam ? totalAway : totalHome,
-          winner: currentWinner,
-          timeline: timeline,
-          hitLeaders: (getPlayerList() || [])
-            .filter(p => inGameStats?.[p]?.hits > 0)
-            .map(p => ({ name: p, count: inGameStats[p].hits }))
-        };
+        // ★ 先攻・後攻を明確に定義
+        const topTeamName = isHomeTeam ? opponentTeam : myTeam;    // 先攻
+        const bottomTeamName = isHomeTeam ? myTeam : opponentTeam; // 後攻
+        const topTeamScore = isHomeTeam ? totalAway : totalHome;   // 先攻スコア
+        const bottomTeamScore = isHomeTeam ? totalHome : totalAway; // 後攻スコア
+
+        const gameDataForAI = {
+          tournamentName: tournamentName,
+          date: formatDate(gameStartDate),
+          myTeam: myTeam,
+          opponentTeam: opponentTeam,
+          totalMyScore: isHomeTeam ? totalHome : totalAway,
+          totalOpponentScore: isHomeTeam ? totalAway : totalHome,
+          winner: currentWinner,
+          // ★ AIに渡す情報を追加
+          topTeam: topTeamName,
+          bottomTeam: bottomTeamName,
+          topScore: topTeamScore,
+          bottomScore: bottomTeamScore,
+          timeline: timeline,
+          hitLeaders: (getPlayerList() || [])
+            .filter(p => inGameStats?.[p]?.hits > 0)
+            .map(p => ({ name: p, count: inGameStats[p].hits }))
+        };
+
         setNewspaperGameData(gameDataForAI);
 
-        try {
-          const response = await fetch('/api/generate-report', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ gameData: gameDataForAI }),
-          });
+        try {
+          const response = await fetch('/api/generate-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ gameData: gameDataForAI }),
+          });
 
-          if (!response.ok) throw new Error('Generation failed');
+          if (!response.ok) throw new Error('Generation failed');
 
-          const data = await response.json();
-          setNewspaperData(data);
-        } catch (error) {
-          console.error(error);
-          alert('記事の作成に失敗しました。');
-          setShowNewspaper(false);
-        } finally {
-          setIsGenerating(false);
-        }
-      };
+          const data = await response.json();
+          setNewspaperData(data);
+        } catch (error) {
+          console.error(error);
+          alert('記事の作成に失敗しました。');
+          setShowNewspaper(false);
+        } finally {
+          setIsGenerating(false);
+        }
+      };
       // --- △△△ 新聞生成関数（修正版） △△△ ---
 
   const handleDeleteFirebaseGame = async (gameIdToDelete) => {
