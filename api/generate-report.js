@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY1);
     // ★ モデル名は最新のものを使用
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     // AIへの指示書（プロンプト）を作成
     const prompt = `
