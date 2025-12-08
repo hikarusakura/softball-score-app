@@ -10,13 +10,13 @@ export default async function handler(req, res) {
   const { gameData } = req.body;
 
   // APIキーの確認
-  if (!process.env.GEMINI_API_KEY) {
+  if (!process.env.GEMINI_API_KEY_NEW) {
     console.error("API Key is missing in environment variables");
     return res.status(500).json({ error: 'Server Configuration Error: API Key missing' });
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY_NEW);
     
     // ★ 最も標準的で安定しているモデル名を使用
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
