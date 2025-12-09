@@ -1,8 +1,4 @@
 // api/generate-report.js
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-
-// 指定時間（ミリ秒）待機する関数
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default async function handler(req, res) {
   // POSTメソッド以外は拒否
@@ -11,16 +7,16 @@ export default async function handler(req, res) {
   }
 
   const { gameData } = req.body;
+  const apiKey = process.env.GEMINI_API_KEY;
 
-  if (!process.env.GEMINI_API_KEY) {
+  if (!apiKey) {
     return res.status(500).json({ error: 'API Key not configured' });
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    
-    // ★ 唯一反応があった "gemini-2.0-flash" を使用
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    // ★ ライブラリを使わず、直接URLを叩く (REST API)
+    // ここで gemini-1.5-flash を直接指名します
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const prompt = `
       あなたは少年ソフトボールの熱血スポーツ記者です。
@@ -28,7 +24,7 @@ export default async function handler(req, res) {
 
       【制約事項】
       - 新聞記事のような文体で書いてください（「〜だ」「〜した」調）。
-      - 以下のJSON形式で出力してください（マークダウン等は不要）。
+      - 以下のJSON形式のテキストのみを出力してください（マークダウンの記号は不要）。
       {
         "headline": "記事の見出し（20文字以内、キャッチーに）",
         "content": "記事の本文（400文字程度。試合の流れ、勝敗の分かれ目、活躍した選手などを具体的に。絵文字は少しだけ使用可）"
@@ -37,55 +33,44 @@ export default async function handler(req, res) {
       【試合データ】
       - 大会名: ${gameData.tournamentName || '練習試合'}
       - 日付: ${gameData.date}
-      - 先攻（表の攻撃）: ${gameData.topTeam}
-      - 後攻（裏の攻撃）: ${gameData.bottomTeam}
-      - スコア結果:
-        ${gameData.topTeam}: ${gameData.topScore}点
-        ${gameData.bottomTeam}: ${gameData.bottomScore}点
+      - 先攻（表）: ${gameData.topTeam} / 後攻（裏）: ${gameData.bottomTeam}
+      - スコア: ${gameData.topTeam} ${gameData.topScore} - ${gameData.bottomScore} ${gameData.bottomTeam}
       - 勝者: ${gameData.winner}
-      - タイムライン（試合経過）:
-        ※「表」の攻撃は先攻チーム、「裏」の攻撃は後攻チームです。
+      - 試合経過:
         ${gameData.timeline.map(t => `・${t.inning}回${t.inningHalf || ''} ${t.message}`).join('\n')}
-      - 活躍選手（安打数）:
+      - 活躍選手:
         ${gameData.hitLeaders.map(p => `${p.name} (${p.count}安打)`).join(', ')}
     `;
 
-    // --- ★ リトライロジック（ここから） ---
-    let result;
-    let retryCount = 0;
-    const maxRetries = 3; // 最大3回までやり直す
+    // Googleへのリクエスト送信
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: prompt }]
+        }]
+      })
+    });
 
-    while (retryCount < maxRetries) {
-      try {
-        result = await model.generateContent(prompt);
-        break; // 成功したらループを抜ける
-      } catch (error) {
-        // 429 (Too Many Requests) または 503 (Service Unavailable) の場合のみリトライ
-        if (error.message.includes("429") || error.message.includes("503")) {
-          retryCount++;
-          console.log(`混雑中... リトライします (${retryCount}/${maxRetries})`);
-          await sleep(2000 * retryCount); // 2秒, 4秒... と待機時間を増やす
-        } else {
-          throw error; // それ以外のエラーは即座に停止
-        }
-      }
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'Google API Error');
     }
 
-    if (!result) {
-      throw new Error("混雑のため記事を作成できませんでした。もう一度お試しください。");
-    }
-    // --- ★ リトライロジック（ここまで） ---
+    const data = await response.json();
+    const text = data.candidates[0].content.parts[0].text;
 
-    const response = await result.response;
-    const text = response.text();
-
+    // JSONの整形（```json などを除去）
     const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const article = JSON.parse(jsonStr);
 
     res.status(200).json(article);
 
   } catch (error) {
-    console.error('AI Error:', error);
+    console.error('API Error:', error);
     res.status(500).json({ error: 'Failed to generate report', details: error.message });
   }
 }
