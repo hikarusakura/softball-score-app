@@ -30,15 +30,46 @@ export default async function handler(req, res) {
     // 「generateContent（記事作成）」に対応しているモデルだけを抽出
     // かつ、制限の厳しい "gemini-2.0" は（もし他があるなら）避ける優先順位にする
     const viableModels = availableModels
+      // 1. まずは「記事作成(generateContent)」に対応しているかチェック
       .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent"))
-      .map(m => m.name.replace("models/", "")) // "models/gemini-pro" -> "gemini-pro"
+      // 2. さらに、今回の用途に合わない特殊なモデルを除外
+      .filter(m => {
+        const name = m.name;
+        return !name.includes("image") &&    // 画像生成用は除外
+               !name.includes("vision") &&   // 視覚認識用は除外
+               !name.includes("robotics") && // ロボット用は除外
+               !name.includes("nano") &&     // スマホ用(超軽量)は除外
+               !name.includes("tts");        // 音声読み上げ用は除外
+      })
+      .map(m => m.name.replace("models/", ""))
+      
+      // 3. 「賢い順」に並び替え
       .sort((a, b) => {
-        // 1.5-flash を最優先、次に pro、2.0 は最後
-        if (a.includes("1.5-flash")) return -1;
-        if (b.includes("1.5-flash")) return 1;
-        if (a.includes("2.0")) return 1;
-        if (b.includes("2.0")) return -1;
-        return 0;
+        // ヘルパー関数: モデルの強さを数値化する（大きい方が優先）
+        const getScore = (name) => {
+          let score = 0;
+          
+          // 世代による加点 (新しい方が偉い)
+          if (name.includes("gemini-3")) score += 4000;
+          else if (name.includes("gemini-2.5")) score += 3000;
+          else if (name.includes("gemini-2.0")) score += 2000;
+          else if (name.includes("gemini-1.5")) score += 1000;
+          
+          // ランクによる加点 (Pro > Flash > Lite > Gemma)
+          if (name.includes("pro")) score += 500;
+          else if (name.includes("flash") && !name.includes("lite")) score += 300; // 普通のFlash
+          else if (name.includes("lite")) score += 100; // Lite
+          else if (name.includes("gemma")) score -= 100; // Gemmaは今回不向き
+
+          // "exp" や "preview" は不安定なことがあるので少し下げる（安定版優先）
+          // ただしGemini 3などはPreviewしかないので、スコア差でカバーされます
+          if (name.includes("preview") || name.includes("exp")) score -= 10;
+
+          return score;
+        };
+
+        // スコア比較（降順＝点数が高い方が先に来る）
+        return getScore(b) - getScore(a);
       });
 
     console.log("📋 Found models:", viableModels);
