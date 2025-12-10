@@ -1669,15 +1669,20 @@ const handleFetchFirebaseGames = async () => {
         setShowNewspaper(true);
         setIsGenerating(true);
 
-        // ★ 先攻・後攻を明確に定義
-        const topTeamName = isHomeTeam ? opponentTeam : myTeam;    // 先攻
-        const bottomTeamName = isHomeTeam ? myTeam : opponentTeam; // 後攻
-        const topTeamScore = isHomeTeam ? totalAway : totalHome;   // 先攻スコア
-        const bottomTeamScore = isHomeTeam ? totalHome : totalAway; // 後攻スコア
+        // 先攻(Top)は常にAway、後攻(Bottom)は常にHome
+        const topTeamName = isHomeTeam ? opponentTeam : myTeam;    // 自分が後攻なら、相手が先攻
+        const bottomTeamName = isHomeTeam ? myTeam : opponentTeam; // 自分が後攻なら、自分が後攻
 
         // ★ イニングごとのスコア配列を取得
-        const topScoreArray = isHomeTeam ? awayScore : homeScore;
-        const bottomScoreArray = isHomeTeam ? homeScore : awayScore;
+        const topScoreArray = awayScore; 
+        const bottomScoreArray = homeScore;
+
+        const topTeamScore = totalAway;
+        const bottomTeamScore = totalHome;
+
+        // ★★★ 修正ポイント3：タイムラインを時系列順（古い順）にする ★★★
+        // そのまま送ると「最新」が上に来てしまうので、コピーして逆転(.reverse)させます
+        const chronologicalTimeline = [...timeline].reverse();
 
         const gameDataForAI = {
           tournamentName: tournamentName,
