@@ -50,27 +50,41 @@ export default async function handler(req, res) {
     // ---------------------------------------------------------
     // ステップ2: 見つかったモデルを使って記事を書く
     // ---------------------------------------------------------
+    // AIが間違えないように、明確な役割定義を作成
+    const topTeamInfo = `先攻（${gameData.topTeam}）`;
+    const bottomTeamInfo = `後攻（${gameData.bottomTeam}）`;
+
     const prompt = `
       あなたは少年ソフトボールの熱血スポーツ記者です。
       以下の試合データをもとに、保護者が読んで感動するような、ドラマチックな「試合戦評記事」を書いてください。
+
+      【⚠️ 最重要：チーム情報の定義】
+      以下の定義を厳守し、絶対にチームを取り違えないでください。
+      - 先攻チーム: ${gameData.topTeam}（スコアボードの上の段）
+      - 後攻チーム: ${gameData.bottomTeam}（スコアボードの下の段）
+      - 試合結果: ${gameData.topTeam} ${gameData.topScore} 対 ${gameData.bottomScore} ${gameData.bottomTeam}
+      - 勝者: ${gameData.winner}
+
+      【タイムラインの読み方ルール】
+      - 「表」と書かれている回は、必ず「先攻（${gameData.topTeam}）」の攻撃です。
+      - 「裏」と書かれている回は、必ず「後攻（${gameData.bottomTeam}）」の攻撃です。
+      - 例えば「1回表」の出来事は、${gameData.topTeam}が攻撃し、${gameData.bottomTeam}が守っています。
+      - 逆転やサヨナラなどのドラマは、この時系列を正しく解釈して描写してください。
 
       【制約事項】
       - 新聞記事のような文体で書いてください（「〜だ」「〜した」調）。
       - 以下のJSON形式のテキストのみを出力してください（マークダウン不要）。
       {
-        "headline": "記事の見出し（20文字以内、キャッチーに）",
+        "headline": "記事の見出し（20文字以内、キャッチーに。勝ったチームを主役に）",
         "content": "記事の本文（400文字程度。試合の流れ、勝敗の分かれ目、活躍した選手などを具体的に。絵文字は少しだけ使用可）"
       }
 
-      【試合データ】
+      【試合データ詳細】
       - 大会名: ${gameData.tournamentName || '練習試合'}
       - 日付: ${gameData.date}
-      - 先攻（表）: ${gameData.topTeam} / 後攻（裏）: ${gameData.bottomTeam}
-      - スコア: ${gameData.topTeam} ${gameData.topScore} - ${gameData.bottomScore} ${gameData.bottomTeam}
-      - 勝者: ${gameData.winner}
-      - 試合経過:
-        ${gameData.timeline.map(t => `・${t.inning}回${t.inningHalf || ''} ${t.message}`).join('\n')}
-      - 活躍選手:
+      - 試合経過タイムライン:
+        ${gameData.timeline.map(t => `・${t.inning}回${t.inningHalf || ''}：${t.message}`).join('\n')}
+      - 活躍選手（ヒットを打った選手）:
         ${gameData.hitLeaders.map(p => `${p.name} (${p.count}安打)`).join(', ')}
     `;
 
