@@ -84,9 +84,10 @@ export default async function handler(req, res) {
     // AIが間違えないように、明確な役割定義を作成
     const topTeamInfo = `先攻（${gameData.topTeam}）`;
     const bottomTeamInfo = `後攻（${gameData.bottomTeam}）`;
+    const myTeamName = gameData.myTeam || '自チーム';
 
     const prompt = `
-      あなたは少年ソフトボールの熱血スポーツ記者です。
+      あなたは少年ソフトボールチーム「${myTeamName}」の【熱血専属スポーツ記者】です。
       以下の試合データをもとに、保護者が読んで感動するような、ドラマチックな「試合戦評記事」を書いてください。
 
       【⚠️ 最重要：チーム情報の定義】
@@ -95,6 +96,22 @@ export default async function handler(req, res) {
       - 後攻チーム: ${gameData.bottomTeam}（スコアボードの下の段）
       - 試合結果: ${gameData.topTeam} ${gameData.topScore} 対 ${gameData.bottomScore} ${gameData.bottomTeam}
       - 勝者: ${gameData.winner}
+
+      【チーム情報の定義2】
+      - 我がチーム: ${myTeamName}
+      - 対戦相手: ${gameData.opponentTeam}
+
+      【重要：視点の固定】
+      - あなたは「${myTeamName}」の味方です。中立である必要はありません。
+      - 常に「${myTeamName}」を主語（主人公）にして記事を構成してください。
+
+      【勝敗による書き分けルール】
+      - **${myTeamName}が勝った場合**:
+        手放しで称賛してください。「快勝」「劇的勝利」「圧倒」など、ポジティブな言葉を多用してください。
+      - **${myTeamName}が負けた場合**:
+        「悔しい敗戦」「あと一歩」「健闘」というトーンで書いてください。
+        相手の勝利を祝うのではなく、自チームの頑張りや、次につながる良いプレーに焦点を当ててください。
+        最後は必ず「次戦に期待したい」「前を向こう」といった励ましの言葉で締めてください。
 
       【タイムラインの読み方ルール】
       - データは「試合開始（1回）から試合終了」に向かって、時系列順（古い順）に並んでいます。
@@ -106,7 +123,7 @@ export default async function handler(req, res) {
       - 新聞記事のような文体で書いてください（「〜だ」「〜した」調）。
       - 以下のJSON形式のテキストのみを出力してください（マークダウン不要）。
       {
-        "headline": "記事の見出し（20文字以内、キャッチーに。勝ったチームを主役に）",
+        "headline": "記事の見出し（20文字以内。勝っても負けても${myTeamName}の名前を入れること）",
         "content": "記事の本文（400文字程度。試合の流れ、勝敗の分かれ目、活躍した選手などを具体的に。絵文字は少しだけ使用可）"
       }
 
