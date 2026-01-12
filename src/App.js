@@ -717,14 +717,27 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [mainView, setMainView] = useState('timeline');
   const [dialogTitle, setDialogTitle] = useState('共有メッセージ');
   // eslint-disable-next-line no-unused-vars
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  // eslint-disable-next-line no-unused-vars
   const [availableYears, setAvailableYears] = useState(initialTeamData.availableYears || [new Date().getFullYear()]);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [showNewspaper, setShowNewspaper] = useState(false);
   const [newspaperData, setNewspaperData] = useState(null);
   const [newspaperGameData, setNewspaperGameData] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // ★年度計算用のロジックを追加（コンポーネント内、または外でもOK）
+const getFiscalYear = () => {
+  const now = new Date();
+  // getMonth()は 0=1月, 1=2月, 2=3月 ... です
+  // 3月(2)以下、つまり1,2,3月の場合は「去年」を返す
+  if (now.getMonth() < 3) { 
+    return now.getFullYear() - 1;
+  }
+  // 4月以降なら「今年」を返す
+  return now.getFullYear();
+};
+
+// eslint-disable-next-line no-unused-vars
+const [currentYear, setCurrentYear] = useState(getFiscalYear());
 
 useEffect(() => {
     if (!user || !user.uid) return;
