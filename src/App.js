@@ -729,11 +729,11 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
 const getFiscalYear = () => {
   const now = new Date();
   // getMonth()は 0=1月, 1=2月, 2=3月 ... です
-  // 3月(2)以下、つまり1,2,3月の場合は「去年」を返す
-  if (now.getMonth() < 3) { 
+  // 1月(0)以下、つまり1月の場合は「去年」を返す
+  if (now.getMonth() < 1) { 
     return now.getFullYear() - 1;
   }
-  // 4月以降なら「今年」を返す
+  // 2月以降なら「今年」を返す
   return now.getFullYear();
 };
 
