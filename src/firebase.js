@@ -104,8 +104,8 @@ export const updatePlayerStats = async (teamId, year, playerName, statsData, isO
 };
 
 // 特定の選手の成績データを丸ごと上書きする関数
-export const setPlayerStats = async (teamId, playerName, newStats) => {
-  const teamRef = doc(db, 'teams', teamId);
+export const setPlayerStats = async (teamId, year, playerName, newStats) => {
+  const teamRef = doc(db, 'teams', teamId, 'years', String(year));
   try {
     // ドット記法を使い、特定の選手のマップを新しいデータで上書きする
     await setDoc(teamRef, {
