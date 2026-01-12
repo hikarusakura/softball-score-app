@@ -681,6 +681,7 @@ const SoftballScoreApp = ({ user, initialTeamData }) => {
   const [awayHits, setAwayHits] = useState(0);
   const [timeline, setTimeline] = useState([]);
   const [gameStartDate, setGameStartDate] = useState(null);
+  const [gameEndDate, setGameEndDate] = useState(null);
   const [currentBatter, setCurrentBatter] = useState('');
   const [customBatter, setCustomBatter] = useState('');
   const [useCustomBatter, setUseCustomBatter] = useState(false);
@@ -912,6 +913,7 @@ const setNextBatter = (lastBatterName) => {
     setUseCustomBatter(false);
     setFreeComment('');
     setGameStartDate(null);
+    setGameEndDate(null);
     setGameId(null);
     setIsGameCreator(false);
     
@@ -965,6 +967,7 @@ const setNextBatter = (lastBatterName) => {
       customBatter,
       useCustomBatter,
       gameStartDate,
+      gameEndDate,
       createdAt: gameStartDate || Date.now(),
     };
     try {
@@ -975,7 +978,7 @@ const setNextBatter = (lastBatterName) => {
   }, [
     user.uid, gameId, isGameCreator, myTeamNameForGame, bsoCount, inGameStats, myTeamPitcher, opponentPitcher, isStatsRecordingEnabled, tournamentName, opponentTeam, isHomeTeam, currentInning, 
     currentTeamBatting, outCount, bases, homeScore, awayScore, homeHits, awayHits,
-    timeline, currentBatter, customBatter, useCustomBatter, gameStartDate, myTeamLineup, opponentLineup, currentYear
+    timeline, currentBatter, customBatter, useCustomBatter, gameStartDate, gameEndDate, myTeamLineup, opponentLineup, currentYear
   ]);
 
   // ★useEffectの依存配列を修正
@@ -1035,6 +1038,7 @@ const setNextBatter = (lastBatterName) => {
         setCustomBatter(data.customBatter || '');
         setUseCustomBatter(data.useCustomBatter === true);
         setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
+        setGameEndDate(typeof data.gameEndDate === 'number' ? data.gameEndDate : null);
         setLikeCount(data.likeCount || 0);
         setMyTeamLineup(data.myTeamLineup || Array(9).fill({ playerName: '', position: '' }));
         setOpponentLineup(data.opponentLineup || Array(9).fill({ playerName: '', position: '' }));
@@ -1558,7 +1562,18 @@ const setNextBatter = (lastBatterName) => {
     setBases(prev => ({ ...prev, [base]: !prev[base] }));
   };
 
-  const endGame = () => {
+  const endGame = async () => {
+    const endTime = Date.now(); // ★現在の時刻を取得
+    setGameEndDate(endTime);    // ★State更新
+
+    // ★Firebaseへ即座に終了時刻を保存 (重要: resetGameStatesされる前に保存)
+    if (gameId && user && user.uid) {
+       await saveGameState(user.uid, currentYear, gameId, {
+         gameEndDate: endTime,
+         // 念のためステータスも更新
+         isGameFinished: true 
+       });
+    }
     const finalHomeScore = homeScore.reduce((a, b) => (a || 0) + (b || 0), 0);
     const finalAwayScore = awayScore.reduce((a, b) => (a || 0) + (b || 0), 0);
     const myTeam = myTeamNameForGame || selectedGameTeam;
@@ -1888,6 +1903,58 @@ const handleSaveStats = (playerName) => { // ★ async を削除
       alert('パスワードの更新に失敗しました。');
     }
   };
+
+  // --- ▽▽▽ タイマーコンポーネント (新規追加) ▽▽▽ ---
+const GameTimer = ({ startDate, endDate }) => {
+  const [elapsed, setElapsed] = useState('00:00');
+
+  useEffect(() => {
+    if (!startDate) return;
+
+    const calculateTime = () => {
+      // 終了時刻があればそれを使い、なければ現在時刻を使う
+      const end = endDate || Date.now();
+      const diff = end - startDate;
+
+      if (diff < 0) {
+        setElapsed('00:00');
+        return;
+      }
+
+      // 時間、分、秒の計算
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      // const seconds = Math.floor((diff % (1000 * 60)) / 1000); // 秒まで出すならコメント解除
+
+      // 表示フォーマット (例: 1時間05分 または 65分)
+      // 少年野球なら「分」だけで表現した方が直感的かもしれません
+      const totalMinutes = hours * 60 + minutes;
+      setElapsed(`${totalMinutes}分経過`); 
+      
+      // 秒まで出したい場合はこちら
+      // setElapsed(`${totalMinutes}分${String(seconds).padStart(2, '0')}秒経過`);
+    };
+
+    calculateTime(); // 初回実行
+
+    // 試合終了していなければ1秒ごとに更新
+    if (!endDate) {
+      const timerId = setInterval(calculateTime, 1000); // 1秒更新
+      // const timerId = setInterval(calculateTime, 60000); // 1分更新で良ければこちら
+      return () => clearInterval(timerId);
+    }
+  }, [startDate, endDate]);
+
+  if (!startDate) return null;
+
+  return (
+    <div className="bg-black bg-opacity-60 text-white rounded px-3 py-1 text-sm font-mono inline-block mb-2 border border-yellow-500">
+      <span className="text-yellow-400 mr-2">Start {new Date(startDate).getHours()}:{String(new Date(startDate).getMinutes()).padStart(2, '0')}</span>
+      <span className="font-bold text-lg">{elapsed}</span>
+    </div>
+  );
+};
+// --- △△△ ここまで追加 △△△ ---
 
   // ★この関数と、その下の`return`文内の`GameHighlights`コンポーネントの定義を、
   // State宣言の後に移動させます
@@ -2463,6 +2530,11 @@ if (showLineupEditor) {
               <h1 className="text-lg font-bold">⚾ {myTeam} 試合速報 ⚾</h1>
               <p className="text-xs text-gray-300">試合日時: {formatDate(gameStartDate)}{tournamentName && ` (${tournamentName})`}</p>
               <p className="text-xs truncate">{myTeam} vs {opponentTeam}</p>
+{/* ★★★ ここにタイマーを追加 ★★★ */}
+  <div className="mt-1">
+    <GameTimer startDate={gameStartDate} endDate={gameEndDate} />
+  </div>
+
             </div>
             <div className="bg-black bg-opacity-50 rounded-lg p-4 mb-4">
               <div className="text-center text-sm">
