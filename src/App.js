@@ -1090,6 +1090,7 @@ const setNextBatter = (lastBatterName) => {
   	  	  setCustomBatter(data.customBatter || '');
   	  	  setUseCustomBatter(data.useCustomBatter === true);
   	  	  setGameStartDate(typeof data.gameStartDate === 'number' ? data.gameStartDate : null);
+          setGameEndDate(typeof data.gameEndDate === 'number' ? data.gameEndDate : null);
   	  	  setLikeCount(data.likeCount || 0);
   	  	  setMyTeamLineup(data.myTeamLineup || Array(9).fill({ playerName: '', position: '' }));
   	  	  setOpponentLineup(data.opponentLineup || Array(9).fill({ playerName: '', position: '' }));
