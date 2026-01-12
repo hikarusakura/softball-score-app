@@ -1180,7 +1180,7 @@ const setNextBatter = (lastBatterName) => {
     setMyTeamLineup(gameMyLineup);
     setOpponentLineup(gameOpponentLineup);
     const newGameId = generateGameId();
-    setGameStartDate(Date.now());
+    setGameStartDate(null);
     setGameId(newGameId);
     const message = `◆試合速報開始◆\n${gameTournament}\n対 ${gameOpponent}`;
     setDialogTitle('共有メッセージ');
@@ -1188,7 +1188,7 @@ const setNextBatter = (lastBatterName) => {
     setIsGameCreator(true);
     setGameState('playing');
     setCurrentTeamBatting('away');
-    addToTimeline(`試合開始！ (${gameMyTeam} vs ${gameOpponent})`);
+    addToTimeline(`速報記録を開始します！ (${gameMyTeam} vs ${gameOpponent})`);
     setShowShareDialog(true);
   };
 
@@ -1619,6 +1619,28 @@ const setNextBatter = (lastBatterName) => {
 
     resetGameStates();
     setGameState('setup');
+  };
+
+// ★新規追加: 試合開始（計測スタート）ボタンの処理
+  const handleStartTimer = () => {
+    const startTime = Date.now();
+    setGameStartDate(startTime);
+    addToTimeline("プレイボール！試合開始！");
+    
+    // Firebaseへ即座に開始時刻を保存
+    if (gameId && user && user.uid) {
+       saveGameState(user.uid, currentYear, gameId, {
+         gameStartDate: startTime,
+         timeline: [{ // タイムラインも更新
+           time: new Date().toLocaleTimeString(),
+           message: "プレイボール！試合開始！",
+           inning: currentInning,
+           inningHalf: currentTeamBatting === 'away' ? '表' : '裏',
+           team: getCurrentTeamName(),
+           outCount: 0,
+         }, ...timeline]
+       });
+    }
   };
 
   // eslint-disable-next-line no-unused-vars
@@ -2636,6 +2658,22 @@ if (showLineupEditor) {
                 <input type="text" value={opponentPitcher} onChange={(e) => setOpponentPitcher(e.target.value)} className="w-full px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="相手チームのピッチャー名" />
               </div>
             </div>
+            {/* ★★★ ここに追加: 試合開始ボタン (未開始時のみ表示) ★★★ */}
+            {!gameStartDate && (
+              <div className="mt-4 border-t-4 border-double border-red-200 pt-4">
+                <button 
+                  onClick={handleStartTimer} 
+                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white text-xl font-black rounded-xl shadow-lg transform transition active:scale-95 flex items-center justify-center animate-pulse"
+                >
+                  <Play className="w-6 h-6 mr-2" fill="currentColor" />
+                  試合開始 (計測スタート)
+                </button>
+                <p className="text-center text-xs text-red-500 mt-2 font-bold">
+                  ※プレイボールの合図に合わせて押してください
+                </p>
+              </div>
+            )}
+            {/* ★★★ ここまで ★★★ */}
           </div>
         </div>
       )}
